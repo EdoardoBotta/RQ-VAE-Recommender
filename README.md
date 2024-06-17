@@ -10,5 +10,5 @@ This is a PyTorch reimplementation of a generative retrieval model based on RQ-V
 * Properly package repository
 
 ### References
-* [Recommender Systems with Generative Retrieval](https://arxiv.org/pdf/2305.05065)
+* [Recommender Systems with Generative Retrieval](https://arxiv.org/pdf/2305.05065) by Shashank Rajput, Nikhil Mehta, Anima Singh, Raghunandan H. Keshavan, Trung Vu, Lukasz Heldt, Lichan Hong, Yi Tay, Vinh Q. Tran, Jonah Samost, Maciej Kula, Ed H. Chi, Maheswaran Sathiamoorthy
   
