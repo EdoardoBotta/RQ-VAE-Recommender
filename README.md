@@ -7,6 +7,7 @@ This is a PyTorch reimplementation of a generative retrieval model based on RQ-V
 ### Next steps
 * K-Means initialization of codebooks
 * Retrieval model + Training code with semantic id user sequences.
+* Properly package repository
 
 ### References
 * [Recommender Systems with Generative Retrieval](https://arxiv.org/pdf/2305.05065)
