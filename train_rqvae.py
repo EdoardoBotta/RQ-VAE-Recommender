@@ -64,29 +64,33 @@ def train(
         step_size=6000
     )
 
-    for iter in tqdm(range(iterations)):
-        model.train()
-        total_loss = 0
-        t = temp_scheduler.get_t(iter)
+    with tqdm(initial = 0, total = iterations, disable = not accelerator.is_main_process) as pbar:
+        for iter in range(iterations):
+            model.train()
+            total_loss = 0
+            t = temp_scheduler.get_t(iter)
 
-        optimizer.zero_grad()
-        for _ in range(gradient_accumulate_every):
-            data = next(dataloader).to(device)
+            optimizer.zero_grad()
+            for _ in range(gradient_accumulate_every):
+                data = next(dataloader).to(device)
 
-            with accelerator.autocast():
-                loss = model(data, gumbel_t=t)
-                loss = loss / gradient_accumulate_every
-                total_loss += loss.item()
+                with accelerator.autocast():
+                    loss = model(data, gumbel_t=t)
+                    loss = loss / gradient_accumulate_every
+                    total_loss += loss.item()
 
-            accelerator.backward(loss)
+                accelerator.backward(loss)
 
-        accelerator.wait_for_everyone()
-        accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
-    
-        optimizer.step()
-        scheduler.step()
+            pbar.set_description(f'loss: {total_loss:.4f}')
 
-        accelerator.wait_for_everyone()
+            accelerator.wait_for_everyone()
+            accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
+        
+            optimizer.step()
+            scheduler.step()
+
+            accelerator.wait_for_everyone()
+            pbar.update(1)
 
 if __name__ == "__main__":
     train()
