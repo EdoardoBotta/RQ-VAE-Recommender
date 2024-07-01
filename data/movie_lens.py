@@ -17,7 +17,7 @@ class MovieLensMovieData(Dataset):
         raw_movie_lens.process()
 
         data = torch.load(root + PROCESSED_MOVIE_LENS_SUFFIX)
-        self.movie_data = data["movie"]["x"]
+        self.movie_data = data[0]["movie"]["x"]
     
     def __len__(self):
         return self.movie_data.shape[0]

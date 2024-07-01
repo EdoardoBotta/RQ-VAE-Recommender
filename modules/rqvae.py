@@ -1,9 +1,9 @@
 import torch
 
-from encoder import MLP
-from loss import ReconstuctionLoss
-from loss import RqVaeLoss
-from quantize import Quantize
+from .encoder import MLP
+from .loss import ReconstuctionLoss
+from .loss import RqVaeLoss
+from .quantize import Quantize
 from torch import nn
 
 
