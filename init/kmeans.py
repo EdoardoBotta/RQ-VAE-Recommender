@@ -2,24 +2,28 @@ import numpy as np
 import torch
 
 from typing import NamedTuple
- 
+
 
 def kmeans_init_(tensor: torch.Tensor, x: torch.Tensor):
-    assert tensor.dim() == 2, f"x incompatible tensor size: Expected 2, Found {tensor.dim()}"
-    assert x.dim() == 2, f"x incompatible data size: Expected 2, Found {x.dim()}"
-    
+    assert tensor.dim() == 2
+    assert x.dim() == 2
+
     with torch.no_grad():
         k, _ = tensor.shape
         kmeans_out = Kmeans(k=k).run(x)
-        tensor[:,:] = kmeans_out.centroids[:,:]
+        tensor[:, :] = kmeans_out.centroids[:, :]
 
 
 class KmeansOutput(NamedTuple):
     centroids: torch.Tensor
     assignment: torch.Tensor
 
+
 class Kmeans:
-    def __init__(self, k: int, max_iters: int = None, stop_threshold: float = 1e-2) -> None:
+    def __init__(self,
+                 k: int,
+                 max_iters: int = None,
+                 stop_threshold: float = 1e-2) -> None:
         self.k = k
         self.iters = max_iters
         self.stop_threshold = stop_threshold
@@ -35,31 +39,27 @@ class Kmeans:
     def _update_centroids(self, x) -> torch.Tensor:
         squared_pw_dist = (x.unsqueeze(1) - self.centroids.unsqueeze(0))**2
         centroid_idx = (squared_pw_dist.sum(axis=2)).min(axis=1).indices
-        assigned = torch.arange(self.k, device=x.device).unsqueeze(1) == centroid_idx
+        assigned = (
+            torch.arange(self.k, device=x.device).unsqueeze(1) == centroid_idx
+        )
         for cluster in range(self.k):
             is_assigned_to_c = assigned[cluster]
             if not is_assigned_to_c.any():
                 continue
             self.centroids[cluster, :] = x[is_assigned_to_c, :].mean(axis=0)
         self.assignment = centroid_idx
-    
+
     def run(self, x):
         self._init_centroids(x)
-        
+
         i = 0
         while self.iters is None or i < self.max_iters:
             old_c = self.centroids.clone()
             self._update_centroids(x)
             if torch.norm(self.centroids - old_c) < self.stop_threshold:
                 break
-        
+
         return KmeansOutput(
             centroids=self.centroids,
             assignment=self.assignment
         )
-
-
-
-
-
-        

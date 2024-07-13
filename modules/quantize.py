@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 
 from distributions.gumbel import gumbel_softmax_sample
@@ -6,9 +5,11 @@ from torch import nn
 from typing import NamedTuple
 from typing import Tuple
 
+
 class QuantizeOutput(NamedTuple):
     embeddings: torch.Tensor
     ids: torch.Tensor
+
 
 class Quantize(nn.Module):
     def __init__(
@@ -30,33 +31,35 @@ class Quantize(nn.Module):
     @property
     def device(self) -> torch.device:
         return self.embedding.weight.device
-    
+
     def _init_weights(self) -> None:
         for m in self.modules():
             if isinstance(m, nn.Embedding):
                 nn.init.trunc_normal_(m.weight, mean=0.0, std=0.2)
-    
+
     def get_item_embeddings(self, item_ids) -> torch.Tensor:
         return self.embedding(item_ids)
-    
+
     def forward(self, x, temperature) -> Tuple[torch.Tensor, torch.Tensor]:
-        assert x.shape[-1] == self.embed_dim, f"Invalid input dim: Expected {self.embed_dim}, found {x.shape[-1]}"
+        assert x.shape[-1] == self.embed_dim
 
         codebook = self.embedding.weight
         dist = (
             (x**2).sum(axis=1, keepdim=True) +
             (codebook.T**2).sum(axis=0, keepdim=True) -
             2 * x @ codebook.T
-        ) 
+        )
 
         _, ids = (-dist).max(axis=1)
 
         if self.train:
-            weights = gumbel_softmax_sample(-dist, temperature=temperature, device=self.device)
+            weights = gumbel_softmax_sample(
+                -dist, temperature=temperature, device=self.device
+            )
             emb = weights @ codebook
         else:
             emb = self.get_item_embeddings(ids)
-        
+
         return QuantizeOutput(
             embeddings=emb,
             ids=ids

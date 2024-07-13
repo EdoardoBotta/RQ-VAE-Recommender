@@ -9,18 +9,20 @@ from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+
 def cycle(dataloader):
     while True:
         for data in dataloader:
             yield data
 
+
 @gin.configurable
 def train(
     iterations=500000,
-    batch_size = 64,
-    learning_rate = 0.001, 
-    weight_decay = 0.01,
-    max_grad_norm = 1,
+    batch_size=64,
+    learning_rate=0.001,
+    weight_decay=0.01,
+    max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
     use_kmeans_init=True,
     split_batches=True,
@@ -39,24 +41,26 @@ def train(
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     dataloader = cycle(dataloader)
     dataloader = accelerator.prepare(dataloader)
-    
+
     model = RqVae(
-        input_dim = 18,
-        embed_dim = 64,
-        hidden_dim = 32,
-        codebook_size = 32,
-        n_layers = 3
+        input_dim=18,
+        embed_dim=64,
+        hidden_dim=32,
+        codebook_size=32,
+        n_layers=3
     )
 
     optimizer = AdamW(
         params=model.parameters(),
-        lr = learning_rate,
-        weight_decay = weight_decay
+        lr=learning_rate,
+        weight_decay=weight_decay
     )
 
     scheduler = LinearLR(optimizer)
 
-    model, optimizer, scheduler = accelerator.prepare(model, optimizer, scheduler)
+    model, optimizer, scheduler = accelerator.prepare(
+        model, optimizer, scheduler
+    )
 
     temp_scheduler = TemperatureScheduler(
         t0=1,
@@ -65,14 +69,13 @@ def train(
         step_size=6000
     )
 
-    with tqdm(initial = 0, total = iterations, disable = not accelerator.is_main_process) as pbar:
+    with tqdm(initial=0, total=iterations,
+              disable=not accelerator.is_main_process) as pbar:
         for iter in range(iterations):
             model.train()
-            
             if iter == 0 and use_kmeans_init:
                 init_data = next(dataloader).to(device)
                 model.kmeans_init(init_data)
-            
             total_loss = 0
             t = temp_scheduler.get_t(iter)
 
@@ -91,18 +94,13 @@ def train(
 
             accelerator.wait_for_everyone()
             accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
-        
+
             optimizer.step()
             scheduler.step()
 
             accelerator.wait_for_everyone()
             pbar.update(1)
 
+
 if __name__ == "__main__":
     train()
-
-
-    
-
-
-    
