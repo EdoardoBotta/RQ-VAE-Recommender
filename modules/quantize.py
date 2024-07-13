@@ -1,8 +1,14 @@
+import numpy as np
 import torch
 
 from distributions.gumbel import gumbel_softmax_sample
 from torch import nn
+from typing import NamedTuple
 from typing import Tuple
+
+class QuantizeOutput(NamedTuple):
+    embeddings: torch.Tensor
+    ids: torch.Tensor
 
 class Quantize(nn.Module):
     def __init__(
@@ -16,6 +22,10 @@ class Quantize(nn.Module):
         self.n_embed = n_embed
         self.embedding = nn.Embedding(n_embed, embed_dim)
         self._init_weights()
+
+    @property
+    def weight(self) -> torch.Tensor:
+        return self.embedding.weight
 
     @property
     def device(self) -> torch.device:
@@ -47,7 +57,7 @@ class Quantize(nn.Module):
         else:
             emb = self.get_item_embeddings(ids)
         
-        return {
-            "embeddings": emb,
-            "ids": ids
-        }
+        return QuantizeOutput(
+            embeddings=emb,
+            ids=ids
+        )

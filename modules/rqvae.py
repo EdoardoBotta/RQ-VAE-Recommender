@@ -1,10 +1,18 @@
 import torch
 
+from torch import nn
+from typing import NamedTuple
+
 from .encoder import MLP
 from .loss import ReconstuctionLoss
 from .loss import RqVaeLoss
 from .quantize import Quantize
-from torch import nn
+from init.kmeans import kmeans_init_
+
+class RqVaeOutput(NamedTuple):
+    embeddings: torch.Tensor
+    residuals: torch.Tensor
+    sem_ids: torch.Tensor
 
 
 class RqVae(nn.Module):
@@ -41,6 +49,12 @@ class RqVae(nn.Module):
             hidden_dim=hidden_dim,
             out_dim=input_dim
         )
+    
+    def kmeans_init(self, x: torch.Tensor) -> None:
+        with torch.no_grad():
+            x = self.encoder(x)
+            for layer in self.layers:
+                kmeans_init_(layer.weight, x=x)
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.encoder(x)
@@ -55,20 +69,20 @@ class RqVae(nn.Module):
         for layer in self.layers:
             residuals.append(res)
             quantized = layer(res, temperature=gumbel_t)
-            emb, id = quantized["embeddings"], quantized["ids"]
+            emb, id = quantized.embeddings, quantized.ids
             res = res - emb
             sem_ids.append(id)
             embs.append(emb)
         
-        return {
-            "embeddings": torch.stack(embs, dim=-1),
-            "residuals": torch.stack(residuals, dim=-1),
-            "sem_ids": torch.stack(sem_ids, dim=-1)
-        }
+        return RqVaeOutput(
+            embeddings=torch.stack(embs, dim=-1),
+            residuals=torch.stack(residuals, dim=-1),
+            sem_ids=torch.stack(sem_ids, dim=-1)
+        )
     
     def forward(self, x: torch.Tensor, gumbel_t: float) -> torch.Tensor:
         quantized = self.get_semantic_ids(x, gumbel_t)
-        embs, residuals = quantized["embeddings"], quantized["residuals"]
+        embs, residuals = quantized.embeddings, quantized.residuals
         x_hat = self.decode(embs.sum(axis=-1))
 
         reconstuction_loss = ReconstuctionLoss()(x_hat, x)

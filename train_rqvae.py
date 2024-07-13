@@ -22,6 +22,7 @@ def train(
     weight_decay = 0.01,
     max_grad_norm = 1,
     dataset_folder="dataset/ml-1m",
+    use_kmeans_init=True,
     split_batches=True,
     amp=False,
     mixed_precision_type="fp16",
@@ -67,6 +68,11 @@ def train(
     with tqdm(initial = 0, total = iterations, disable = not accelerator.is_main_process) as pbar:
         for iter in range(iterations):
             model.train()
+            
+            if iter == 0 and use_kmeans_init:
+                init_data = next(dataloader).to(device)
+                model.kmeans_init(init_data)
+            
             total_loss = 0
             t = temp_scheduler.get_t(iter)
 
