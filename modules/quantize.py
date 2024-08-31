@@ -1,9 +1,9 @@
 import torch
 
 from distributions.gumbel import gumbel_softmax_sample
-from torch import nn
 from typing import NamedTuple
 from typing import Tuple
+from torch import nn
 
 
 class QuantizeOutput(NamedTuple):

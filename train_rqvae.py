@@ -28,7 +28,12 @@ def train(
     split_batches=True,
     amp=False,
     mixed_precision_type="fp16",
-    gradient_accumulate_every=1
+    gradient_accumulate_every=1,
+    vae_input_dim=18,
+    vae_embed_dim=32,
+    vae_hidden_dim=32,
+    vae_codebook_size=32,
+    vae_n_layers=3
 ):
     accelerator = Accelerator(
         split_batches=split_batches,
@@ -43,11 +48,11 @@ def train(
     dataloader = accelerator.prepare(dataloader)
 
     model = RqVae(
-        input_dim=18,
-        embed_dim=64,
-        hidden_dim=32,
-        codebook_size=32,
-        n_layers=3
+        input_dim=vae_input_dim,
+        embed_dim=vae_embed_dim,
+        hidden_dim=vae_hidden_dim,
+        codebook_size=vae_codebook_size,
+        n_layers=vae_n_layers
     )
 
     optimizer = AdamW(

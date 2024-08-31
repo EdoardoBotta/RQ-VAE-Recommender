@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+
 class L2NormalizationLayer(nn.Module):
     def __init__(self, dim=-1, eps=1e-12):
         super().__init__()
@@ -10,6 +11,7 @@ class L2NormalizationLayer(nn.Module):
 
     def forward(self, x):
         return F.normalize(x, p=2, dim=self.dim, eps=self.eps)
+
 
 class MLP(nn.Module):
     def __init__(
@@ -33,7 +35,7 @@ class MLP(nn.Module):
             nn.GELU(),
             L2NormalizationLayer() if normalize else nn.Identity()
         )
-    
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         assert x.shape[-1] == self.input_dim, f"Invalid input dim: Expected {self.input_dim}, found {x.shape[-1]}"
         return self.mlp(x)
