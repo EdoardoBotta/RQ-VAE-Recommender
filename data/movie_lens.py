@@ -34,13 +34,13 @@ class MovieLensSeqData(Dataset):
             *args,
             **kwargs
     ) -> None:
-     
+
         raw_movie_lens = RawMovieLens1M(root=root, *args, **kwargs)
         raw_movie_lens.process()
-    
+  
         data = torch.load(root + PROCESSED_MOVIE_LENS_SUFFIX)
         self.sequence_data = data[0][("user", "rated", "movie")]["history"]
-   
+
     def __len__(self):
         return self.sequence_data.shape[0]
   

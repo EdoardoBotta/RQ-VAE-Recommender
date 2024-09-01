@@ -3,11 +3,7 @@ import numpy as np
 from typing import Tuple
 
 
-def sample_gumbel(
-      shape: Tuple,
-      device: torch.device, 
-      eps=1e-20
-) -> torch.Tensor:
+def sample_gumbel(shape: Tuple, device: torch.device, eps=1e-20) -> torch.Tensor:
     """Sample from Gumbel(0, 1)"""
     U = torch.rand(shape, device=device)
     return -torch.log(-torch.log(U + eps) + eps)
@@ -35,12 +31,8 @@ class TemperatureScheduler:
 
     def update_t(self, iter):
         if iter % self.step_size == self.step_size-1:
-            self.t = np.maximum(
-                self.t*np.exp(-self.anneal_rate*iter),
-                self.min_t
-            )
+            self.t = np.maximum(self.t*np.exp(-self.anneal_rate*iter), self.min_t)
 
     def get_t(self, iter):
         self.update_t(iter)
         return self.t
-
