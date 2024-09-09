@@ -4,7 +4,7 @@ from torch import nn
 from typing import NamedTuple
 
 from .encoder import MLP
-from .loss import ReconstuctionLoss
+from .loss import ReconstructionLoss
 from .loss import RqVaeLoss
 from .quantize import Quantize
 from init.kmeans import kmeans_init_
@@ -89,7 +89,7 @@ class RqVae(nn.Module):
         embs, residuals = quantized.embeddings, quantized.residuals
         x_hat = self.decode(embs.sum(axis=-1))
 
-        reconstuction_loss = ReconstuctionLoss()(x_hat, x)
+        reconstuction_loss = ReconstructionLoss()(x_hat, x)
         rqvae_loss = RqVaeLoss(self.commitment_weight)(residuals, embs)
         loss = (reconstuction_loss + rqvae_loss).mean()
 

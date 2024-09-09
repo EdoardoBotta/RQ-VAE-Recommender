@@ -1,4 +1,5 @@
 import torch
+from typing import List
 from torch import nn
 from torch.nn import functional as F
 
@@ -17,24 +18,25 @@ class MLP(nn.Module):
     def __init__(
         self,
         input_dim: int,
-        hidden_dim: int,
+        hidden_dims: List[int],
         out_dim: int,
         normalize: bool = False
     ) -> None:
         super().__init__()
 
         self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
+        self.hidden_dims = hidden_dims
         self.out_dim = out_dim
 
-        self.mlp = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.GELU(),
-            nn.LayerNorm(hidden_dim),
-            nn.Linear(hidden_dim, out_dim),
-            nn.GELU(),
-            L2NormalizationLayer() if normalize else nn.Identity()
-        )
+        dims = [self.input_dim] + self.hidden_dims + [self.out_dim]
+        
+        modules = []
+        for in_d, out_d in zip(dims[:-1], dims[1:]):
+            modules.append(nn.Linear(in_d, out_d))
+            modules.append(nn.ReLU())
+        modules.append(L2NormalizationLayer() if normalize else nn.Identity())
+
+        self.mlp = nn.Sequential(nn.ModuleList(modules))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         assert x.shape[-1] == self.input_dim, f"Invalid input dim: Expected {self.input_dim}, found {x.shape[-1]}"
