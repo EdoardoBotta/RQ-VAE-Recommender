@@ -79,7 +79,7 @@ class TransformerDecoder(nn.Module):
                  dropout: float,
                  num_heads: int,
                  n_layers: int,
-                 do_cross_attn: bool) -> None:
+                 do_cross_attn: bool = False) -> None:
         super().__init__()
 
         self.do_cross_attn = do_cross_attn

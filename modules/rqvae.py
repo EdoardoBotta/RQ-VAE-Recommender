@@ -1,6 +1,7 @@
 import torch
 
 from torch import nn
+from typing import List
 from typing import NamedTuple
 
 from .encoder import MLP
@@ -21,7 +22,7 @@ class RqVae(nn.Module):
         self,
         input_dim: int,
         embed_dim: int,
-        hidden_dim: int,
+        hidden_dims: List[int],
         codebook_size: int,
         n_layers: int = 3,
         commitment_weight: float = 0.25
@@ -30,7 +31,7 @@ class RqVae(nn.Module):
 
         self.input_dim = input_dim
         self.embed_dim = embed_dim
-        self.hidden_dim = hidden_dim
+        self.hidden_dims = hidden_dims
         self.n_layers = n_layers
         self.codebook_size = codebook_size
         self.commitment_weight = commitment_weight
@@ -42,13 +43,13 @@ class RqVae(nn.Module):
 
         self.encoder = MLP(
             input_dim=input_dim,
-            hidden_dim=hidden_dim,
+            hidden_dims=hidden_dims,
             out_dim=embed_dim
         )
 
         self.decoder = MLP(
             input_dim=embed_dim,
-            hidden_dim=hidden_dim,
+            hidden_dims=hidden_dims,
             out_dim=input_dim
         )
 

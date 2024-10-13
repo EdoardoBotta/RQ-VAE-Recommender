@@ -1,8 +1,8 @@
 import torch
 
+from data.ml1m import RawMovieLens1M
+from data.schemas import SeqBatch
 from torch.utils.data import Dataset
-from .ml1m import RawMovieLens1M
-from .schemas import SeqBatch
 
 PROCESSED_MOVIE_LENS_SUFFIX = "/processed/data.pt"
 
@@ -25,7 +25,14 @@ class MovieLensMovieData(Dataset):
         return self.movie_data.shape[0]
 
     def __getitem__(self, idx):
-        return self.movie_data[idx, :]
+        movie_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
+        x = self.movie_data[idx, :]
+        return SeqBatch(
+            user_ids=-1 * torch.ones_like(movie_ids.squeeze(0)),
+            ids=movie_ids,
+            x=x,
+            seq_mask=-1 * torch.ones_like(movie_ids)
+        )
 
 
 class MovieLensSeqData(Dataset):
@@ -48,8 +55,11 @@ class MovieLensSeqData(Dataset):
   
     def __getitem__(self, idx):
         user_ids = self.sequence_data[idx, 0]
-        movie_ids = self.sequence_data[idx, 1:] - 1
-        assert movie_ids >= -1, "Invalid movie id found"
+        movie_ids = self.sequence_data[idx, 1:]
+        assert (movie_ids >= -1).all(), "Invalid movie id found"
+        x = self.movie_data[movie_ids, :]
+        x[movie_ids == -1] = -1
+
         return SeqBatch(
             user_ids=user_ids,
             ids=movie_ids,
@@ -60,3 +70,5 @@ class MovieLensSeqData(Dataset):
 
 if __name__ == "__main__":
     dataset = MovieLensSeqData("dataset/ml-1m")
+    dataset[0]
+    import pdb; pdb.set_trace()
