@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 
-from .preprocessing import MovieLensPreprocessingMixin
+from data.preprocessing import MovieLensPreprocessingMixin
 from torch_geometric.data import HeteroData
 from torch_geometric.datasets import MovieLens1M
 

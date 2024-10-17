@@ -50,7 +50,7 @@ def train(
     model = RqVae(
         input_dim=vae_input_dim,
         embed_dim=vae_embed_dim,
-        hidden_dim=vae_hidden_dim,
+        hidden_dims=[vae_hidden_dim],
         codebook_size=vae_codebook_size,
         n_layers=vae_n_layers
     )

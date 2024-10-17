@@ -1,7 +1,7 @@
 from torch import nn
 
 
-class ReconstuctionLoss(nn.Module):
+class ReconstructionLoss(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
@@ -18,3 +18,4 @@ class RqVaeLoss(nn.Module):
         emb_loss = ((query.detach() - value)**2).sum(axis=[-1, -2])
         query_loss = ((query - value.detach())**2).sum(axis=[-1, -2])
         return emb_loss + self.commitment_weight * query_loss
+
