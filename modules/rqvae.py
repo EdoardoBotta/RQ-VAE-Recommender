@@ -53,6 +53,9 @@ class RqVae(nn.Module):
             out_dim=input_dim
         )
 
+        self.reconstruction_loss = ReconstructionLoss()
+        self.rqvae_loss = RqVaeLoss(self.commitment_weight)
+
     def kmeans_init(self, x: torch.Tensor) -> None:
         with torch.no_grad():
             x = self.encoder(x)
@@ -67,7 +70,7 @@ class RqVae(nn.Module):
 
     def get_semantic_ids(self,
                          x: torch.Tensor,
-                         gumbel_t=0.001) -> torch.Tensor:
+                         gumbel_t: float = 0.001) -> torch.Tensor:
         res = self.encode(x)
         embs, residuals, sem_ids = [], [], []
 
@@ -90,8 +93,8 @@ class RqVae(nn.Module):
         embs, residuals = quantized.embeddings, quantized.residuals
         x_hat = self.decode(embs.sum(axis=-1))
 
-        reconstuction_loss = ReconstructionLoss()(x_hat, x)
-        rqvae_loss = RqVaeLoss(self.commitment_weight)(residuals, embs)
+        reconstuction_loss = self.reconstruction_loss(x_hat, x)
+        rqvae_loss = self.rqvae_loss(residuals, embs)
         loss = (reconstuction_loss + rqvae_loss).mean()
 
         return loss

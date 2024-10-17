@@ -53,11 +53,12 @@ class Kmeans:
         self._init_centroids(x)
 
         i = 0
-        while self.iters is None or i < self.max_iters:
+        while self.iters is None or i < self.iters:
             old_c = self.centroids.clone()
             self._update_centroids(x)
             if torch.norm(self.centroids - old_c) < self.stop_threshold:
                 break
+            i += 1
 
         return KmeansOutput(
             centroids=self.centroids,
