@@ -1,19 +1,27 @@
 import torch
+from modules.embedding.id_embedder import SemIdEmbedder
+from modules.embedding.id_embedder import UserIdEmbedder
+from modules.tokenizer.semids import TokenizedSeqBatch
+from modules.transformer.model import TransformerDecoder
 from typing import NamedTuple
 from torch import nn
 from torch.nn import functional as F
-from .embedding.id_embedder import SemIdEmbedder
-from .embedding.id_embedder import UserIdEmbedder
-from .tokenizer.semids import TokenizedSeqBatch
-from .transformer.model import TransformerDecoder
 
 
 class ModelOutput(NamedTuple):
     loss: torch.Tensor
 
 
-class Model(nn.Module):
-    def __init__(self, embedding_dim, d_out, dropout, num_heads, n_layers, num_embeddings, max_pos) -> None:
+class DecoderRetrievalModel(nn.Module):
+    def __init__(self,
+                 embedding_dim,
+                 d_out,
+                 dropout,
+                 num_heads,
+                 n_layers,
+                 num_embeddings,
+                 max_pos=2048) -> None:
+        super().__init__()
         self.num_embeddings = num_embeddings
         self.sem_id_embedder = SemIdEmbedder(num_embeddings, embedding_dim)
         self.user_id_embedder = UserIdEmbedder(2000, embedding_dim)
@@ -33,6 +41,8 @@ class Model(nn.Module):
         self.out_proj = nn.Linear(d_out, num_embeddings)
     
     def forward(self, batch: TokenizedSeqBatch) -> torch.Tensor:
+        # TODO: Handle paddings in tokenization
+        import pdb; pdb.set_trace()
         B, N = batch.seq_mask
         user_emb = self.user_id_embedder(batch.user_ids)
         sem_ids_emb = self.sem_id_embedder(batch.sem_ids)
