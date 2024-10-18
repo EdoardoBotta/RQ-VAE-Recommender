@@ -4,6 +4,11 @@ This is a PyTorch implementation of a generative retrieval model based on RQ-VAE
 ### Currently supports
 * RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training on MovieLens 1M.
 
+### Executing
+RQ_VAE tokenizer model and the retrieval model are trained separately, using two separate training scripts.
+* RQ-VAE tokenizer model training `python train_rqvae.py`
+* Retrieval model training `python train_decoder.py` (Currently unstable)
+
 ### Next steps
 * Retrieval model + Training code with semantic id user sequences.
 * Comparison encoder-decoder model vs. decoder-only model.
