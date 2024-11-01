@@ -7,7 +7,7 @@ This is a PyTorch implementation of a generative retrieval model based on RQ-VAE
 ### Executing
 RQ_VAE tokenizer model and the retrieval model are trained separately, using two separate training scripts.
 * **RQ-VAE tokenizer model training:** Trains the RQ-VAE tokenizer on the item corpus. Executed via `python train_rqvae.py`
-* **Retrieval model training:** Trains retrieval model using a frozen RQ-`python train_decoder.py` (Currently unstable)
+* **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py` (Currently unstable)
 
 ### Next steps
 * Retrieval model + Training code with semantic id user sequences.
