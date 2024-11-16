@@ -27,12 +27,7 @@ class MovieLensMovieData(Dataset):
     def __getitem__(self, idx):
         movie_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
         x = self.movie_data[idx, :]
-        return SeqBatch(
-            user_ids=-1 * torch.ones_like(movie_ids.squeeze(0)),
-            ids=movie_ids,
-            x=x,
-            seq_mask=-1 * torch.ones_like(movie_ids)
-        )
+        return x
 
 
 class MovieLensSeqData(Dataset):
