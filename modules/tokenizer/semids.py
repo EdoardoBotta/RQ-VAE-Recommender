@@ -4,7 +4,6 @@ from data.movie_lens import MovieLensMovieData
 from data.movie_lens import MovieLensSeqData
 from data.schemas import SeqBatch
 from modules.rqvae import RqVae
-from modules.rqvae import RqVaeOutput
 from typing import NamedTuple
 from typing import List
 from torch import nn
@@ -73,7 +72,6 @@ class SemanticIdTokenizer(nn.Module):
                 cached_ids = torch.cat([cached_ids, batch_ids], axis=0)
             dedup_dim.append(hits)
         # Concatenate new column to deduplicate ids
-        # TODO: Handle edge case hits > codebook size
         dedup_dim_tensor = torch.cat(dedup_dim).unsqueeze(-1)
         self.cached_ids = torch.cat([
             cached_ids,
