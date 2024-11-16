@@ -41,21 +41,18 @@ class DecoderRetrievalModel(nn.Module):
         self.out_proj = nn.Linear(d_out, num_embeddings)
     
     def forward(self, batch: TokenizedSeqBatch) -> torch.Tensor:
-        # TODO: Handle paddings in tokenization
-        import pdb; pdb.set_trace()
-        B, N = batch.seq_mask
+        B, N = batch.seq_mask.shape
+        seq_mask = batch.seq_mask
         user_emb = self.user_id_embedder(batch.user_ids)
         sem_ids_emb = self.sem_id_embedder(batch.sem_ids)
-        
-        user_id_seq_mask = torch.zeros((B, 1), dtype=torch.bool)
-        seq_mask = torch.cat([user_id_seq_mask, batch.seq_mask], axis=1)
 
-        input_embedding = torch.cat([user_emb, sem_ids_emb], axis=1)
+        input_embedding = user_emb.unsqueeze(1) + sem_ids_emb
+        import pdb; pdb.set_trace()
+        # OOM due to seq. length. TODO: Adjust seq.length in dataset
         transformer_output = self.decoder(input_embedding)
 
-        if self.training:
-            out = F.softmax(transformer_output, dim=-1)[seq_mask, :][:-1, :, :].reshape((-1, self.num_embeddings))
-            target = batch.sem_ids[seq_mask, :][1:, :, :].flatten()
-            loss = F.cross_entropy(out, target)
+        out = F.softmax(transformer_output, dim=-1)[seq_mask, :][:-1, :, :].reshape((-1, self.num_embeddings))
+        target = batch.sem_ids[seq_mask, :][1:, :, :].flatten()
+        loss = F.cross_entropy(out, target)
 
         return ModelOutput(loss=loss)

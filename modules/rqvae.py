@@ -4,6 +4,7 @@ from torch import nn
 from typing import List
 from typing import NamedTuple
 
+from data.schemas import SeqBatch
 from .encoder import MLP
 from .loss import ReconstructionLoss
 from .loss import RqVaeLoss
@@ -56,7 +57,8 @@ class RqVae(nn.Module):
         self.reconstruction_loss = ReconstructionLoss()
         self.rqvae_loss = RqVaeLoss(self.commitment_weight)
 
-    def kmeans_init(self, x: torch.Tensor) -> None:
+    def kmeans_init(self, batch: SeqBatch) -> None:
+        x = batch.x
         with torch.no_grad():
             x = self.encoder(x)
             for layer in self.layers:
@@ -88,7 +90,8 @@ class RqVae(nn.Module):
             sem_ids=torch.stack(sem_ids, dim=-1)
         )
 
-    def forward(self, x: torch.Tensor, gumbel_t: float) -> torch.Tensor:
+    def forward(self, batch: SeqBatch, gumbel_t: float) -> torch.Tensor:
+        x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)
         embs, residuals = quantized.embeddings, quantized.residuals
         x_hat = self.decode(embs.sum(axis=-1))

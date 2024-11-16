@@ -80,7 +80,7 @@ def train(
         dropout=True,
         num_heads=attn_heads,
         n_layers=attn_layers,
-        num_embeddings=vae_codebook_size
+        num_embeddings=tokenizer.n_ids
     )
 
     optimizer = AdamW(
