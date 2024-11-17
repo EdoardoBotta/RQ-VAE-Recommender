@@ -1,6 +1,10 @@
 # RQ-VAE Recommender
-This is a PyTorch implementation of a generative retrieval model based on RQ-VAE from "Recommender Systems with Generative Retrieval". 
-![image](https://github.com/EdoardoBotta/RQ-VAE/assets/64335373/199b38ac-a282-4ba1-bd89-3291617e6aa5)
+This is a PyTorch implementation of a generative retrieval model using semantic IDs based on RQ-VAE from "Recommender Systems with Generative Retrieval". 
+The model has two stages:
+1. Items in the corpus are mapped to a tuple of semantic IDs by training an RQ-VAE (figure below).
+2. Sequences of semantic IDs are tokenized by using a frozen RQ-VAE and a transformer-based is trained on sequences of semantic IDs to generate the next ids in the sequence.
+![image](https://github.com/EdoardoBotta/RQ-VAE/assets/64335373/199b38ac-a282-4ba1-bd89-3291617e6aa5).
+
 ### Currently supports
 * RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training on MovieLens 1M.
 * Retrieval model + Training code with semantic id user sequences from randomly initialized RQ-VAE.
