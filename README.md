@@ -6,8 +6,9 @@ The model has two stages:
 ![image](https://github.com/EdoardoBotta/RQ-VAE/assets/64335373/199b38ac-a282-4ba1-bd89-3291617e6aa5).
 
 ### Currently supports
-* RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training on MovieLens 1M.
-* Retrieval model + Training code with semantic id user sequences from randomly initialized RQ-VAE.
+* Datasets: MovieLens 1M
+* RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training.
+* Decoder-only retrieval model + Training code with semantic id user sequences from randomly initialized RQ-VAE.
 
 ### Executing
 RQ_VAE tokenizer model and the retrieval model are trained separately, using two separate training scripts.
