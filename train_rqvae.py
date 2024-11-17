@@ -2,6 +2,7 @@ import gin
 
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
+from data.schemas import SeqBatch
 from distributions.gumbel import TemperatureScheduler
 from modules.rqvae import RqVae
 from torch.optim import AdamW
@@ -14,6 +15,16 @@ def cycle(dataloader):
     while True:
         for data in dataloader:
             yield data
+
+
+def next_batch(dataloader, device):
+    batch = next(dataloader)
+    return SeqBatch(
+        user_ids=batch.user_ids.to(device),
+        ids=batch.ids.to(device),
+        x=batch.x.to(device),
+        seq_mask=batch.seq_mask.to(device)
+    )
 
 
 @gin.configurable
@@ -79,14 +90,14 @@ def train(
         for iter in range(iterations):
             model.train()
             if iter == 0 and use_kmeans_init:
-                init_data = next(dataloader).to(device)
+                init_data = next_batch(dataloader, device)
                 model.kmeans_init(init_data)
             total_loss = 0
             t = temp_scheduler.get_t(iter)
 
             optimizer.zero_grad()
             for _ in range(gradient_accumulate_every):
-                data = next(dataloader).to(device)
+                data = next_batch(dataloader, device)
 
                 with accelerator.autocast():
                     loss = model(data, gumbel_t=t)

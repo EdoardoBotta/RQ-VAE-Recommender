@@ -30,7 +30,7 @@ class RawMovieLens1M(MovieLens1M, MovieLensPreprocessingMixin):
             engine='python',
         )
 
-    def process(self) -> None:
+    def process(self, max_seq_len=None) -> None:
         data = HeteroData()
         ratings_df = self._load_ratings()
 
@@ -99,7 +99,9 @@ class RawMovieLens1M(MovieLens1M, MovieLensPreprocessingMixin):
         data['movie', 'rated_by', 'user'].time = time
 
         df["movieId"] = df["movieId"].apply(lambda x: movie_mapping[x])
-        data["user", "rated", "movie"].history = self._generate_user_history(df)
+
+        rolling = max_seq_len is not None
+        data["user", "rated", "movie"].history = self._generate_user_history(df, rolling=rolling, window_size=max_seq_len)
 
         if self.pre_transform is not None:
             data = self.pre_transform(data)

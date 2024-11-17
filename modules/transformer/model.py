@@ -95,7 +95,7 @@ class TransformerDecoder(nn.Module):
             ) for _ in range(n_layers)
         ])
     
-    def forward(self, x: torch.Tensor, attn_mask: torch.Tensor, context: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None, context: Optional[torch.Tensor] = None) -> torch.Tensor:
         for layer in self.layers:
             x = layer(x, attn_mask, context)
         return x

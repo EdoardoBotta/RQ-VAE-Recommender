@@ -52,7 +52,7 @@ class Quantize(nn.Module):
 
         _, ids = (-dist).max(axis=1)
 
-        if self.train:
+        if self.training:
             weights = gumbel_softmax_sample(
                 -dist, temperature=temperature, device=self.device
             )
