@@ -39,7 +39,7 @@ class DecoderRetrievalModel(nn.Module):
 
         self.out_proj = nn.Linear(d_out, num_embeddings)
     
-    def forward(self, batch: TokenizedSeqBatch) -> torch.Tensor:
+    def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         user_emb = self.user_id_embedder(batch.user_ids)
         sem_ids_emb = self.sem_id_embedder(batch.sem_ids)
