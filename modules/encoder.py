@@ -1,5 +1,5 @@
 import torch
-from normalize import L2NormalizationLayer
+from modules.normalize import L2NormalizationLayer
 from typing import List
 from torch import nn
 
