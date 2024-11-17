@@ -27,7 +27,6 @@ class DecoderRetrievalModel(nn.Module):
         self.user_id_embedder = UserIdEmbedder(2000, embedding_dim)
         
         self.wpe = nn.Embedding(num_embeddings=max_pos, embedding_dim=embedding_dim)
-        self.wte = nn.Embedding(num_embeddings=2, embedding_dim=embedding_dim)
 
         self.decoder = TransformerDecoder(
             d_in=embedding_dim,
@@ -41,18 +40,23 @@ class DecoderRetrievalModel(nn.Module):
         self.out_proj = nn.Linear(d_out, num_embeddings)
     
     def forward(self, batch: TokenizedSeqBatch) -> torch.Tensor:
-        B, N = batch.seq_mask.shape
         seq_mask = batch.seq_mask
         user_emb = self.user_id_embedder(batch.user_ids)
         sem_ids_emb = self.sem_id_embedder(batch.sem_ids)
+        
+        B, N, D = sem_ids_emb.shape
+        
+        pos = torch.arange(N, device=sem_ids_emb.device)
+        wpe = self.wpe(pos)
 
-        input_embedding = user_emb.unsqueeze(1) + sem_ids_emb
-        import pdb; pdb.set_trace()
-        # OOM due to seq. length. TODO: Adjust seq.length in dataset
+        input_embedding = user_emb.unsqueeze(1) + wpe.unsqueeze(0) + sem_ids_emb
         transformer_output = self.decoder(input_embedding)
 
-        out = F.softmax(transformer_output, dim=-1)[seq_mask, :][:-1, :, :].reshape((-1, self.num_embeddings))
-        target = batch.sem_ids[seq_mask, :][1:, :, :].flatten()
+        logits = self.out_proj(transformer_output)
+
+        target_mask = seq_mask[:, 1:]
+        out = logits[:, :-1, :][target_mask, :]
+        target = batch.sem_ids[:, 1:][target_mask]
         loss = F.cross_entropy(out, target)
 
         return ModelOutput(loss=loss)

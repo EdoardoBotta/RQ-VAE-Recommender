@@ -3,29 +3,14 @@ import gin
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
 from data.movie_lens import MovieLensSeqData
-from data.schemas import SeqBatch
+from data.utils import cycle
+from data.utils import next_batch
 from modules.model import DecoderRetrievalModel
 from modules.tokenizer.semids import SemanticIdTokenizer
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
-
-def cycle(dataloader):
-    while True:
-        for data in dataloader:
-            yield data
-
-
-def next_batch(dataloader, device):
-    batch = next(dataloader)
-    return SeqBatch(
-        user_ids=batch.user_ids.to(device),
-        ids=batch.ids.to(device),
-        x=batch.x.to(device),
-        seq_mask=batch.seq_mask.to(device)
-    )
 
 
 @gin.configurable
@@ -76,7 +61,7 @@ def train(
 
     model = DecoderRetrievalModel(
         embedding_dim=vae_embed_dim,
-        d_out=attn_embed_dim,
+        d_out=vae_embed_dim,
         dropout=True,
         num_heads=attn_heads,
         n_layers=attn_layers,
@@ -107,7 +92,7 @@ def train(
                 tokenized_data = tokenizer(data)
 
                 with accelerator.autocast():
-                    loss = model(tokenized_data)
+                    loss = model(tokenized_data).loss
                     loss = loss / gradient_accumulate_every
                     total_loss += loss.item()
 
