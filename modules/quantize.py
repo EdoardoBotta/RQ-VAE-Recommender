@@ -40,7 +40,7 @@ class Quantize(nn.Module):
     def get_item_embeddings(self, item_ids) -> torch.Tensor:
         return self.embedding(item_ids)
 
-    def forward(self, x, temperature) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x, temperature) -> QuantizeOutput:
         assert x.shape[-1] == self.embed_dim
 
         codebook = self.embedding.weight

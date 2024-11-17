@@ -72,7 +72,7 @@ class RqVae(nn.Module):
 
     def get_semantic_ids(self,
                          x: torch.Tensor,
-                         gumbel_t: float = 0.001) -> torch.Tensor:
+                         gumbel_t: float = 0.001) -> RqVaeOutput:
         res = self.encode(x)
         embs, residuals, sem_ids = [], [], []
 
