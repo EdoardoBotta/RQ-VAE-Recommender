@@ -18,6 +18,7 @@ RQ_VAE tokenizer model and the retrieval model are trained separately, using two
 ### Next steps
 * Initalize RQ-VAE from pre-trained checkpoint + ML1M timestamp-based train/test split.
 * Comparison encoder-decoder model vs. decoder-only model.
+* Eval loops.
 
 ### References
 * [Recommender Systems with Generative Retrieval](https://arxiv.org/pdf/2305.05065) by Shashank Rajput, Nikhil Mehta, Anima Singh, Raghunandan H. Keshavan, Trung Vu, Lukasz Heldt, Lichan Hong, Yi Tay, Vinh Q. Tran, Jonah Samost, Maciej Kula, Ed H. Chi, Maheswaran Sathiamoorthy
