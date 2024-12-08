@@ -1,4 +1,6 @@
 import gin
+import os
+import torch
 
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
@@ -20,11 +22,13 @@ def train(
     weight_decay=0.01,
     max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
+    save_dir_root="out/",
     use_kmeans_init=True,
     split_batches=True,
     amp=False,
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
+    save_model_every=1000,
     vae_input_dim=18,
     vae_embed_dim=32,
     vae_hidden_dim=32,
@@ -100,6 +104,19 @@ def train(
             scheduler.step()
 
             accelerator.wait_for_everyone()
+
+            if (iter+1) % save_model_every == 0:
+                state = {
+                    "iter": iter,
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict()
+                }
+
+                if not os.path.exists(save_dir_root):
+                    os.makedirs(save_dir_root)
+
+                torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
+
             pbar.update(1)
 
 

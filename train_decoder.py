@@ -22,6 +22,7 @@ def train(
     max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
     movie_dataset_folder="dataset/ml-1m-movie",
+    pretrained_rqvae_path=None,
     use_kmeans_init=True,
     split_batches=True,
     amp=False,
@@ -54,9 +55,9 @@ def train(
         hidden_dims=[vae_hidden_dim],
         output_dim=vae_embed_dim,
         codebook_size=vae_codebook_size,
-        n_layers=vae_n_layers
+        n_layers=vae_n_layers,
+        rq_vae_weights_path=pretrained_rqvae_path
     )
-    tokenizer.eval()
     tokenizer.precompute_corpus_ids(movie_dataset)
 
     model = DecoderRetrievalModel(

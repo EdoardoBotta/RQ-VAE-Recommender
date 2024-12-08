@@ -56,6 +56,14 @@ class RqVae(nn.Module):
 
         self.reconstruction_loss = ReconstructionLoss()
         self.rqvae_loss = RqVaeLoss(self.commitment_weight)
+    
+    @property
+    def device(self) -> torch.device:
+        return next(self.encoder.parameters()).device
+    
+    def load_pretrained(self, path: str) -> None:
+        state = torch.load(path, map_location=next(self.device))
+        self.load_state_dict(state["model"])
 
     def kmeans_init(self, batch: SeqBatch) -> None:
         x = batch.x
