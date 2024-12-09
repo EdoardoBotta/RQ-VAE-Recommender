@@ -16,7 +16,7 @@ RQ_VAE tokenizer model and the retrieval model are trained separately, using two
 * **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py`
 
 ### Next steps
-* Initalize RQ-VAE from pre-trained checkpoint + ML1M timestamp-based train/test split.
+* ML1M timestamp-based train/test split.
 * Comparison encoder-decoder model vs. decoder-only model.
 * Eval loops.
 
