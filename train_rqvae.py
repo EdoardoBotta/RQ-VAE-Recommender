@@ -1,4 +1,7 @@
 import gin
+import os
+import torch
+import numpy as np
 
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
@@ -14,20 +17,23 @@ from tqdm import tqdm
 
 @gin.configurable
 def train(
-    iterations=500000,
+    iterations=50000,
     batch_size=64,
-    learning_rate=0.001,
+    learning_rate=0.0001,
     weight_decay=0.01,
     max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
+    save_dir_root="out/",
     use_kmeans_init=True,
     split_batches=True,
     amp=False,
+    wandb_logging=False,
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
+    save_model_every=1000000,
     vae_input_dim=18,
-    vae_embed_dim=32,
-    vae_hidden_dim=32,
+    vae_embed_dim=16,
+    vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
     vae_n_layers=3
 ):
@@ -39,6 +45,7 @@ def train(
     device = accelerator.device
 
     dataset = MovieLensMovieData(root=dataset_folder)
+    # TODO: Add random sampler to perform vectorized getitem
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     dataloader = cycle(dataloader)
     dataloader = accelerator.prepare(dataloader)
@@ -46,7 +53,7 @@ def train(
     model = RqVae(
         input_dim=vae_input_dim,
         embed_dim=vae_embed_dim,
-        hidden_dims=[vae_hidden_dim],
+        hidden_dims=vae_hidden_dims,
         codebook_size=vae_codebook_size,
         n_layers=vae_n_layers
     )
@@ -67,11 +74,12 @@ def train(
         t0=1,
         min_t=0.1,
         anneal_rate=0.00003,
-        step_size=6000
+        step_size=4000
     )
 
     with tqdm(initial=0, total=iterations,
               disable=not accelerator.is_main_process) as pbar:
+        losses = []
         for iter in range(iterations):
             model.train()
             if iter == 0 and use_kmeans_init:
@@ -85,23 +93,45 @@ def train(
                 data = next_batch(dataloader, device)
 
                 with accelerator.autocast():
-                    loss = model(data, gumbel_t=t)
+                    model_output = model(data, gumbel_t=t)
+                    loss = model_output.loss
                     loss = loss / gradient_accumulate_every
-                    total_loss += loss.item()
+                    total_loss += loss
 
-                accelerator.backward(loss)
+            accelerator.backward(total_loss)
 
-            pbar.set_description(f'loss: {total_loss:.4f}')
+            # if (iter+1) % 1000 == 0:
+            #     import pdb; pdb.set_trace()
+
+            losses.append(total_loss.cpu().item())
+            losses = losses[-1000:]
+            if iter % 100 == 0:
+                print_loss = np.mean(losses)
+
+            pbar.set_description(f'loss: {print_loss:.4f}')
 
             accelerator.wait_for_everyone()
-            accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
+            # accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
 
             optimizer.step()
             scheduler.step()
 
             accelerator.wait_for_everyone()
+
+            if (iter+1) % save_model_every == 0 or iter+1 == iterations:
+                state = {
+                    "iter": iter,
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict()
+                }
+
+                if not os.path.exists(save_dir_root):
+                    os.makedirs(save_dir_root)
+
+                torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
+
             pbar.update(1)
 
 
 if __name__ == "__main__":
-    train()
+    train(batch_size=256)

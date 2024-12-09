@@ -6,6 +6,7 @@ from data.schemas import SeqBatch
 from modules.rqvae import RqVae
 from typing import NamedTuple
 from typing import List
+from typing import Optional
 from torch import nn
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
@@ -27,7 +28,8 @@ class SemanticIdTokenizer(nn.Module):
                  hidden_dims: List[int],
                  codebook_size: int,
                  n_layers: int = 3,
-                 commitment_weight: float = 0.25) -> None:
+                 commitment_weight: float = 0.25,
+                 rqvae_weights_path: Optional[str] = None) -> None:
         super().__init__()
 
         self.rq_vae = RqVae(
@@ -38,6 +40,11 @@ class SemanticIdTokenizer(nn.Module):
             n_layers=n_layers,
             commitment_weight=commitment_weight
         )
+        
+        if rqvae_weights_path is not None:
+            self.rq_vae.load_pretrained(rqvae_weights_path)
+
+        self.rq_vae.eval()
 
         self.codebook_size = codebook_size
         self.n_layers = n_layers
