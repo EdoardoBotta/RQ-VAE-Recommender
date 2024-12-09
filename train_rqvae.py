@@ -32,7 +32,7 @@ def train(
     gradient_accumulate_every=1,
     save_model_every=1000000,
     vae_input_dim=18,
-    vae_embed_dim=12,
+    vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
     vae_n_layers=3

@@ -29,7 +29,7 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     vae_input_dim=18,
-    vae_embed_dim=12,
+    vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
     vae_n_layers=3,
@@ -59,8 +59,6 @@ def train(
         rqvae_weights_path=pretrained_rqvae_path
     )
     tokenizer.precompute_corpus_ids(movie_dataset)
-
-    import pdb; pdb.set_trace()
 
     model = DecoderRetrievalModel(
         embedding_dim=vae_embed_dim,
