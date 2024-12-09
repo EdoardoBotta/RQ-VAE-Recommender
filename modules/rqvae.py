@@ -6,6 +6,7 @@ from typing import NamedTuple
 
 from data.schemas import SeqBatch
 from .encoder import MLP
+from .loss import CategoricalReconstuctionLoss
 from .loss import ReconstructionLoss
 from .loss import RqVaeLoss
 from .quantize import Quantize
@@ -18,6 +19,12 @@ class RqVaeOutput(NamedTuple):
     sem_ids: torch.Tensor
 
 
+class RqVaeComputedLosses(NamedTuple):
+    loss: torch.Tensor
+    reconstruction_loss: torch.Tensor
+    rqvae_loss: torch.Tensor
+
+
 class RqVae(nn.Module):
     def __init__(
         self,
@@ -26,7 +33,8 @@ class RqVae(nn.Module):
         hidden_dims: List[int],
         codebook_size: int,
         n_layers: int = 3,
-        commitment_weight: float = 0.25
+        commitment_weight: float = 0.25,
+        categorical_reconstruction: bool = True
     ) -> None:
         super().__init__()
 
@@ -54,7 +62,10 @@ class RqVae(nn.Module):
             out_dim=input_dim
         )
 
-        self.reconstruction_loss = ReconstructionLoss()
+        self.reconstruction_loss = (
+            CategoricalReconstuctionLoss() if categorical_reconstruction 
+            else ReconstructionLoss()
+        )
         self.rqvae_loss = RqVaeLoss(self.commitment_weight)
     
     @property
@@ -62,7 +73,7 @@ class RqVae(nn.Module):
         return next(self.encoder.parameters()).device
     
     def load_pretrained(self, path: str) -> None:
-        state = torch.load(path, map_location=next(self.device))
+        state = torch.load(path, map_location=self.device)
         self.load_state_dict(state["model"])
 
     def kmeans_init(self, batch: SeqBatch) -> None:
@@ -98,7 +109,7 @@ class RqVae(nn.Module):
             sem_ids=torch.stack(sem_ids, dim=-1)
         )
 
-    def forward(self, batch: SeqBatch, gumbel_t: float) -> torch.Tensor:
+    def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)
         embs, residuals = quantized.embeddings, quantized.residuals
@@ -108,4 +119,8 @@ class RqVae(nn.Module):
         rqvae_loss = self.rqvae_loss(residuals, embs)
         loss = (reconstuction_loss + rqvae_loss).mean()
 
-        return loss
+        return RqVaeComputedLosses(
+            loss=loss,
+            reconstruction_loss=reconstuction_loss.mean(),
+            rqvae_loss=rqvae_loss.mean()
+        )

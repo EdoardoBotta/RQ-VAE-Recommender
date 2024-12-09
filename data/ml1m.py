@@ -50,6 +50,7 @@ class RawMovieLens1M(MovieLens1M, MovieLensPreprocessingMixin):
         genres = self._process_genres(df["genres"].str.get_dummies('|').values, one_hot=True)
         genres = torch.from_numpy(genres).to(torch.float)
 
+        import pdb; pbd.set_trace()
         data['movie'].x = genres
         # Process user data:
         full_df = pd.read_csv(

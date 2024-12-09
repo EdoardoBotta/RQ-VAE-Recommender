@@ -29,8 +29,8 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     vae_input_dim=18,
-    vae_embed_dim=32,
-    vae_hidden_dim=32,
+    vae_embed_dim=12,
+    vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
     vae_n_layers=3,
     attn_heads=16,
@@ -52,13 +52,15 @@ def train(
 
     tokenizer = SemanticIdTokenizer(
         input_dim=vae_input_dim,
-        hidden_dims=[vae_hidden_dim],
+        hidden_dims=vae_hidden_dims,
         output_dim=vae_embed_dim,
         codebook_size=vae_codebook_size,
         n_layers=vae_n_layers,
-        rq_vae_weights_path=pretrained_rqvae_path
+        rqvae_weights_path=pretrained_rqvae_path
     )
     tokenizer.precompute_corpus_ids(movie_dataset)
+
+    import pdb; pdb.set_trace()
 
     model = DecoderRetrievalModel(
         embedding_dim=vae_embed_dim,
@@ -112,4 +114,4 @@ def train(
 
 
 if __name__ == "__main__":
-    train()
+    train(pretrained_rqvae_path="out/checkpoint_49999.pt")
