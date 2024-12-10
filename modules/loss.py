@@ -11,11 +11,22 @@ class ReconstructionLoss(nn.Module):
 
 
 class CategoricalReconstuctionLoss(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, n_cat_feats) -> None:
         super().__init__()
+        self.reconstruction_loss = ReconstructionLoss()
+        self.n_cat_feats = n_cat_feats
     
     def forward(self, x_hat, x) -> Tensor:
-        return nn.functional.binary_cross_entropy_with_logits(x_hat, x, reduction='none').sum(axis=1)
+        cont_reconstr = self.reconstruction_loss(
+            x_hat[:, :-self.n_cat_feats],
+            x[:, :-self.n_cat_feats]
+        )
+        cat_reconstr = nn.functional.binary_cross_entropy_with_logits(
+            x_hat[:, -self.n_cat_feats:],
+            x[:, -self.n_cat_feats:],
+            reduction='none'
+        ).sum(axis=-1)
+        return cont_reconstr + cat_reconstr
 
 
 class RqVaeLoss(nn.Module):

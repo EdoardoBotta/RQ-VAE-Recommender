@@ -34,7 +34,7 @@ class RqVae(nn.Module):
         codebook_size: int,
         n_layers: int = 3,
         commitment_weight: float = 0.25,
-        categorical_reconstruction: bool = True
+        n_cat_features: int = 18
     ) -> None:
         super().__init__()
 
@@ -58,12 +58,12 @@ class RqVae(nn.Module):
 
         self.decoder = MLP(
             input_dim=embed_dim,
-            hidden_dims=hidden_dims,
+            hidden_dims=hidden_dims[-1::-1],
             out_dim=input_dim
         )
 
         self.reconstruction_loss = (
-            CategoricalReconstuctionLoss() if categorical_reconstruction 
+            CategoricalReconstuctionLoss(n_cat_features) if n_cat_features != 0
             else ReconstructionLoss()
         )
         self.rqvae_loss = RqVaeLoss(self.commitment_weight)

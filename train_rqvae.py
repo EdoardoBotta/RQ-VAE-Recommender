@@ -11,7 +11,9 @@ from distributions.gumbel import TemperatureScheduler
 from modules.rqvae import RqVae
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR
+from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
+from torch.utils.data import RandomSampler
 from tqdm import tqdm
 
 
@@ -21,7 +23,6 @@ def train(
     batch_size=64,
     learning_rate=0.0001,
     weight_decay=0.01,
-    max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
     save_dir_root="out/",
     use_kmeans_init=True,
@@ -45,8 +46,8 @@ def train(
     device = accelerator.device
 
     dataset = MovieLensMovieData(root=dataset_folder)
-    # TODO: Add random sampler to perform vectorized getitem
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    sampler = BatchSampler(RandomSampler(dataset), batch_size, False)
+    dataloader = DataLoader(dataset, sampler=sampler, batch_size=None, collate_fn=lambda batch: batch)
     dataloader = cycle(dataloader)
     dataloader = accelerator.prepare(dataloader)
 
@@ -64,17 +65,15 @@ def train(
         weight_decay=weight_decay
     )
 
-    scheduler = LinearLR(optimizer)
-
-    model, optimizer, scheduler = accelerator.prepare(
-        model, optimizer, scheduler
+    model, optimizer = accelerator.prepare(
+        model, optimizer
     )
 
     temp_scheduler = TemperatureScheduler(
-        t0=1,
+        t0=2,
         min_t=0.1,
         anneal_rate=0.00003,
-        step_size=4000
+        step_size=3000
     )
 
     with tqdm(initial=0, total=iterations,
@@ -100,22 +99,16 @@ def train(
 
             accelerator.backward(total_loss)
 
-            # if (iter+1) % 1000 == 0:
-            #     import pdb; pdb.set_trace()
-
             losses.append(total_loss.cpu().item())
             losses = losses[-1000:]
             if iter % 100 == 0:
                 print_loss = np.mean(losses)
 
-            pbar.set_description(f'loss: {print_loss:.4f}')
+            pbar.set_description(f'loss: {print_loss:.4f}, t: {t:.3f}')
 
             accelerator.wait_for_everyone()
-            # accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
 
             optimizer.step()
-            scheduler.step()
-
             accelerator.wait_for_everyone()
 
             if (iter+1) % save_model_every == 0 or iter+1 == iterations:
@@ -134,4 +127,11 @@ def train(
 
 
 if __name__ == "__main__":
-    train(batch_size=256)
+    train(
+        iterations=15000,
+        batch_size=256,
+        vae_input_dim=786,
+        vae_hidden_dims=[512, 256, 128],
+        vae_embed_dim=32,
+        vae_codebook_size=256
+    )
