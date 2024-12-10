@@ -81,7 +81,6 @@ def train(
         model, optimizer, tokenizer, scheduler
     )
 
-
     with tqdm(initial=0, total=iterations,
               disable=not accelerator.is_main_process) as pbar:
         for iter in range(iterations):
@@ -112,4 +111,12 @@ def train(
 
 
 if __name__ == "__main__":
-    train(pretrained_rqvae_path="out/checkpoint_49999.pt")
+    train(
+        iterations=20000,
+        batch_size=64,
+        vae_input_dim=786,
+        vae_hidden_dims=[512, 256, 128],
+        vae_embed_dim=32,
+        vae_codebook_size=256,
+        pretrained_rqvae_path="out/checkpoint_14999.pt"
+    )

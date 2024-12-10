@@ -62,20 +62,14 @@ class SemanticIdTokenizer(nn.Module):
             batch_ids = self.forward(batch).sem_ids
             # Detect in-batch duplicates
             is_hit = self._get_hits(batch_ids, batch_ids)
-            hits = torch.maximum(
-                torch.triu(is_hit, diagonal=1).sum(axis=-1) - 1,
-                torch.tensor(0, device=is_hit.device)
-            )
+            hits = torch.triu(is_hit, diagonal=1).sum(axis=-1)
             assert hits.min() >= 0
             if cached_ids is None:
                 cached_ids = batch_ids.clone()
             else:
                 # Detect batch-cache duplicates
                 is_hit = self._get_hits(batch_ids, cached_ids)
-                hits += torch.maximum(
-                    torch.triu(is_hit, diagonal=1).sum(axis=-1) - 1,
-                    torch.tensor(0, device=is_hit.device)
-                )
+                hits += torch.triu(is_hit, diagonal=1).sum(axis=-1)
                 cached_ids = torch.cat([cached_ids, batch_ids], axis=0)
             dedup_dim.append(hits)
         # Concatenate new column to deduplicate ids

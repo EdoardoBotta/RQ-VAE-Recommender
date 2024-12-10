@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import torch
+from sentence_transformers import SentenceTransformer
 from typing import List
 
 
@@ -31,6 +32,13 @@ class MovieLensPreprocessingMixin:
             high_occ = count[count["ratingCnt"] >= 5]
             out = out.merge(high_occ, on=col).drop(columns=["ratingCnt"])
         return out
+
+    @staticmethod
+    def _encode_text_feature(text_feat, model=None):
+        if model is None:
+            model = SentenceTransformer('sentence-transformers/sentence-t5-base')
+        embeddings = model.encode(sentences=text_feat)
+        return torch.tensor(embeddings)
     
     @staticmethod
     def _rolling_window(group, features, window_size=200, stride=1):

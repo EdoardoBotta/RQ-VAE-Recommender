@@ -12,7 +12,8 @@ def sample_gumbel(shape: Tuple, device: torch.device, eps=1e-20) -> torch.Tensor
 def gumbel_softmax_sample(logits: torch.Tensor, temperature: float, device: torch.device) -> torch.Tensor:
     """ Draw a sample from the Gumbel-Softmax distribution"""
     y = logits + sample_gumbel(logits.shape, device)
-    return torch.nn.functional.softmax(y / temperature, dim=-1)
+    sample = torch.nn.functional.softmax(y / temperature, dim=-1)
+    return sample
 
 
 class TemperatureScheduler:
