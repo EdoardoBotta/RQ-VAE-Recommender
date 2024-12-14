@@ -23,4 +23,5 @@ RQ_VAE tokenizer model and the retrieval model are trained separately, using two
 ### References
 * [Recommender Systems with Generative Retrieval](https://arxiv.org/pdf/2305.05065) by Shashank Rajput, Nikhil Mehta, Anima Singh, Raghunandan H. Keshavan, Trung Vu, Lukasz Heldt, Lichan Hong, Yi Tay, Vinh Q. Tran, Jonah Samost, Maciej Kula, Ed H. Chi, Maheswaran Sathiamoorthy
 * [Categorical Reparametrization with Gumbel-Softmax](https://openreview.net/pdf?id=rkE3y85ee) by Eric Jang, Shixiang Gu, Ben Poole
+* Parts of the Quantize module are borrowed from [vector-quantize-pytorch](https://github.com/lucidrains/vector-quantize-pytorch)
   
