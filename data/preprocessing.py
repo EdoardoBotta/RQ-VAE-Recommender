@@ -1,7 +1,10 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+import polars as pl
 import torch
+from einops import rearrange
 from sentence_transformers import SentenceTransformer
+from typing import List
 
 
 class MovieLensPreprocessingMixin:
@@ -42,7 +45,7 @@ class MovieLensPreprocessingMixin:
     @staticmethod
     def _rolling_window(group, features, window_size=200, stride=1):
         assert group["userId"].nunique() == 1, "Found data for too many users"
-
+        
         if len(group) < window_size:
             window_size = len(group)
             stride = 1
@@ -62,40 +65,47 @@ class MovieLensPreprocessingMixin:
         return rolling_df
 
     @staticmethod
-    def _generate_user_history(ratings_df, rolling: bool = False, window_size: int = 200, stride: int = 1):
-        if rolling:
-            grouped_by_user = (ratings_df
-                .sort_values(by=['userId', 'timestamp'])
-                .groupby("userId")
-                .apply(lambda g: MovieLensPreprocessingMixin._rolling_window(
-                    g, ["movieId"], window_size=window_size, stride=stride)
-                )
-                .reset_index()
-                .apply(
-                    lambda x: (
-                        torch.cat([torch.tensor(x["userId"]).unsqueeze(0).unsqueeze(0), x["movieId"]], axis=1).T
-                    ),
-                    axis=1   
-                )
-            )
-        else:
-            grouped_by_user = (ratings_df
-                .sort_values(by=['userId', 'timestamp'])
-                .groupby("userId")
-                .agg(list)["movieId"]
-                .reset_index()
-                .apply(
-                    lambda x: (
-                        torch.tensor([x["userId"]] + x["movieId"]).unsqueeze(-1)
-                    ),
-                    axis=1
-                )
-            )
+    def _generate_user_history(
+        ratings_df,
+        features: List[str] = ["movieId", "rating"],
+        window_size: int = 200,
+        stride: int = 1
+    ) -> torch.Tensor:
+        
+        if isinstance(ratings_df, pd.DataFrame):
+            ratings_df = pl.from_pandas(ratings_df)
 
-        padded_history = torch.nn.utils.rnn.pad_sequence(
-            grouped_by_user.to_list(),
-            batch_first=True,
-            padding_value=-1
-        ).squeeze(-1)
+        grouped_by_user = (ratings_df
+            .sort("userId", "timestamp")
+            .group_by_dynamic(
+                index_column=pl.int_range(pl.len()),
+                every=f"{stride}i",
+                period=f"{window_size}i",
+                by="userId")
+            .agg(
+                *(pl.col(feat) for feat in features),
+                seq_len=pl.col(features[0]).len()
+            )
+        )
+        
+        max_seq_len = grouped_by_user.select(pl.col("seq_len").max()).item()
+        padded_history = (grouped_by_user
+            .with_columns(pad_len=max_seq_len-pl.col("seq_len"))
+            .select(
+                pl.col("userId"),
+                *(pl.col(feat).list.concat(
+                    pl.lit(-1, dtype=pl.Int64).repeat_by(pl.col("pad_len"))
+                ).list.to_array(max_seq_len) for feat in features)
+            )
+        )
 
-        return padded_history
+        out = {
+            feat: torch.from_numpy(
+                rearrange(
+                    padded_history.select(feat).to_numpy().squeeze().tolist(), "b d -> b d"
+                )
+            ) for feat in features
+        }
+        out["userId"] = torch.from_numpy(padded_history.select("userId").to_numpy())
+        
+        return out

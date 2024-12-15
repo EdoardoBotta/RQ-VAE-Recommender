@@ -78,11 +78,11 @@ class MovieLensSeqData(Dataset):
         # TODO: Implement train-test split using timestamps
 
     def __len__(self):
-        return self.sequence_data.shape[0]
+        return self.sequence_data["userId"].shape[0]
   
     def __getitem__(self, idx):
-        user_ids = self.sequence_data[idx, 0]
-        movie_ids = self.sequence_data[idx, 1:]
+        user_ids = self.sequence_data["userId"][idx]
+        movie_ids = self.sequence_data["movieId"][idx]
         assert (movie_ids >= -1).all(), "Invalid movie id found"
         x = self.movie_data[movie_ids, :]
         x[movie_ids == -1] = -1
@@ -96,6 +96,6 @@ class MovieLensSeqData(Dataset):
 
 
 if __name__ == "__main__":
-    dataset = MovieLensMovieData("dataset/ml-32m", dataset_size=MovieLensSize._32M)
+    dataset = MovieLensMovieData("dataset/ml-32m", dataset_size=MovieLensSize._32M, force_process=True)
     dataset[0]
     import pdb; pdb.set_trace()

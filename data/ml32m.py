@@ -33,6 +33,10 @@ class MovieLens32M(InMemoryDataset):
     @property
     def processed_file_names(self) -> str:
         return 'data.pt'
+
+    @property
+    def has_process(self) -> bool:
+        return not os.path.exists(self.processed_paths[0])
     
     def download(self) -> None:
         path = download_url(self.url, self.root)
@@ -67,7 +71,6 @@ class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
         data = HeteroData()
         ratings_df = self._load_ratings()
 
-        import pdb; pdb.set_trace()
         # TODO: Extract actor name tag from tag dataset
         # TODO: Maybe use links to extract more item features
         # Process movie data:
@@ -113,8 +116,13 @@ class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
 
         df["movieId"] = df["movieId"].apply(lambda x: movie_mapping[x])
 
-        rolling = max_seq_len is not None
-        data["user", "rated", "movie"].history = self._generate_user_history(df, rolling=rolling, window_size=max_seq_len)
+        df["rating"] = (2*df["rating"]).astype(int)
+        data["user", "rated", "movie"].history = self._generate_user_history(
+            df,
+            features=["movieId", "rating"],
+            window_size=max_seq_len if max_seq_len is not None else 200,
+            stride=180
+        )
 
         if self.pre_transform is not None:
             data = self.pre_transform(data)
