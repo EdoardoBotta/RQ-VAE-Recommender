@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
-from typing import List
 
 
 class MovieLensPreprocessingMixin:
@@ -37,8 +36,8 @@ class MovieLensPreprocessingMixin:
     def _encode_text_feature(text_feat, model=None):
         if model is None:
             model = SentenceTransformer('sentence-transformers/sentence-t5-base')
-        embeddings = model.encode(sentences=text_feat)
-        return torch.tensor(embeddings)
+        embeddings = model.encode(sentences=text_feat, show_progress_bar=True, convert_to_tensor=True).cpu()
+        return embeddings
     
     @staticmethod
     def _rolling_window(group, features, window_size=200, stride=1):
@@ -76,7 +75,7 @@ class MovieLensPreprocessingMixin:
                     lambda x: (
                         torch.cat([torch.tensor(x["userId"]).unsqueeze(0).unsqueeze(0), x["movieId"]], axis=1).T
                     ),
-                    axis=1      
+                    axis=1   
                 )
             )
         else:

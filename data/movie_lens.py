@@ -2,10 +2,23 @@ import os
 import torch
 
 from data.ml1m import RawMovieLens1M
+from data.ml32m import RawMovieLens32M
 from data.schemas import SeqBatch
+from enum import Enum
 from torch.utils.data import Dataset
 
 PROCESSED_MOVIE_LENS_SUFFIX = "/processed/data.pt"
+
+
+class MovieLensSize(Enum):
+    _1M = 1
+    _32M = 2
+
+
+MOVIE_LENS_SIZE_TO_RAW_DATASET = {
+    MovieLensSize._1M: RawMovieLens1M,
+    MovieLensSize._32M: RawMovieLens32M
+}
 
 
 class MovieLensMovieData(Dataset):
@@ -14,12 +27,14 @@ class MovieLensMovieData(Dataset):
         root: str,
         *args,
         force_process: bool = False,
+        dataset_size: MovieLensSize = MovieLensSize._1M,
         **kwargs
     ) -> None:
         
         processed_data_path = root + PROCESSED_MOVIE_LENS_SUFFIX
+        raw_dataset_class = MOVIE_LENS_SIZE_TO_RAW_DATASET[dataset_size]
 
-        raw_movie_lens = RawMovieLens1M(root=root, *args, **kwargs)
+        raw_movie_lens = raw_dataset_class(root=root, *args, **kwargs)
         if not os.path.exists(processed_data_path) or force_process:
             raw_movie_lens.process(max_seq_len=200)
 
@@ -46,12 +61,14 @@ class MovieLensSeqData(Dataset):
             root: str,
             *args,
             force_process: bool = False,
+            dataset_size: MovieLensSize = MovieLensSize._1M,
             **kwargs
     ) -> None:
 
         processed_data_path = root + PROCESSED_MOVIE_LENS_SUFFIX
+        raw_dataset_class = MOVIE_LENS_SIZE_TO_RAW_DATASET[dataset_size]
 
-        raw_movie_lens = RawMovieLens1M(root=root, *args, **kwargs)
+        raw_movie_lens = raw_dataset_class(root=root, *args, **kwargs)
         if not os.path.exists(processed_data_path) or force_process:
             raw_movie_lens.process(max_seq_len=200)
   
@@ -79,6 +96,6 @@ class MovieLensSeqData(Dataset):
 
 
 if __name__ == "__main__":
-    dataset = MovieLensSeqData("dataset/ml-1m")
+    dataset = MovieLensMovieData("dataset/ml-32m", dataset_size=MovieLensSize._32M)
     dataset[0]
     import pdb; pdb.set_trace()

@@ -24,6 +24,7 @@ def train(
     learning_rate=0.0001,
     weight_decay=0.01,
     dataset_folder="dataset/ml-1m",
+    pretrained_rqvae_path=None,
     save_dir_root="out/",
     use_kmeans_init=True,
     split_batches=True,
@@ -56,7 +57,8 @@ def train(
         embed_dim=vae_embed_dim,
         hidden_dims=vae_hidden_dims,
         codebook_size=vae_codebook_size,
-        n_layers=vae_n_layers
+        codebook_kmeans_init=use_kmeans_init and pretrained_rqvae_path is None,
+        n_layers=vae_n_layers,
     )
 
     optimizer = AdamW(
@@ -64,6 +66,13 @@ def train(
         lr=learning_rate,
         weight_decay=weight_decay
     )
+
+    start_iter = 0
+    if pretrained_rqvae_path is not None:
+        model.load_pretrained(pretrained_rqvae_path)
+        state = torch.load(pretrained_rqvae_path, map_location=device)
+        optimizer.load_state_dict(state["optimizer"])
+        start_iter = state["iter"]
 
     model, optimizer = accelerator.prepare(
         model, optimizer
@@ -79,13 +88,10 @@ def train(
     with tqdm(initial=0, total=iterations,
               disable=not accelerator.is_main_process) as pbar:
         losses = []
-        for iter in range(iterations):
+        for iter in range(start_iter+1, start_iter+1+iterations):
             model.train()
-            if iter == 0 and use_kmeans_init:
-                init_data = next_batch(dataloader, device)
-                model.kmeans_init(init_data)
             total_loss = 0
-            t = temp_scheduler.get_t(iter)
+            t = 0.2 # temp_scheduler.get_t(iter)
 
             optimizer.zero_grad()
             for _ in range(gradient_accumulate_every):
@@ -128,10 +134,12 @@ def train(
 
 if __name__ == "__main__":
     train(
-        iterations=15000,
+        iterations=300000,
+        learning_rate=0.0001,
         batch_size=256,
         vae_input_dim=786,
         vae_hidden_dims=[512, 256, 128],
         vae_embed_dim=32,
-        vae_codebook_size=256
+        vae_codebook_size=256,
+        save_model_every=50000
     )

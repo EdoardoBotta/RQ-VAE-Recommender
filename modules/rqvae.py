@@ -5,12 +5,13 @@ from typing import List
 from typing import NamedTuple
 
 from data.schemas import SeqBatch
+from einops import rearrange
 from .encoder import MLP
 from .loss import CategoricalReconstuctionLoss
 from .loss import ReconstructionLoss
 from .loss import RqVaeLoss
 from .quantize import Quantize
-from init.kmeans import kmeans_init_
+from .quantize import QuantizeForwardMode
 
 
 class RqVaeOutput(NamedTuple):
@@ -32,9 +33,10 @@ class RqVae(nn.Module):
         embed_dim: int,
         hidden_dims: List[int],
         codebook_size: int,
+        codebook_kmeans_init: bool = True,
         n_layers: int = 3,
         commitment_weight: float = 0.25,
-        n_cat_features: int = 18
+        n_cat_features: int = 18,
     ) -> None:
         super().__init__()
 
@@ -46,8 +48,12 @@ class RqVae(nn.Module):
         self.commitment_weight = commitment_weight
 
         self.layers = nn.ModuleList(modules=[
-            Quantize(embed_dim=embed_dim, n_embed=codebook_size)
-            for _ in range(n_layers)
+            Quantize(
+                embed_dim=embed_dim,
+                n_embed=codebook_size,
+                forward_mode=QuantizeForwardMode.ROTATION_TRICK,
+                do_kmeans_init=codebook_kmeans_init
+            ) for _ in range(n_layers)
         ])
 
         self.encoder = MLP(
@@ -76,13 +82,6 @@ class RqVae(nn.Module):
         state = torch.load(path, map_location=self.device)
         self.load_state_dict(state["model"])
 
-    def kmeans_init(self, batch: SeqBatch) -> None:
-        x = batch.x
-        with torch.no_grad():
-            x = self.encoder(x)
-            for layer in self.layers:
-                kmeans_init_(layer.weight, x=x)
-
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.encoder(x)
 
@@ -99,14 +98,14 @@ class RqVae(nn.Module):
             residuals.append(res)
             quantized = layer(res, temperature=gumbel_t)
             emb, id = quantized.embeddings, quantized.ids
-            res = res - emb
+            res = res - emb.detach()
             sem_ids.append(id)
             embs.append(emb)
 
         return RqVaeOutput(
-            embeddings=torch.stack(embs, dim=-1),
-            residuals=torch.stack(residuals, dim=-1),
-            sem_ids=torch.stack(sem_ids, dim=-1)
+            embeddings=rearrange(embs, "b h d -> h d b"),
+            residuals=rearrange(residuals, "b h d -> h d b"),
+            sem_ids=rearrange(sem_ids, "b d -> d b")
         )
 
     def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:

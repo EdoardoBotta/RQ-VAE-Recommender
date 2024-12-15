@@ -60,6 +60,8 @@ def train(
     )
     tokenizer.precompute_corpus_ids(movie_dataset)
 
+    import pdb; pdb.set_trace()
+
     model = DecoderRetrievalModel(
         embedding_dim=vae_embed_dim,
         d_out=vae_embed_dim,
@@ -118,5 +120,5 @@ if __name__ == "__main__":
         vae_hidden_dims=[512, 256, 128],
         vae_embed_dim=32,
         vae_codebook_size=256,
-        pretrained_rqvae_path="out/checkpoint_14999.pt"
+        pretrained_rqvae_path="out/checkpoint_299999.pt" #final loss 0.7927
     )
