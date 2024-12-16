@@ -1,7 +1,9 @@
 accelerate==0.31.0
 gin_config==0.5.0
+einops==0.8.0
 numpy==1.24.3
 pandas==1.5.3
+polars==1.9.0
 sentence_transformers==3.3.1
 torch==2.4.1
 torch_geometric==2.6.1

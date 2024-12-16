@@ -123,7 +123,7 @@ if __name__ == "__main__":
         vae_embed_dim=32,
         vae_n_cat_feats=20,
         vae_codebook_size=256,
-        pretrained_rqvae_path="out/ml32m/checkpoint_749999.pt", #final loss ML1M 0.7927
+        pretrained_rqvae_path="out/ml32m/checkpoint_499999.pt", #final loss ML1M 0.7927
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
     )
