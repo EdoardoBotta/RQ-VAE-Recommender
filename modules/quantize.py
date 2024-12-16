@@ -4,6 +4,7 @@ from distributions.gumbel import gumbel_softmax_sample
 from einops import rearrange
 from enum import Enum
 from init.kmeans import kmeans_init_
+from modules.normalize import L2NormalizationLayer
 from typing import NamedTuple
 from torch import nn
 from torch.nn import functional as F
@@ -40,6 +41,7 @@ class Quantize(nn.Module):
         embed_dim: int,
         n_embed: int,
         do_kmeans_init: bool = True,
+        normalize: bool = True,
         forward_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX
     ) -> None:
         super().__init__()
@@ -47,6 +49,7 @@ class Quantize(nn.Module):
         self.embed_dim = embed_dim
         self.n_embed = n_embed
         self.embedding = nn.Embedding(n_embed, embed_dim)
+        self.l2norm = L2NormalizationLayer() if normalize else nn.Identity()
         self.forward_mode = forward_mode
         self.do_kmeans_init = do_kmeans_init
         self.kmeans_initted = False
@@ -71,7 +74,7 @@ class Quantize(nn.Module):
         self.kmeans_initted = True
 
     def get_item_embeddings(self, item_ids) -> torch.Tensor:
-        return self.embedding(item_ids)
+        return self.l2norm(self.embedding(item_ids))
 
     def forward(self, x, temperature) -> QuantizeOutput:
         assert x.shape[-1] == self.embed_dim
@@ -79,7 +82,7 @@ class Quantize(nn.Module):
         if self.do_kmeans_init and not self.kmeans_initted:
             self._kmeans_init(x=x)
 
-        codebook = self.embedding.weight
+        codebook = self.l2norm(self.embedding.weight)
         dist = (
             (x**2).sum(axis=1, keepdim=True) +
             (codebook.T**2).sum(axis=0, keepdim=True) -

@@ -34,6 +34,7 @@ class RqVae(nn.Module):
         hidden_dims: List[int],
         codebook_size: int,
         codebook_kmeans_init: bool = True,
+        codebook_normalize: bool = True,
         n_layers: int = 3,
         commitment_weight: float = 0.25,
         n_cat_features: int = 18,
@@ -52,14 +53,16 @@ class RqVae(nn.Module):
                 embed_dim=embed_dim,
                 n_embed=codebook_size,
                 forward_mode=QuantizeForwardMode.ROTATION_TRICK,
-                do_kmeans_init=codebook_kmeans_init
+                do_kmeans_init=codebook_kmeans_init,
+                codebook_normalize=codebook_normalize
             ) for _ in range(n_layers)
         ])
 
         self.encoder = MLP(
             input_dim=input_dim,
             hidden_dims=hidden_dims,
-            out_dim=embed_dim
+            out_dim=embed_dim,
+            normalize=codebook_normalize
         )
 
         self.decoder = MLP(

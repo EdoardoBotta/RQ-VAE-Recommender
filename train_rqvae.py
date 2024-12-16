@@ -41,6 +41,7 @@ def train(
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
+    vae_codebook_normalize=False,
     vae_n_layers=3
 ):
     if wandb_logging:
@@ -65,6 +66,7 @@ def train(
         hidden_dims=vae_hidden_dims,
         codebook_size=vae_codebook_size,
         codebook_kmeans_init=use_kmeans_init and pretrained_rqvae_path is None,
+        codebook_normalize=vae_codebook_normalize,
         n_layers=vae_n_layers,
         n_cat_features=n_cat_feats
     )
@@ -173,6 +175,7 @@ if __name__ == "__main__":
         vae_hidden_dims=[512, 256, 128],
         vae_embed_dim=32,
         vae_codebook_size=256,
+        vae_codebook_normalize=True,
         save_model_every=50000,
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
