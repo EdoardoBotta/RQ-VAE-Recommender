@@ -3,6 +3,7 @@ import gin
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
 from data.movie_lens import MovieLensSeqData
+from data.movie_lens import MovieLensSize
 from data.utils import cycle
 from data.utils import next_batch
 from modules.model import DecoderRetrievalModel
@@ -21,9 +22,8 @@ def train(
     weight_decay=0.01,
     max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
-    movie_dataset_folder="dataset/ml-1m-movie",
+    dataset_size=MovieLensSize._1M,
     pretrained_rqvae_path=None,
-    use_kmeans_init=True,
     split_batches=True,
     amp=False,
     mixed_precision_type="fp16",
@@ -32,6 +32,7 @@ def train(
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
+    vae_n_cat_feats=18,
     vae_n_layers=3,
     attn_heads=16,
     attn_embed_dim=64,
@@ -44,8 +45,8 @@ def train(
 
     device = accelerator.device
 
-    movie_dataset = MovieLensMovieData(root=movie_dataset_folder)
-    dataset = MovieLensSeqData(root=dataset_folder)
+    movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size)
+    dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     dataloader = cycle(dataloader)
     dataloader = accelerator.prepare(dataloader)
@@ -56,6 +57,7 @@ def train(
         output_dim=vae_embed_dim,
         codebook_size=vae_codebook_size,
         n_layers=vae_n_layers,
+        n_cat_feats=vae_n_cat_feats,
         rqvae_weights_path=pretrained_rqvae_path
     )
     tokenizer.precompute_corpus_ids(movie_dataset)
@@ -116,9 +118,12 @@ if __name__ == "__main__":
     train(
         iterations=20000,
         batch_size=64,
-        vae_input_dim=786,
+        vae_input_dim=788,
         vae_hidden_dims=[512, 256, 128],
         vae_embed_dim=32,
+        vae_n_cat_feats=20,
         vae_codebook_size=256,
-        pretrained_rqvae_path="out/checkpoint_299999.pt" #final loss 0.7927
+        pretrained_rqvae_path="out/ml32m/checkpoint_749999.pt", #final loss ML1M 0.7927
+        dataset_folder="dataset/ml-32m",
+        dataset_size=MovieLensSize._32M,
     )

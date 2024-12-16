@@ -51,10 +51,6 @@ class MovieLens32M(InMemoryDataset):
 
 
 class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
-    MOVIE_HEADERS = ["movieId", "title", "genres"]
-    RATING_HEADERS = ['userId', 'movieId', 'rating', 'timestamp']
-    TAG_HEADERS = ["userId", "movieId", "tag", "timestamp"]
-
     def __init__(self,
                  root,
                  transform=None,

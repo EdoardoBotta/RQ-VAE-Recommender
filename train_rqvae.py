@@ -5,6 +5,7 @@ import numpy as np
 
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
+from data.movie_lens import MovieLensSize
 from data.utils import cycle
 from data.utils import next_batch
 from distributions.gumbel import TemperatureScheduler
@@ -24,6 +25,7 @@ def train(
     learning_rate=0.0001,
     weight_decay=0.01,
     dataset_folder="dataset/ml-1m",
+    dataset_size=MovieLensSize._1M,
     pretrained_rqvae_path=None,
     save_dir_root="out/",
     use_kmeans_init=True,
@@ -33,6 +35,7 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     save_model_every=1000000,
+    n_cat_feats=18,
     vae_input_dim=18,
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
@@ -46,7 +49,7 @@ def train(
 
     device = accelerator.device
 
-    dataset = MovieLensMovieData(root=dataset_folder)
+    dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size)
     sampler = BatchSampler(RandomSampler(dataset), batch_size, False)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=None, collate_fn=lambda batch: batch)
     dataloader = cycle(dataloader)
@@ -59,6 +62,7 @@ def train(
         codebook_size=vae_codebook_size,
         codebook_kmeans_init=use_kmeans_init and pretrained_rqvae_path is None,
         n_layers=vae_n_layers,
+        n_cat_features=n_cat_feats
     )
 
     optimizer = AdamW(
@@ -72,7 +76,7 @@ def train(
         model.load_pretrained(pretrained_rqvae_path)
         state = torch.load(pretrained_rqvae_path, map_location=device)
         optimizer.load_state_dict(state["optimizer"])
-        start_iter = state["iter"]
+        start_iter = state["iter"]+1
 
     model, optimizer = accelerator.prepare(
         model, optimizer
@@ -85,10 +89,10 @@ def train(
         step_size=3000
     )
 
-    with tqdm(initial=0, total=iterations,
+    with tqdm(initial=start_iter, total=start_iter+iterations,
               disable=not accelerator.is_main_process) as pbar:
-        losses = []
-        for iter in range(start_iter+1, start_iter+1+iterations):
+        losses = [[], [], []]
+        for iter in range(start_iter, start_iter+1+iterations):
             model.train()
             total_loss = 0
             t = 0.2 # temp_scheduler.get_t(iter)
@@ -105,12 +109,18 @@ def train(
 
             accelerator.backward(total_loss)
 
-            losses.append(total_loss.cpu().item())
-            losses = losses[-1000:]
+            losses[0].append(total_loss.cpu().item())
+            losses[1].append(model_output.reconstruction_loss.cpu().item())
+            losses[2].append(model_output.rqvae_loss.cpu().item())
+            losses[0] = losses[0][-1000:]
+            losses[1] = losses[1][-1000:]
+            losses[2] = losses[2][-1000:]
             if iter % 100 == 0:
-                print_loss = np.mean(losses)
+                print_loss = np.mean(losses[0])
+                print_rec_loss = np.mean(losses[1])
+                print_vae_loss = np.mean(losses[2])
 
-            pbar.set_description(f'loss: {print_loss:.4f}, t: {t:.3f}')
+            pbar.set_description(f'loss: {print_loss:.4f}, rl: {print_rec_loss:.4f}, vl: {print_vae_loss:.4f}')
 
             accelerator.wait_for_everyone()
 
@@ -134,12 +144,17 @@ def train(
 
 if __name__ == "__main__":
     train(
-        iterations=300000,
+        iterations=500000,
         learning_rate=0.0001,
         batch_size=256,
-        vae_input_dim=786,
+        vae_input_dim=788,
+        n_cat_feats=20,
         vae_hidden_dims=[512, 256, 128],
         vae_embed_dim=32,
         vae_codebook_size=256,
-        save_model_every=50000
+        save_model_every=50000,
+        dataset_folder="dataset/ml-32m",
+        dataset_size=MovieLensSize._32M,
+        save_dir_root="out/ml32m/",
+        pretrained_rqvae_path="out/ml32m/checkpoint_499999.pt"
     )

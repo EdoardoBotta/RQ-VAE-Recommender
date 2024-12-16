@@ -116,7 +116,7 @@ class RqVae(nn.Module):
 
         reconstuction_loss = self.reconstruction_loss(x_hat, x)
         rqvae_loss = self.rqvae_loss(residuals, embs)
-        loss = (reconstuction_loss + rqvae_loss).mean()
+        loss = (reconstuction_loss + 3*rqvae_loss).mean()
 
         return RqVaeComputedLosses(
             loss=loss,

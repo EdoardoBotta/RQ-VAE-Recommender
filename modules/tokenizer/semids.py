@@ -31,6 +31,7 @@ class SemanticIdTokenizer(nn.Module):
                  hidden_dims: List[int],
                  codebook_size: int,
                  n_layers: int = 3,
+                 n_cat_feats: int = 18,
                  commitment_weight: float = 0.25,
                  rqvae_weights_path: Optional[str] = None) -> None:
         super().__init__()
@@ -42,6 +43,7 @@ class SemanticIdTokenizer(nn.Module):
             codebook_size=codebook_size,
             codebook_kmeans_init=False,
             n_layers=n_layers,
+            n_cat_features=n_cat_feats,
             commitment_weight=commitment_weight
         )
         
