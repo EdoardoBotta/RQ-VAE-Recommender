@@ -2,6 +2,7 @@ import gin
 import os
 import torch
 import numpy as np
+import wandb
 
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
@@ -42,6 +43,9 @@ def train(
     vae_codebook_size=32,
     vae_n_layers=3
 ):
+    if wandb_logging:
+        params = locals()
+
     accelerator = Accelerator(
         split_batches=split_batches,
         mixed_precision=mixed_precision_type if amp else 'no'
@@ -70,6 +74,13 @@ def train(
         lr=learning_rate,
         weight_decay=weight_decay
     )
+
+    if wandb_logging:
+        wandb.login()
+        run = wandb.init(
+            project="rq-vae-training",
+            config=params
+        )
 
     start_iter = 0
     if pretrained_rqvae_path is not None:
@@ -109,6 +120,14 @@ def train(
 
             accelerator.backward(total_loss)
 
+            if wandb_logging:
+                wandb.log({
+                    "total_loss": total_loss.cpu().item(),
+                    "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
+                    "rqvae_loss": model_output.rqvae_loss.cpu().item(),
+                    "temperature": t
+                })
+
             losses[0].append(total_loss.cpu().item())
             losses[1].append(model_output.reconstruction_loss.cpu().item())
             losses[2].append(model_output.rqvae_loss.cpu().item())
@@ -140,11 +159,13 @@ def train(
                 torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
 
             pbar.update(1)
+    
+    wandb.finish()
 
 
 if __name__ == "__main__":
     train(
-        iterations=500000,
+        iterations=10000, #500000,
         learning_rate=0.0001,
         batch_size=256,
         vae_input_dim=788,
@@ -156,5 +177,6 @@ if __name__ == "__main__":
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
         save_dir_root="out/ml32m/",
-        pretrained_rqvae_path="out/ml32m/checkpoint_499999.pt"
+        wandb_logging=True,
+        #pretrained_rqvae_path="out/ml32m/checkpoint_499999.pt"
     )
