@@ -32,6 +32,8 @@ def train(
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
+    vae_codebook_normalize=False,
+    vae_sim_vq=False,
     vae_n_cat_feats=18,
     vae_n_layers=3,
     attn_heads=16,
@@ -58,7 +60,9 @@ def train(
         codebook_size=vae_codebook_size,
         n_layers=vae_n_layers,
         n_cat_feats=vae_n_cat_feats,
-        rqvae_weights_path=pretrained_rqvae_path
+        rqvae_weights_path=pretrained_rqvae_path,
+        rqvae_codebook_normalize=vae_codebook_normalize,
+        rqvae_sim_vq=vae_sim_vq
     )
     tokenizer.precompute_corpus_ids(movie_dataset)
 
@@ -118,12 +122,12 @@ if __name__ == "__main__":
     train(
         iterations=20000,
         batch_size=64,
-        vae_input_dim=788,
+        vae_input_dim=768,
         vae_hidden_dims=[512, 256, 128],
         vae_embed_dim=32,
-        vae_n_cat_feats=20,
+        vae_n_cat_feats=0,
         vae_codebook_size=256,
-        pretrained_rqvae_path="out/ml32m/checkpoint_499999.pt", #final loss ML1M 0.7927
+        pretrained_rqvae_path="out/ml32m/checkpoint_49999.pt", #final loss ML1M 0.7927
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
     )

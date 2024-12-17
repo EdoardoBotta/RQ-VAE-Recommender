@@ -41,7 +41,8 @@ class Quantize(nn.Module):
         embed_dim: int,
         n_embed: int,
         do_kmeans_init: bool = True,
-        normalize: bool = True,
+        codebook_normalize: bool = False,
+        sim_vq: bool = False, # https://arxiv.org/pdf/2411.02038
         forward_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX
     ) -> None:
         super().__init__()
@@ -49,10 +50,15 @@ class Quantize(nn.Module):
         self.embed_dim = embed_dim
         self.n_embed = n_embed
         self.embedding = nn.Embedding(n_embed, embed_dim)
-        self.l2norm = L2NormalizationLayer() if normalize else nn.Identity()
         self.forward_mode = forward_mode
         self.do_kmeans_init = do_kmeans_init
         self.kmeans_initted = False
+
+        self.out_proj = nn.Sequential(
+            nn.Linear(embed_dim, embed_dim, bias=False) if sim_vq else nn.Identity(),
+            L2NormalizationLayer(dim=-1) if codebook_normalize else nn.Identity()
+        )
+
         self._init_weights()
 
     @property
@@ -74,7 +80,7 @@ class Quantize(nn.Module):
         self.kmeans_initted = True
 
     def get_item_embeddings(self, item_ids) -> torch.Tensor:
-        return self.l2norm(self.embedding(item_ids))
+        return self.out_proj(self.embedding(item_ids))
 
     def forward(self, x, temperature) -> QuantizeOutput:
         assert x.shape[-1] == self.embed_dim
@@ -82,12 +88,12 @@ class Quantize(nn.Module):
         if self.do_kmeans_init and not self.kmeans_initted:
             self._kmeans_init(x=x)
 
-        codebook = self.l2norm(self.embedding.weight)
+        codebook = self.out_proj(self.embedding.weight)
         dist = (
             (x**2).sum(axis=1, keepdim=True) +
             (codebook.T**2).sum(axis=0, keepdim=True) -
             2 * x @ codebook.T
-        )
+        ).detach()
 
         _, ids = (dist).min(axis=1)
 
@@ -105,6 +111,8 @@ class Quantize(nn.Module):
                 weights = gumbel_softmax_sample(
                     -dist, temperature=temperature, device=self.device
                 )
+                #_, ids = (weights).max(axis=1)
+                #emb = self.get_item_embeddings(ids)
                 emb = weights @ codebook
                 emb = efficient_rotation_trick_transform(
                     x / x.norm(dim=-1, keepdim=True),

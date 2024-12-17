@@ -46,7 +46,7 @@ class MovieLensMovieData(Dataset):
 
     def __getitem__(self, idx):
         movie_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
-        x = self.movie_data[idx, :]
+        x = self.movie_data[idx, :768]
         return SeqBatch(
             user_ids=-1 * torch.ones_like(movie_ids.squeeze(0)),
             ids=movie_ids,
@@ -84,7 +84,7 @@ class MovieLensSeqData(Dataset):
         user_ids = self.sequence_data["userId"][idx]
         movie_ids = self.sequence_data["movieId"][idx]
         assert (movie_ids >= -1).all(), "Invalid movie id found"
-        x = self.movie_data[movie_ids, :]
+        x = self.movie_data[movie_ids, :768]
         x[movie_ids == -1] = -1
 
         return SeqBatch(

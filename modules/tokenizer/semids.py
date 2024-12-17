@@ -33,7 +33,9 @@ class SemanticIdTokenizer(nn.Module):
                  n_layers: int = 3,
                  n_cat_feats: int = 18,
                  commitment_weight: float = 0.25,
-                 rqvae_weights_path: Optional[str] = None) -> None:
+                 rqvae_weights_path: Optional[str] = None,
+                 rqvae_codebook_normalize: bool = False,
+                 rqvae_sim_vq: bool = False) -> None:
         super().__init__()
 
         self.rq_vae = RqVae(
@@ -42,9 +44,11 @@ class SemanticIdTokenizer(nn.Module):
             hidden_dims=hidden_dims,
             codebook_size=codebook_size,
             codebook_kmeans_init=False,
+            codebook_normalize=rqvae_codebook_normalize,
+            codebook_sim_vq=rqvae_sim_vq,
             n_layers=n_layers,
             n_cat_features=n_cat_feats,
-            commitment_weight=commitment_weight
+            commitment_weight=commitment_weight,
         )
         
         if rqvae_weights_path is not None:

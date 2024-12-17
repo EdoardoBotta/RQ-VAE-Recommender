@@ -7,10 +7,12 @@ import wandb
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
 from data.movie_lens import MovieLensSize
+from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
 from distributions.gumbel import TemperatureScheduler
 from modules.rqvae import RqVae
+from modules.quantize import QuantizeForwardMode
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import BatchSampler
@@ -36,12 +38,15 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     save_model_every=1000000,
+    commitment_weight=0.25,
     n_cat_feats=18,
     vae_input_dim=18,
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
     vae_codebook_size=32,
     vae_codebook_normalize=False,
+    vae_codebook_mode=QuantizeForwardMode.GUMBEL_SOFTMAX,
+    vae_sim_vq=False,
     vae_n_layers=3
 ):
     if wandb_logging:
@@ -67,8 +72,11 @@ def train(
         codebook_size=vae_codebook_size,
         codebook_kmeans_init=use_kmeans_init and pretrained_rqvae_path is None,
         codebook_normalize=vae_codebook_normalize,
+        codebook_sim_vq=vae_sim_vq,
+        codebook_mode=vae_codebook_mode,
         n_layers=vae_n_layers,
-        n_cat_features=n_cat_feats
+        n_cat_features=n_cat_feats,
+        commitment_weight=commitment_weight
     )
 
     optimizer = AdamW(
@@ -109,25 +117,33 @@ def train(
             model.train()
             total_loss = 0
             t = 0.2 # temp_scheduler.get_t(iter)
+            if iter == 0 and use_kmeans_init:
+                kmeans_init_data = batch_to(dataset[torch.arange(20000)], device)
+                model(kmeans_init_data, t)
 
             optimizer.zero_grad()
             for _ in range(gradient_accumulate_every):
                 data = next_batch(dataloader, device)
 
                 with accelerator.autocast():
-                    model_output = model(data, gumbel_t=t)
+                    model_output = model(data, gumbel_t=t, debug=iter > 3000)
                     loss = model_output.loss
                     loss = loss / gradient_accumulate_every
                     total_loss += loss
 
             accelerator.backward(total_loss)
-
             if wandb_logging:
+                emb_norms_avg = model_output.embs_norm.mean(axis=0)
+                emb_norms_avg_log = {
+                    f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
+                }
                 wandb.log({
                     "total_loss": total_loss.cpu().item(),
                     "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
                     "rqvae_loss": model_output.rqvae_loss.cpu().item(),
-                    "temperature": t
+                    "temperature": t,
+                    "p_unique_ids": model_output.p_unique_ids.cpu().item(),
+                    **emb_norms_avg_log
                 })
 
             losses[0].append(total_loss.cpu().item())
@@ -167,19 +183,23 @@ def train(
 
 if __name__ == "__main__":
     train(
-        iterations=10000, #500000,
+        iterations=1000000,
         learning_rate=0.0001,
         batch_size=256,
-        vae_input_dim=788,
-        n_cat_feats=20,
+        vae_input_dim=768,
+        n_cat_feats=0,
         vae_hidden_dims=[512, 256, 128],
         vae_embed_dim=32,
         vae_codebook_size=256,
-        vae_codebook_normalize=True,
+        vae_codebook_normalize=False,
+        vae_sim_vq=False,
         save_model_every=50000,
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
         save_dir_root="out/ml32m/",
         wandb_logging=True,
+        commitment_weight=0.25,
+        vae_n_layers=3,
+        vae_codebook_mode=QuantizeForwardMode.ROTATION_TRICK
         #pretrained_rqvae_path="out/ml32m/checkpoint_499999.pt"
     )

@@ -17,16 +17,18 @@ class CategoricalReconstuctionLoss(nn.Module):
         self.n_cat_feats = n_cat_feats
     
     def forward(self, x_hat, x) -> Tensor:
-        cont_reconstr = self.reconstruction_loss(
+        reconstr = self.reconstruction_loss(
             x_hat[:, :-self.n_cat_feats],
             x[:, :-self.n_cat_feats]
         )
-        cat_reconstr = nn.functional.binary_cross_entropy_with_logits(
-            x_hat[:, -self.n_cat_feats:],
-            x[:, -self.n_cat_feats:],
-            reduction='none'
-        ).sum(axis=-1)
-        return cont_reconstr + cat_reconstr
+        if self.n_cat_feats > 0:
+            cat_reconstr = nn.functional.binary_cross_entropy_with_logits(
+                x_hat[:, -self.n_cat_feats:],
+                x[:, -self.n_cat_feats:],
+                reduction='none'
+            ).sum(axis=-1)
+            reconstr += cat_reconstr
+        return reconstr
 
 
 class RqVaeLoss(nn.Module):
