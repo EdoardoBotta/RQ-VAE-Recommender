@@ -42,7 +42,7 @@ class Quantize(nn.Module):
         n_embed: int,
         do_kmeans_init: bool = True,
         codebook_normalize: bool = False,
-        sim_vq: bool = False, # https://arxiv.org/pdf/2411.02038
+        sim_vq: bool = False,  # https://arxiv.org/pdf/2411.02038
         forward_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX
     ) -> None:
         super().__init__()
@@ -72,7 +72,7 @@ class Quantize(nn.Module):
     def _init_weights(self) -> None:
         for m in self.modules():
             if isinstance(m, nn.Embedding):
-                nn.init.trunc_normal_(m.weight, mean=0.0, std=0.2)
+                nn.init.uniform_(m.weight)
     
     @torch.no_grad
     def _kmeans_init(self, x) -> None:
@@ -107,12 +107,9 @@ class Quantize(nn.Module):
                 emb = self.get_item_embeddings(ids)
                 emb = x + (emb - x).detach()
             elif self.forward_mode == QuantizeForwardMode.ROTATION_TRICK:
-                # emb = self.get_item_embeddings(ids)
                 weights = gumbel_softmax_sample(
                     -dist, temperature=temperature, device=self.device
                 )
-                #_, ids = (weights).max(axis=1)
-                #emb = self.get_item_embeddings(ids)
                 emb = weights @ codebook
                 emb = efficient_rotation_trick_transform(
                     x / x.norm(dim=-1, keepdim=True),

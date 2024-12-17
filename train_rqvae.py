@@ -60,7 +60,7 @@ def train(
 
     device = accelerator.device
 
-    dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size)
+    dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=True)
     sampler = BatchSampler(RandomSampler(dataset), batch_size, False)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=None, collate_fn=lambda batch: batch)
     dataloader = cycle(dataloader)
@@ -130,7 +130,7 @@ def train(
         for iter in range(start_iter, start_iter+1+iterations):
             model.train()
             total_loss = 0
-            t = 0.2 # temp_scheduler.get_t(iter)
+            t = 0.2  # temp_scheduler.get_t(iter)
             if iter == 0 and use_kmeans_init:
                 kmeans_init_data = batch_to(dataset[torch.arange(20000)], device)
                 model(kmeans_init_data, t)

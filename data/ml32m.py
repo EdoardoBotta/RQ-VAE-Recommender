@@ -70,8 +70,7 @@ class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
         # TODO: Extract actor name tag from tag dataset
         # TODO: Maybe use links to extract more item features
         # Process movie data:
-        full_df = pd.read_csv(self.raw_paths[1], index_col='movieId')
-        df = full_df # self._remove_low_occurrence(ratings_df, full_df, "movieId") # TODO: Maybe remove to retain more data for RQVAE training.
+        df = pd.read_csv(self.raw_paths[1], index_col='movieId')
         
         movie_mapping = {idx: i for i, idx in enumerate(df.index)}
 

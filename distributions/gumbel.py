@@ -18,11 +18,11 @@ def gumbel_softmax_sample(logits: torch.Tensor, temperature: float, device: torc
 
 class TemperatureScheduler:
     def __init__(
-          self,
-          t0: float,
-          min_t: float,
-          anneal_rate: float,
-          step_size: int,
+        self,
+        t0: float,
+        min_t: float,
+        anneal_rate: float,
+        step_size: int,
     ) -> None:
         self.t0 = t0
         self.min_t = min_t

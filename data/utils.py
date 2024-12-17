@@ -6,8 +6,10 @@ def cycle(dataloader):
         for data in dataloader:
             yield data
 
+
 def batch_to(batch, device):
     return SeqBatch(*[v.to(device) for _,v in batch._asdict().items()])
+
 
 def next_batch(dataloader, device):
     batch = next(dataloader)

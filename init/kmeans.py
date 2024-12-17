@@ -10,6 +10,7 @@ def kmeans_init_(tensor: torch.Tensor, x: torch.Tensor):
 
     with torch.no_grad():
         k, _ = tensor.shape
+        # TODO: Check out scipy kmeans2
         kmeans_out = Kmeans(k=k).run(x)
         tensor[:, :] = kmeans_out.centroids[:, :]
 

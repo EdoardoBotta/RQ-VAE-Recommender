@@ -1,6 +1,5 @@
 import torch
 from modules.normalize import L2NormalizationLayer
-from modules.normalize import RMSNorm
 from typing import List
 from torch import nn
 
