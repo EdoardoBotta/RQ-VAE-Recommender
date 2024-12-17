@@ -75,7 +75,8 @@ class RqVae(nn.Module):
         self.decoder = MLP(
             input_dim=embed_dim,
             hidden_dims=hidden_dims[-1::-1],
-            out_dim=input_dim
+            out_dim=input_dim,
+            normalize=True
         )
 
         self.reconstruction_loss = (
@@ -91,6 +92,7 @@ class RqVae(nn.Module):
     def load_pretrained(self, path: str) -> None:
         state = torch.load(path, map_location=self.device)
         self.load_state_dict(state["model"])
+        print(f"---Loaded RQVAE Iter {state['iter']}---")
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.encoder(x)

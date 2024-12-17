@@ -3,6 +3,7 @@ import torch
 from data.movie_lens import MovieLensMovieData
 from data.movie_lens import MovieLensSeqData
 from data.schemas import SeqBatch
+from data.utils import batch_to
 from einops import rearrange
 from einops import repeat
 from einops import pack
@@ -11,8 +12,10 @@ from typing import NamedTuple
 from typing import List
 from typing import Optional
 from torch import nn
+from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
+from torch.utils.data import SequentialSampler
 
 
 class TokenizedSeqBatch(NamedTuple):
@@ -58,28 +61,35 @@ class SemanticIdTokenizer(nn.Module):
 
         self.codebook_size = codebook_size
         self.n_layers = n_layers
-        self.n_ids = None
-        self.cached_ids = None
+        self.reset()
     
     def _get_hits(self, query: torch.Tensor, key: torch.Tensor) -> torch.Tensor:
         return (rearrange(key, "b d -> 1 b d") == rearrange(query, "b d -> b 1 d")).all(axis=-1)
+    
+    def reset(self):
+        self.n_ids = None
+        self.cached_ids = None
     
     @torch.no_grad
     def precompute_corpus_ids(self, movie_dataset: Dataset) -> torch.Tensor:
         cached_ids = None
         dedup_dim = []
-        for batch in DataLoader(movie_dataset, batch_size=128, shuffle=False):
-            batch_ids = self.forward(batch).sem_ids
+        sampler = BatchSampler(
+            SequentialSampler(range(len(movie_dataset))), batch_size=512, drop_last=False
+        )
+        dataloader = DataLoader(movie_dataset, sampler=sampler, shuffle=False, collate_fn=lambda batch: batch[0])
+        for batch in dataloader:
+            batch_ids = self.forward(batch_to(batch, self.rq_vae.device)).sem_ids
             # Detect in-batch duplicates
             is_hit = self._get_hits(batch_ids, batch_ids)
-            hits = torch.triu(is_hit, diagonal=1).sum(axis=-1)
+            hits = torch.tril(is_hit, diagonal=-1).sum(axis=-1)
             assert hits.min() >= 0
             if cached_ids is None:
                 cached_ids = batch_ids.clone()
             else:
                 # Detect batch-cache duplicates
                 is_hit = self._get_hits(batch_ids, cached_ids)
-                hits += torch.triu(is_hit, diagonal=1).sum(axis=-1)
+                hits += is_hit.sum(axis=-1)
                 cached_ids = pack([cached_ids, batch_ids], "* d")[0]
             dedup_dim.append(hits)
         # Concatenate new column to deduplicate ids

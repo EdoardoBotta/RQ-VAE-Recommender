@@ -13,8 +13,8 @@ from data.utils import next_batch
 from distributions.gumbel import TemperatureScheduler
 from modules.rqvae import RqVae
 from modules.quantize import QuantizeForwardMode
+from modules.tokenizer.semids import SemanticIdTokenizer
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import RandomSampler
@@ -38,8 +38,9 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     save_model_every=1000000,
+    eval_every=50000,
     commitment_weight=0.25,
-    n_cat_feats=18,
+    vae_n_cat_feats=18,
     vae_input_dim=18,
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
@@ -75,7 +76,7 @@ def train(
         codebook_sim_vq=vae_sim_vq,
         codebook_mode=vae_codebook_mode,
         n_layers=vae_n_layers,
-        n_cat_features=n_cat_feats,
+        n_cat_features=vae_n_cat_feats,
         commitment_weight=commitment_weight
     )
 
@@ -102,6 +103,19 @@ def train(
     model, optimizer = accelerator.prepare(
         model, optimizer
     )
+
+    tokenizer = SemanticIdTokenizer(
+        input_dim=vae_input_dim,
+        hidden_dims=vae_hidden_dims,
+        output_dim=vae_embed_dim,
+        codebook_size=vae_codebook_size,
+        n_layers=vae_n_layers,
+        n_cat_feats=vae_n_cat_feats,
+        rqvae_weights_path=pretrained_rqvae_path,
+        rqvae_codebook_normalize=vae_codebook_normalize,
+        rqvae_sim_vq=vae_sim_vq
+    )
+    tokenizer.rq_vae = model
 
     temp_scheduler = TemperatureScheduler(
         t0=2,
@@ -132,19 +146,6 @@ def train(
                     total_loss += loss
 
             accelerator.backward(total_loss)
-            if wandb_logging:
-                emb_norms_avg = model_output.embs_norm.mean(axis=0)
-                emb_norms_avg_log = {
-                    f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
-                }
-                wandb.log({
-                    "total_loss": total_loss.cpu().item(),
-                    "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
-                    "rqvae_loss": model_output.rqvae_loss.cpu().item(),
-                    "temperature": t,
-                    "p_unique_ids": model_output.p_unique_ids.cpu().item(),
-                    **emb_norms_avg_log
-                })
 
             losses[0].append(total_loss.cpu().item())
             losses[1].append(model_output.reconstruction_loss.cpu().item())
@@ -175,6 +176,36 @@ def train(
                     os.makedirs(save_dir_root)
 
                 torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
+            
+            id_diversity_log = {}
+            if (iter+1) % eval_every == 0 or iter+1 == iterations:
+                tokenizer.reset()
+                model.eval()
+
+                corpus_ids = tokenizer.precompute_corpus_ids(dataset)
+                max_duplicates = corpus_ids[:,-1].max() / corpus_ids.shape[0]
+                
+                _, counts = torch.unique(corpus_ids[:,:-1], dim=0, return_counts=True)
+                p = counts / corpus_ids.shape[0]
+                rqvae_entropy = -(p*torch.log(p)).sum()
+
+                id_diversity_log["rqvae_entropy"] = rqvae_entropy.cpu().item()
+                id_diversity_log["max_id_duplicates"] = max_duplicates.cpu().item()
+            
+            if wandb_logging:
+                emb_norms_avg = model_output.embs_norm.mean(axis=0)
+                emb_norms_avg_log = {
+                    f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
+                }
+                wandb.log({
+                    "total_loss": total_loss.cpu().item(),
+                    "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
+                    "rqvae_loss": model_output.rqvae_loss.cpu().item(),
+                    "temperature": t,
+                    "p_unique_ids": model_output.p_unique_ids.cpu().item(),
+                    **emb_norms_avg_log,
+                    **id_diversity_log
+                })
 
             pbar.update(1)
     
@@ -183,23 +214,24 @@ def train(
 
 if __name__ == "__main__":
     train(
-        iterations=1000000,
+        iterations=50000,
         learning_rate=0.0001,
+        weight_decay=0.01,
         batch_size=256,
         vae_input_dim=768,
-        n_cat_feats=0,
+        vae_n_cat_feats=0,
         vae_hidden_dims=[512, 256, 128],
-        vae_embed_dim=32,
+        vae_embed_dim=64,
         vae_codebook_size=256,
         vae_codebook_normalize=False,
         vae_sim_vq=False,
-        save_model_every=50000,
+        save_model_every=10000,
+        eval_every=10000,
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
         save_dir_root="out/ml32m/",
         wandb_logging=True,
         commitment_weight=0.25,
         vae_n_layers=3,
-        vae_codebook_mode=QuantizeForwardMode.ROTATION_TRICK
-        #pretrained_rqvae_path="out/ml32m/checkpoint_499999.pt"
+        vae_codebook_mode=QuantizeForwardMode.ROTATION_TRICK,
     )

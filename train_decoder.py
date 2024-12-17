@@ -124,10 +124,10 @@ if __name__ == "__main__":
         batch_size=64,
         vae_input_dim=768,
         vae_hidden_dims=[512, 256, 128],
-        vae_embed_dim=32,
+        vae_embed_dim=64,
         vae_n_cat_feats=0,
         vae_codebook_size=256,
-        pretrained_rqvae_path="out/ml32m/checkpoint_49999.pt", #final loss ML1M 0.7927
+        pretrained_rqvae_path="out/ml32m/checkpoint_entropy.pt",
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
     )

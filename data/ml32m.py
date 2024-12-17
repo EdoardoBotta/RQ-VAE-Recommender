@@ -71,7 +71,8 @@ class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
         # TODO: Maybe use links to extract more item features
         # Process movie data:
         full_df = pd.read_csv(self.raw_paths[1], index_col='movieId')
-        df = self._remove_low_occurrence(ratings_df, full_df, "movieId") # TODO: Maybe remove to retain more data for RQVAE training.
+        df = full_df # self._remove_low_occurrence(ratings_df, full_df, "movieId") # TODO: Maybe remove to retain more data for RQVAE training.
+        
         movie_mapping = {idx: i for i, idx in enumerate(df.index)}
 
         genres = self._process_genres(df["genres"].str.get_dummies('|').values, one_hot=True)
