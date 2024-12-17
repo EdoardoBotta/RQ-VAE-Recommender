@@ -140,7 +140,7 @@ def train(
                 data = next_batch(dataloader, device)
 
                 with accelerator.autocast():
-                    model_output = model(data, gumbel_t=t, debug=iter > 3000)
+                    model_output = model(data, gumbel_t=t)
                     loss = model_output.loss
                     loss = loss / gradient_accumulate_every
                     total_loss += loss

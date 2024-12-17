@@ -60,7 +60,7 @@ class RqVae(nn.Module):
                 n_embed=codebook_size,
                 forward_mode=codebook_mode,
                 do_kmeans_init=codebook_kmeans_init,
-                codebook_normalize=l != 0 and codebook_normalize,
+                codebook_normalize=l == 0 and codebook_normalize,
                 sim_vq=codebook_sim_vq
             ) for l in range(n_layers)
         ])
@@ -130,9 +130,6 @@ class RqVae(nn.Module):
         reconstuction_loss = self.reconstruction_loss(x_hat, x)
         rqvae_loss = self.rqvae_loss(residuals, embs)
         loss = (reconstuction_loss + rqvae_loss).mean()
-
-        #if debug:
-        #    import pdb; pdb.set_trace()
 
         with torch.no_grad():
             # Compute debug ID statistics
