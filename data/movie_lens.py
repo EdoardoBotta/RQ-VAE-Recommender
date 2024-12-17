@@ -2,10 +2,23 @@ import os
 import torch
 
 from data.ml1m import RawMovieLens1M
+from data.ml32m import RawMovieLens32M
 from data.schemas import SeqBatch
+from enum import Enum
 from torch.utils.data import Dataset
 
 PROCESSED_MOVIE_LENS_SUFFIX = "/processed/data.pt"
+
+
+class MovieLensSize(Enum):
+    _1M = 1
+    _32M = 2
+
+
+MOVIE_LENS_SIZE_TO_RAW_DATASET = {
+    MovieLensSize._1M: RawMovieLens1M,
+    MovieLensSize._32M: RawMovieLens32M
+}
 
 
 class MovieLensMovieData(Dataset):
@@ -14,12 +27,14 @@ class MovieLensMovieData(Dataset):
         root: str,
         *args,
         force_process: bool = False,
+        dataset_size: MovieLensSize = MovieLensSize._1M,
         **kwargs
     ) -> None:
         
         processed_data_path = root + PROCESSED_MOVIE_LENS_SUFFIX
+        raw_dataset_class = MOVIE_LENS_SIZE_TO_RAW_DATASET[dataset_size]
 
-        raw_movie_lens = RawMovieLens1M(root=root, *args, **kwargs)
+        raw_movie_lens = raw_dataset_class(root=root, *args, **kwargs)
         if not os.path.exists(processed_data_path) or force_process:
             raw_movie_lens.process(max_seq_len=200)
 
@@ -31,7 +46,7 @@ class MovieLensMovieData(Dataset):
 
     def __getitem__(self, idx):
         movie_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
-        x = self.movie_data[idx, :]
+        x = self.movie_data[idx, :768]
         return SeqBatch(
             user_ids=-1 * torch.ones_like(movie_ids.squeeze(0)),
             ids=movie_ids,
@@ -46,12 +61,14 @@ class MovieLensSeqData(Dataset):
             root: str,
             *args,
             force_process: bool = False,
+            dataset_size: MovieLensSize = MovieLensSize._1M,
             **kwargs
     ) -> None:
 
         processed_data_path = root + PROCESSED_MOVIE_LENS_SUFFIX
+        raw_dataset_class = MOVIE_LENS_SIZE_TO_RAW_DATASET[dataset_size]
 
-        raw_movie_lens = RawMovieLens1M(root=root, *args, **kwargs)
+        raw_movie_lens = raw_dataset_class(root=root, *args, **kwargs)
         if not os.path.exists(processed_data_path) or force_process:
             raw_movie_lens.process(max_seq_len=200)
   
@@ -61,13 +78,13 @@ class MovieLensSeqData(Dataset):
         # TODO: Implement train-test split using timestamps
 
     def __len__(self):
-        return self.sequence_data.shape[0]
+        return self.sequence_data["userId"].shape[0]
   
     def __getitem__(self, idx):
-        user_ids = self.sequence_data[idx, 0]
-        movie_ids = self.sequence_data[idx, 1:]
+        user_ids = self.sequence_data["userId"][idx]
+        movie_ids = self.sequence_data["movieId"][idx]
         assert (movie_ids >= -1).all(), "Invalid movie id found"
-        x = self.movie_data[movie_ids, :]
+        x = self.movie_data[movie_ids, :768]
         x[movie_ids == -1] = -1
 
         return SeqBatch(
@@ -79,6 +96,6 @@ class MovieLensSeqData(Dataset):
 
 
 if __name__ == "__main__":
-    dataset = MovieLensSeqData("dataset/ml-1m")
+    dataset = MovieLensMovieData("dataset/ml-32m", dataset_size=MovieLensSize._32M, force_process=True)
     dataset[0]
     import pdb; pdb.set_trace()

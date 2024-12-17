@@ -3,13 +3,19 @@ import torch
 from data.movie_lens import MovieLensMovieData
 from data.movie_lens import MovieLensSeqData
 from data.schemas import SeqBatch
+from data.utils import batch_to
+from einops import rearrange
+from einops import repeat
+from einops import pack
 from modules.rqvae import RqVae
 from typing import NamedTuple
 from typing import List
 from typing import Optional
 from torch import nn
+from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
+from torch.utils.data import SequentialSampler
 
 
 class TokenizedSeqBatch(NamedTuple):
@@ -28,8 +34,11 @@ class SemanticIdTokenizer(nn.Module):
                  hidden_dims: List[int],
                  codebook_size: int,
                  n_layers: int = 3,
+                 n_cat_feats: int = 18,
                  commitment_weight: float = 0.25,
-                 rqvae_weights_path: Optional[str] = None) -> None:
+                 rqvae_weights_path: Optional[str] = None,
+                 rqvae_codebook_normalize: bool = False,
+                 rqvae_sim_vq: bool = False) -> None:
         super().__init__()
 
         self.rq_vae = RqVae(
@@ -37,8 +46,12 @@ class SemanticIdTokenizer(nn.Module):
             embed_dim=output_dim,
             hidden_dims=hidden_dims,
             codebook_size=codebook_size,
+            codebook_kmeans_init=False,
+            codebook_normalize=rqvae_codebook_normalize,
+            codebook_sim_vq=rqvae_sim_vq,
             n_layers=n_layers,
-            commitment_weight=commitment_weight
+            n_cat_features=n_cat_feats,
+            commitment_weight=commitment_weight,
         )
         
         if rqvae_weights_path is not None:
@@ -48,35 +61,40 @@ class SemanticIdTokenizer(nn.Module):
 
         self.codebook_size = codebook_size
         self.n_layers = n_layers
-        self.n_ids = None
-        self.cached_ids = None
+        self.reset()
     
     def _get_hits(self, query: torch.Tensor, key: torch.Tensor) -> torch.Tensor:
-        return (key.unsqueeze(0) == query.unsqueeze(1)).all(axis=-1)
+        return (rearrange(key, "b d -> 1 b d") == rearrange(query, "b d -> b 1 d")).all(axis=-1)
+    
+    def reset(self):
+        self.n_ids = None
+        self.cached_ids = None
     
     @torch.no_grad
     def precompute_corpus_ids(self, movie_dataset: Dataset) -> torch.Tensor:
         cached_ids = None
         dedup_dim = []
-        for batch in DataLoader(movie_dataset, batch_size=128, shuffle=False):
-            batch_ids = self.forward(batch).sem_ids
+        sampler = BatchSampler(
+            SequentialSampler(range(len(movie_dataset))), batch_size=512, drop_last=False
+        )
+        dataloader = DataLoader(movie_dataset, sampler=sampler, shuffle=False, collate_fn=lambda batch: batch[0])
+        for batch in dataloader:
+            batch_ids = self.forward(batch_to(batch, self.rq_vae.device)).sem_ids
             # Detect in-batch duplicates
             is_hit = self._get_hits(batch_ids, batch_ids)
-            hits = torch.triu(is_hit, diagonal=1).sum(axis=-1)
+            hits = torch.tril(is_hit, diagonal=-1).sum(axis=-1)
             assert hits.min() >= 0
             if cached_ids is None:
                 cached_ids = batch_ids.clone()
             else:
                 # Detect batch-cache duplicates
                 is_hit = self._get_hits(batch_ids, cached_ids)
-                hits += torch.triu(is_hit, diagonal=1).sum(axis=-1)
-                cached_ids = torch.cat([cached_ids, batch_ids], axis=0)
+                hits += is_hit.sum(axis=-1)
+                cached_ids = pack([cached_ids, batch_ids], "* d")[0]
             dedup_dim.append(hits)
         # Concatenate new column to deduplicate ids
-        dedup_dim_tensor = torch.cat(dedup_dim).unsqueeze(-1)
-        self.cached_ids = torch.cat([
-            cached_ids,
-            dedup_dim_tensor], axis=-1)
+        dedup_dim_tensor = pack(dedup_dim, "*")[0]
+        self.cached_ids = pack([cached_ids, dedup_dim_tensor], "b *")[0]
         self.n_ids = self.cached_ids.max()+1
         return self.cached_ids
     
@@ -89,8 +107,8 @@ class SemanticIdTokenizer(nn.Module):
         else:
             B, N = batch.ids.shape
             _, D = self.cached_ids.shape
-            sem_ids = self.cached_ids[batch.ids.flatten(), :].reshape(B, N*D)
-        seq_mask = batch.seq_mask.repeat_interleave(D, dim=1)
+            sem_ids = rearrange(self.cached_ids[batch.ids.flatten(), :], "(b n) d -> b (n d)", n=N)
+        seq_mask = repeat(batch.seq_mask, "b d -> b (rep d)", rep=D)
         return TokenizedSeqBatch(
             user_ids=batch.user_ids,
             sem_ids=sem_ids,

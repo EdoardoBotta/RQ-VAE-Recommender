@@ -1,5 +1,6 @@
 import torch
 from modules.normalize import L2NormalizationLayer
+from modules.normalize import RMSNorm
 from typing import List
 from torch import nn
 
@@ -22,7 +23,7 @@ class MLP(nn.Module):
         
         self.mlp = nn.Sequential()
         for i, (in_d, out_d) in enumerate(zip(dims[:-1], dims[1:])):
-            self.mlp.append(nn.Linear(in_d, out_d))
+            self.mlp.append(nn.Linear(in_d, out_d, bias=False))
             if i != len(dims)-2:
                 self.mlp.append(nn.SiLU())
         self.mlp.append(L2NormalizationLayer() if normalize else nn.Identity())
@@ -30,3 +31,4 @@ class MLP(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         assert x.shape[-1] == self.input_dim, f"Invalid input dim: Expected {self.input_dim}, found {x.shape[-1]}"
         return self.mlp(x)
+

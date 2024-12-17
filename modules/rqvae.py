@@ -5,12 +5,14 @@ from typing import List
 from typing import NamedTuple
 
 from data.schemas import SeqBatch
+from einops import rearrange
 from .encoder import MLP
 from .loss import CategoricalReconstuctionLoss
 from .loss import ReconstructionLoss
 from .loss import RqVaeLoss
+from .normalize import l2norm
 from .quantize import Quantize
-from init.kmeans import kmeans_init_
+from .quantize import QuantizeForwardMode
 
 
 class RqVaeOutput(NamedTuple):
@@ -23,6 +25,8 @@ class RqVaeComputedLosses(NamedTuple):
     loss: torch.Tensor
     reconstruction_loss: torch.Tensor
     rqvae_loss: torch.Tensor
+    embs_norm: torch.Tensor
+    p_unique_ids: torch.Tensor
 
 
 class RqVae(nn.Module):
@@ -32,9 +36,13 @@ class RqVae(nn.Module):
         embed_dim: int,
         hidden_dims: List[int],
         codebook_size: int,
+        codebook_kmeans_init: bool = True,
+        codebook_normalize: bool = False,
+        codebook_sim_vq: bool = False,
+        codebook_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX,
         n_layers: int = 3,
         commitment_weight: float = 0.25,
-        n_cat_features: int = 18
+        n_cat_features: int = 18,
     ) -> None:
         super().__init__()
 
@@ -44,22 +52,31 @@ class RqVae(nn.Module):
         self.n_layers = n_layers
         self.codebook_size = codebook_size
         self.commitment_weight = commitment_weight
+        self.n_cat_feats = n_cat_features
 
         self.layers = nn.ModuleList(modules=[
-            Quantize(embed_dim=embed_dim, n_embed=codebook_size)
-            for _ in range(n_layers)
+            Quantize(
+                embed_dim=embed_dim,
+                n_embed=codebook_size,
+                forward_mode=codebook_mode,
+                do_kmeans_init=codebook_kmeans_init,
+                codebook_normalize=l == 0 and codebook_normalize,
+                sim_vq=codebook_sim_vq
+            ) for l in range(n_layers)
         ])
 
         self.encoder = MLP(
             input_dim=input_dim,
             hidden_dims=hidden_dims,
-            out_dim=embed_dim
+            out_dim=embed_dim,
+            normalize=codebook_normalize
         )
 
         self.decoder = MLP(
             input_dim=embed_dim,
             hidden_dims=hidden_dims[-1::-1],
-            out_dim=input_dim
+            out_dim=input_dim,
+            normalize=True
         )
 
         self.reconstruction_loss = (
@@ -75,13 +92,7 @@ class RqVae(nn.Module):
     def load_pretrained(self, path: str) -> None:
         state = torch.load(path, map_location=self.device)
         self.load_state_dict(state["model"])
-
-    def kmeans_init(self, batch: SeqBatch) -> None:
-        x = batch.x
-        with torch.no_grad():
-            x = self.encoder(x)
-            for layer in self.layers:
-                kmeans_init_(layer.weight, x=x)
+        print(f"---Loaded RQVAE Iter {state['iter']}---")
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.encoder(x)
@@ -99,28 +110,38 @@ class RqVae(nn.Module):
             residuals.append(res)
             quantized = layer(res, temperature=gumbel_t)
             emb, id = quantized.embeddings, quantized.ids
-            res = res - emb
+            res = res - emb.detach()
             sem_ids.append(id)
             embs.append(emb)
 
         return RqVaeOutput(
-            embeddings=torch.stack(embs, dim=-1),
-            residuals=torch.stack(residuals, dim=-1),
-            sem_ids=torch.stack(sem_ids, dim=-1)
+            embeddings=rearrange(embs, "b h d -> h d b"),
+            residuals=rearrange(residuals, "b h d -> h d b"),
+            sem_ids=rearrange(sem_ids, "b d -> d b")
         )
 
-    def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
+    def forward(self, batch: SeqBatch, gumbel_t: float, debug=False) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)
         embs, residuals = quantized.embeddings, quantized.residuals
         x_hat = self.decode(embs.sum(axis=-1))
+        x_hat = torch.cat([l2norm(x_hat[...,:-self.n_cat_feats]), x_hat[...,-self.n_cat_feats:]], axis=-1)
 
         reconstuction_loss = self.reconstruction_loss(x_hat, x)
         rqvae_loss = self.rqvae_loss(residuals, embs)
         loss = (reconstuction_loss + rqvae_loss).mean()
 
+        with torch.no_grad():
+            # Compute debug ID statistics
+            embs_norm = embs.norm(dim=1)
+            p_unique_ids = (~torch.triu(
+                (rearrange(quantized.sem_ids, "b d -> b 1 d") == rearrange(quantized.sem_ids, "b d -> 1 b d")).all(axis=-1), diagonal=1)
+            ).all(axis=1).sum() / quantized.sem_ids.shape[0]
+
         return RqVaeComputedLosses(
             loss=loss,
             reconstruction_loss=reconstuction_loss.mean(),
-            rqvae_loss=rqvae_loss.mean()
+            rqvae_loss=rqvae_loss.mean(),
+            embs_norm=embs_norm,
+            p_unique_ids=p_unique_ids
         )
