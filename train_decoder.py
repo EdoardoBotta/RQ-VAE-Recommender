@@ -26,6 +26,7 @@ def train(
     pretrained_rqvae_path=None,
     split_batches=True,
     amp=False,
+    force_dataset_process=False,
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     vae_input_dim=18,
@@ -47,7 +48,7 @@ def train(
 
     device = accelerator.device
 
-    movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size)
+    movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
     dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     dataloader = cycle(dataloader)
@@ -127,7 +128,7 @@ if __name__ == "__main__":
         vae_embed_dim=64,
         vae_n_cat_feats=0,
         vae_codebook_size=256,
-        pretrained_rqvae_path="out/ml32m/checkpoint_entropy.pt",
+        pretrained_rqvae_path="out/ml32m/checkpoint_high_entropy.pt",
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
     )

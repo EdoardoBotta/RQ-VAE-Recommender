@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from einops import rearrange
 from typing import NamedTuple
 
 
@@ -10,9 +11,8 @@ def kmeans_init_(tensor: torch.Tensor, x: torch.Tensor):
 
     with torch.no_grad():
         k, _ = tensor.shape
-        # TODO: Check out scipy kmeans2
         kmeans_out = Kmeans(k=k).run(x)
-        tensor[:, :] = kmeans_out.centroids[:, :]
+        tensor.data.copy_(kmeans_out.centroids)
 
 
 class KmeansOutput(NamedTuple):
@@ -24,7 +24,7 @@ class Kmeans:
     def __init__(self,
                  k: int,
                  max_iters: int = None,
-                 stop_threshold: float = 1e-2) -> None:
+                 stop_threshold: float = 1e-10) -> None:
         self.k = k
         self.iters = max_iters
         self.stop_threshold = stop_threshold
@@ -38,11 +38,14 @@ class Kmeans:
         self.assignment = None
 
     def _update_centroids(self, x) -> torch.Tensor:
-        squared_pw_dist = (x.unsqueeze(1) - self.centroids.unsqueeze(0))**2
+        squared_pw_dist = (
+            rearrange(x, "b d -> b 1 d") - rearrange(self.centroids, "b d -> 1 b d")
+        )**2
         centroid_idx = (squared_pw_dist.sum(axis=2)).min(axis=1).indices
         assigned = (
-            torch.arange(self.k, device=x.device).unsqueeze(1) == centroid_idx
+            rearrange(torch.arange(self.k, device=x.device), "d -> d 1") == centroid_idx
         )
+
         for cluster in range(self.k):
             is_assigned_to_c = assigned[cluster]
             if not is_assigned_to_c.any():
@@ -57,7 +60,7 @@ class Kmeans:
         while self.iters is None or i < self.iters:
             old_c = self.centroids.clone()
             self._update_centroids(x)
-            if torch.norm(self.centroids - old_c) < self.stop_threshold:
+            if torch.norm(self.centroids - old_c, dim=1).max() < self.stop_threshold:
                 break
             i += 1
 

@@ -15,6 +15,7 @@ from modules.rqvae import RqVae
 from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
 from torch.optim import AdamW
+from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import RandomSampler
@@ -35,6 +36,7 @@ def train(
     split_batches=True,
     amp=False,
     wandb_logging=False,
+    force_dataset_process=False,
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     save_model_every=1000000,
@@ -60,7 +62,7 @@ def train(
 
     device = accelerator.device
 
-    dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=True)
+    dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
     sampler = BatchSampler(RandomSampler(dataset), batch_size, False)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=None, collate_fn=lambda batch: batch)
     dataloader = cycle(dataloader)
@@ -99,9 +101,11 @@ def train(
         state = torch.load(pretrained_rqvae_path, map_location=device)
         optimizer.load_state_dict(state["optimizer"])
         start_iter = state["iter"]+1
+    
+    scheduler = ExponentialLR(optimizer, gamma=0.95)
 
-    model, optimizer = accelerator.prepare(
-        model, optimizer
+    model, optimizer, scheduler = accelerator.prepare(
+        model, optimizer, scheduler
     )
 
     tokenizer = SemanticIdTokenizer(
@@ -118,10 +122,10 @@ def train(
     tokenizer.rq_vae = model
 
     temp_scheduler = TemperatureScheduler(
-        t0=2,
-        min_t=0.1,
+        t0=0.2,
+        min_t=0.0005,
         anneal_rate=0.00003,
-        step_size=3000
+        step_size=2000
     )
 
     with tqdm(initial=start_iter, total=start_iter+iterations,
@@ -130,7 +134,7 @@ def train(
         for iter in range(start_iter, start_iter+1+iterations):
             model.train()
             total_loss = 0
-            t = 0.2  # temp_scheduler.get_t(iter)
+            t = 0.2
             if iter == 0 and use_kmeans_init:
                 kmeans_init_data = batch_to(dataset[torch.arange(20000)], device)
                 model(kmeans_init_data, t)
@@ -163,6 +167,9 @@ def train(
             accelerator.wait_for_everyone()
 
             optimizer.step()
+            if (iter+1) % 750 == 0:
+                scheduler.step()
+            
             accelerator.wait_for_everyone()
 
             if (iter+1) % save_model_every == 0 or iter+1 == iterations:
@@ -197,7 +204,9 @@ def train(
                 emb_norms_avg_log = {
                     f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
                 }
+
                 wandb.log({
+                    "learning_rate": optimizer.param_groups[0]["lr"],
                     "total_loss": total_loss.cpu().item(),
                     "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
                     "rqvae_loss": model_output.rqvae_loss.cpu().item(),
@@ -217,7 +226,7 @@ if __name__ == "__main__":
         iterations=50000,
         learning_rate=0.0001,
         weight_decay=0.01,
-        batch_size=256,
+        batch_size=64,
         vae_input_dim=768,
         vae_n_cat_feats=0,
         vae_hidden_dims=[512, 256, 128],
