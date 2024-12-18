@@ -4,6 +4,8 @@ from .attention import MultiHeadCrossAttention
 from ..normalize import RMSNorm
 from typing import Optional
 from torch import nn
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 
 
 class TransformerBlock(nn.Module):
@@ -94,7 +96,7 @@ class TransformerDecoder(nn.Module):
                 do_cross_attn=self.do_cross_attn
             ) for _ in range(n_layers)
         ])
-    
+
     def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None, context: Optional[torch.Tensor] = None) -> torch.Tensor:
         for layer in self.layers:
             x = layer(x, attn_mask, context)

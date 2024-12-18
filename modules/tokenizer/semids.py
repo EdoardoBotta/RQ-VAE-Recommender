@@ -22,6 +22,7 @@ class TokenizedSeqBatch(NamedTuple):
     user_ids: torch.Tensor
     sem_ids: torch.Tensor
     seq_mask: torch.Tensor
+    token_type_ids: torch.Tensor
     
 
 class SemanticIdTokenizer(nn.Module):
@@ -67,8 +68,11 @@ class SemanticIdTokenizer(nn.Module):
         return (rearrange(key, "b d -> 1 b d") == rearrange(query, "b d -> b 1 d")).all(axis=-1)
     
     def reset(self):
-        self.n_ids = None
         self.cached_ids = None
+    
+    @property
+    def sem_ids_dim(self):
+        return self.n_layers + 1
     
     @torch.no_grad
     def precompute_corpus_ids(self, movie_dataset: Dataset) -> torch.Tensor:
@@ -95,24 +99,36 @@ class SemanticIdTokenizer(nn.Module):
         # Concatenate new column to deduplicate ids
         dedup_dim_tensor = pack(dedup_dim, "*")[0]
         self.cached_ids = pack([cached_ids, dedup_dim_tensor], "b *")[0]
-        self.n_ids = self.cached_ids.max()+1
+        
+        n_ids = self.cached_ids.max()+1
+        assert n_ids <= self.codebook_size, f"Found {n_ids} max duplicates when codebook size is {self.codebook_size}"
+        
         return self.cached_ids
     
     @torch.no_grad
     def forward(self, batch: SeqBatch) -> TokenizedSeqBatch:
+        # TODO: Handle output inconstency in If-else.
+        # If block has to return 3-sized ids for use in precompute_corpus_ids
+        # Else block has to return deduped 4-sized ids for use in decoder training.
         if self.cached_ids is None or batch.ids.max() >= self.cached_ids.shape[0]:
             B, N = batch.ids.shape
             sem_ids = self.rq_vae.get_semantic_ids(batch.x).sem_ids
             D = sem_ids.shape[-1]
+            seq_mask = None
         else:
             B, N = batch.ids.shape
             _, D = self.cached_ids.shape
             sem_ids = rearrange(self.cached_ids[batch.ids.flatten(), :], "(b n) d -> b (n d)", n=N)
-        seq_mask = repeat(batch.seq_mask, "b d -> b (rep d)", rep=D)
+            seq_mask = batch.seq_mask.repeat_interleave(D, dim=1)
+            sem_ids[~seq_mask] = -1
+        
+        token_type_ids = torch.arange(D, device=sem_ids.device).repeat(N)
+        
         return TokenizedSeqBatch(
             user_ids=batch.user_ids,
             sem_ids=sem_ids,
-            seq_mask=seq_mask
+            seq_mask=seq_mask,
+            token_type_ids=token_type_ids
         )
 
 if __name__ == "__main__":

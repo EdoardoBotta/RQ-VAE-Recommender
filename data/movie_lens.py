@@ -76,6 +76,10 @@ class MovieLensSeqData(Dataset):
         self.sequence_data = data[0][("user", "rated", "movie")]["history"]
         self.movie_data = data[0]["movie"]["x"]
         # TODO: Implement train-test split using timestamps
+    
+    @property
+    def max_seq_len(self):
+        return self.sequence_data["movieId"].shape[-1]
 
     def __len__(self):
         return self.sequence_data["userId"].shape[0]

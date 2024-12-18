@@ -1,14 +1,27 @@
 import torch
+
+from modules.tokenizer.semids import TokenizedSeqBatch
 from torch import nn
 
 
 class SemIdEmbedder(nn.Module):
-    def __init__(self, num_embeddings, embeddings_dim) -> None:
+    def __init__(self, num_embeddings, sem_ids_dim, embeddings_dim) -> None:
         super().__init__()
-        self.emb = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=embeddings_dim, padding_idx=-1)
+        
+        self.sem_ids_dim = sem_ids_dim
+        self.num_embeddings = num_embeddings
+        self.padding_idx = sem_ids_dim*num_embeddings
+        
+        self.emb = nn.Embedding(
+            num_embeddings=num_embeddings*self.sem_ids_dim+1,
+            embedding_dim=embeddings_dim,
+            padding_idx=self.padding_idx
+        )
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.emb(x)
+    def forward(self, batch: TokenizedSeqBatch) -> torch.Tensor:
+        sem_ids = batch.token_type_ids*self.num_embeddings + batch.sem_ids
+        sem_ids[~batch.seq_mask] = self.padding_idx
+        return self.emb(sem_ids)
     
 
 class UserIdEmbedder(nn.Module):

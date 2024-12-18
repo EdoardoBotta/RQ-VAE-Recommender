@@ -37,9 +37,9 @@ def train(
     vae_sim_vq=False,
     vae_n_cat_feats=18,
     vae_n_layers=3,
-    attn_heads=16,
+    attn_heads=4,
     attn_embed_dim=64,
-    attn_layers=6
+    attn_layers=1
 ):
     accelerator = Accelerator(
         split_batches=split_batches,
@@ -67,7 +67,7 @@ def train(
     )
     tokenizer.precompute_corpus_ids(movie_dataset)
 
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     model = DecoderRetrievalModel(
         embedding_dim=vae_embed_dim,
@@ -75,7 +75,9 @@ def train(
         dropout=True,
         num_heads=attn_heads,
         n_layers=attn_layers,
-        num_embeddings=tokenizer.n_ids
+        num_embeddings=vae_codebook_size,
+        sem_id_dim=tokenizer.sem_ids_dim,
+        max_pos=dataset.max_seq_len*tokenizer.sem_ids_dim
     )
 
     optimizer = AdamW(
