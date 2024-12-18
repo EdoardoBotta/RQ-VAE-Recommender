@@ -243,4 +243,5 @@ if __name__ == "__main__":
         commitment_weight=0.25,
         vae_n_layers=3,
         vae_codebook_mode=QuantizeForwardMode.ROTATION_TRICK,
+        force_dataset_process=True,
     )
