@@ -128,7 +128,7 @@ if __name__ == "__main__":
         vae_embed_dim=64,
         vae_n_cat_feats=0,
         vae_codebook_size=256,
-        pretrained_rqvae_path="out/ml32m/checkpoint_high_entropy.pt",
+        pretrained_rqvae_path="trained_models/checkpoint_high_entropy.pt",
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
     )
