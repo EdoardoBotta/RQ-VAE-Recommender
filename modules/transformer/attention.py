@@ -3,6 +3,9 @@ from typing import Optional
 from torch import nn
 
 
+torch.backends.cuda.enable_flash_sdp(True)
+
+
 class Attend(nn.Module):
     def __init__(self, d_out, num_heads, head_dim, dropout):
         super().__init__()
@@ -30,7 +33,6 @@ class Attend(nn.Module):
 
         # Combine heads, where self.d_out = self.num_heads * self.head_dim
         context_vec = context_vec.transpose(1, 2).contiguous().view(batch_size, num_tokens, self.d_out)
-
         return context_vec
 
 

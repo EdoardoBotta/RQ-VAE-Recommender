@@ -12,6 +12,8 @@ from torch.nn import functional as F
 # Needed to make torch.compile succeed
 torch._dynamo.config.suppress_errors = True
 
+torch.set_float32_matmul_precision('high')
+
 
 class ModelOutput(NamedTuple):
     loss: torch.Tensor

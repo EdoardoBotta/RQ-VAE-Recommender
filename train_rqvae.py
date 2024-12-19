@@ -218,7 +218,8 @@ def train(
 
             pbar.update(1)
     
-    wandb.finish()
+    if wandb_logging:
+        wandb.finish()
 
 
 if __name__ == "__main__":

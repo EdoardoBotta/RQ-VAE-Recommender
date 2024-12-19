@@ -1,4 +1,6 @@
+import os
 import gin
+import wandb
 
 from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
@@ -22,13 +24,16 @@ def train(
     weight_decay=0.01,
     max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
+    save_dir_root="out/",
     dataset_size=MovieLensSize._1M,
     pretrained_rqvae_path=None,
     split_batches=True,
     amp=False,
+    wandb_logging=False,
     force_dataset_process=False,
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
+    save_model_every=1000000,
     vae_input_dim=18,
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
@@ -37,16 +42,26 @@ def train(
     vae_sim_vq=False,
     vae_n_cat_feats=18,
     vae_n_layers=3,
-    attn_heads=4,
+    attn_heads=8,
     attn_embed_dim=64,
-    attn_layers=1
+    attn_layers=4
 ):
+    if wandb_logging:
+        params = locals()
+
     accelerator = Accelerator(
         split_batches=split_batches,
         mixed_precision=mixed_precision_type if amp else 'no'
     )
 
     device = accelerator.device
+
+    if wandb_logging:
+        wandb.login()
+        run = wandb.init(
+            project="gen-retrieval-decoder-training",
+            config=params
+        )
 
     movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
     dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size)
@@ -65,6 +80,7 @@ def train(
         rqvae_codebook_normalize=vae_codebook_normalize,
         rqvae_sim_vq=vae_sim_vq
     )
+    tokenizer = accelerator.prepare(tokenizer)
     tokenizer.precompute_corpus_ids(movie_dataset)
 
     # import pdb; pdb.set_trace()
@@ -72,7 +88,7 @@ def train(
     model = DecoderRetrievalModel(
         embedding_dim=vae_embed_dim,
         d_out=vae_embed_dim,
-        dropout=True,
+        dropout=False,
         num_heads=attn_heads,
         n_layers=attn_layers,
         num_embeddings=vae_codebook_size,
@@ -86,10 +102,8 @@ def train(
         weight_decay=weight_decay
     )
 
-    scheduler = LinearLR(optimizer)
-
-    model, optimizer, tokenizer, scheduler = accelerator.prepare(
-        model, optimizer, tokenizer, scheduler
+    model, optimizer  = accelerator.prepare(
+        model, optimizer
     )
 
     with tqdm(initial=0, total=iterations,
@@ -105,20 +119,41 @@ def train(
                 with accelerator.autocast():
                     loss = model(tokenized_data).loss
                     loss = loss / gradient_accumulate_every
-                    total_loss += loss.item()
+                    total_loss += loss
 
-                accelerator.backward(loss)
+                accelerator.backward(total_loss)
 
-            pbar.set_description(f'loss: {total_loss:.4f}')
+            pbar.set_description(f'loss: {total_loss.item():.4f}')
 
             accelerator.wait_for_everyone()
             accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
 
             optimizer.step()
-            scheduler.step()
 
             accelerator.wait_for_everyone()
+
+            if (iter+1) % save_model_every == 0 or iter+1 == iterations:
+                state = {
+                    "iter": iter,
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict()
+                }
+
+                if not os.path.exists(save_dir_root):
+                    os.makedirs(save_dir_root)
+
+                torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
+            
+            if wandb_logging:
+                wandb.log({
+                    "learning_rate": optimizer.param_groups[0]["lr"],
+                    "total_loss": total_loss.cpu().item(),
+                })
+
             pbar.update(1)
+    
+    if wandb_logging:
+        wandb.finish()
 
 
 if __name__ == "__main__":
@@ -130,7 +165,9 @@ if __name__ == "__main__":
         vae_embed_dim=64,
         vae_n_cat_feats=0,
         vae_codebook_size=256,
+        wandb_logging=True,
         pretrained_rqvae_path="trained_models/checkpoint_high_entropy.pt",
+        save_dir_root="out/decoder/",
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
     )
