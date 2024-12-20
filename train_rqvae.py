@@ -88,7 +88,7 @@ def train(
         weight_decay=weight_decay
     )
 
-    if wandb_logging:
+    if wandb_logging and accelerator.is_main_process:
         wandb.login()
         run = wandb.init(
             project="rq-vae-training",
@@ -172,49 +172,50 @@ def train(
             
             accelerator.wait_for_everyone()
 
-            if (iter+1) % save_model_every == 0 or iter+1 == iterations:
-                state = {
-                    "iter": iter,
-                    "model": model.state_dict(),
-                    "optimizer": optimizer.state_dict()
-                }
+            if accelerator.is_main_process:
+                if (iter+1) % save_model_every == 0 or iter+1 == iterations:
+                    state = {
+                        "iter": iter,
+                        "model": model.state_dict(),
+                        "optimizer": optimizer.state_dict()
+                    }
 
-                if not os.path.exists(save_dir_root):
-                    os.makedirs(save_dir_root)
+                    if not os.path.exists(save_dir_root):
+                        os.makedirs(save_dir_root)
 
-                torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
-            
-            id_diversity_log = {}
-            if (iter+1) % eval_every == 0 or iter+1 == iterations:
-                tokenizer.reset()
-                model.eval()
-
-                corpus_ids = tokenizer.precompute_corpus_ids(dataset)
-                max_duplicates = corpus_ids[:,-1].max() / corpus_ids.shape[0]
+                    torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
                 
-                _, counts = torch.unique(corpus_ids[:,:-1], dim=0, return_counts=True)
-                p = counts / corpus_ids.shape[0]
-                rqvae_entropy = -(p*torch.log(p)).sum()
+                id_diversity_log = {}
+                if (iter+1) % eval_every == 0 or iter+1 == iterations:
+                    tokenizer.reset()
+                    model.eval()
 
-                id_diversity_log["rqvae_entropy"] = rqvae_entropy.cpu().item()
-                id_diversity_log["max_id_duplicates"] = max_duplicates.cpu().item()
-            
-            if wandb_logging:
-                emb_norms_avg = model_output.embs_norm.mean(axis=0)
-                emb_norms_avg_log = {
-                    f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
-                }
+                    corpus_ids = tokenizer.precompute_corpus_ids(dataset)
+                    max_duplicates = corpus_ids[:,-1].max() / corpus_ids.shape[0]
+                    
+                    _, counts = torch.unique(corpus_ids[:,:-1], dim=0, return_counts=True)
+                    p = counts / corpus_ids.shape[0]
+                    rqvae_entropy = -(p*torch.log(p)).sum()
 
-                wandb.log({
-                    "learning_rate": optimizer.param_groups[0]["lr"],
-                    "total_loss": total_loss.cpu().item(),
-                    "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
-                    "rqvae_loss": model_output.rqvae_loss.cpu().item(),
-                    "temperature": t,
-                    "p_unique_ids": model_output.p_unique_ids.cpu().item(),
-                    **emb_norms_avg_log,
-                    **id_diversity_log
-                })
+                    id_diversity_log["rqvae_entropy"] = rqvae_entropy.cpu().item()
+                    id_diversity_log["max_id_duplicates"] = max_duplicates.cpu().item()
+                
+                if wandb_logging:
+                    emb_norms_avg = model_output.embs_norm.mean(axis=0)
+                    emb_norms_avg_log = {
+                        f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
+                    }
+
+                    wandb.log({
+                        "learning_rate": optimizer.param_groups[0]["lr"],
+                        "total_loss": total_loss.cpu().item(),
+                        "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
+                        "rqvae_loss": model_output.rqvae_loss.cpu().item(),
+                        "temperature": t,
+                        "p_unique_ids": model_output.p_unique_ids.cpu().item(),
+                        **emb_norms_avg_log,
+                        **id_diversity_log
+                    })
 
             pbar.update(1)
     

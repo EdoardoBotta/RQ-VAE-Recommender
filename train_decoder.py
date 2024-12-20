@@ -1,5 +1,6 @@
 import os
 import gin
+import torch
 import wandb
 
 from accelerate import Accelerator
@@ -56,7 +57,7 @@ def train(
 
     device = accelerator.device
 
-    if wandb_logging:
+    if wandb_logging and accelerator.is_main_process:
         wandb.login()
         run = wandb.init(
             project="gen-retrieval-decoder-training",
@@ -102,7 +103,7 @@ def train(
         weight_decay=weight_decay
     )
 
-    model, optimizer  = accelerator.prepare(
+    model, optimizer = accelerator.prepare(
         model, optimizer
     )
 
@@ -117,6 +118,7 @@ def train(
                 tokenized_data = tokenizer(data)
 
                 with accelerator.autocast():
+                    # model.generate(tokenized_data)
                     loss = model(tokenized_data).loss
                     loss = loss / gradient_accumulate_every
                     total_loss += loss
@@ -132,23 +134,24 @@ def train(
 
             accelerator.wait_for_everyone()
 
-            if (iter+1) % save_model_every == 0 or iter+1 == iterations:
-                state = {
-                    "iter": iter,
-                    "model": model.state_dict(),
-                    "optimizer": optimizer.state_dict()
-                }
+            if accelerator.is_main_process:
+                if (iter+1) % save_model_every == 0 or iter+1 == iterations:
+                    state = {
+                        "iter": iter,
+                        "model": model.state_dict(),
+                        "optimizer": optimizer.state_dict()
+                    }
 
-                if not os.path.exists(save_dir_root):
-                    os.makedirs(save_dir_root)
+                    if not os.path.exists(save_dir_root):
+                        os.makedirs(save_dir_root)
 
-                torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
-            
-            if wandb_logging:
-                wandb.log({
-                    "learning_rate": optimizer.param_groups[0]["lr"],
-                    "total_loss": total_loss.cpu().item(),
-                })
+                    torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
+                
+                if wandb_logging:
+                    wandb.log({
+                        "learning_rate": optimizer.param_groups[0]["lr"],
+                        "total_loss": total_loss.cpu().item(),
+                    })
 
             pbar.update(1)
     
@@ -165,7 +168,7 @@ if __name__ == "__main__":
         vae_embed_dim=64,
         vae_n_cat_feats=0,
         vae_codebook_size=256,
-        wandb_logging=True,
+        wandb_logging=False,
         pretrained_rqvae_path="trained_models/checkpoint_high_entropy.pt",
         save_dir_root="out/decoder/",
         dataset_folder="dataset/ml-32m",

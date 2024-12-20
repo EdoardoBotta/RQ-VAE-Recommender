@@ -1,11 +1,9 @@
 import torch
-from .attention import MultiHeadSelfAttention
-from .attention import MultiHeadCrossAttention
-from ..normalize import RMSNorm
+from modules.transformer.attention import MultiHeadSelfAttention
+from modules.transformer.attention import MultiHeadCrossAttention
+from modules.normalize import RMSNorm
 from typing import Optional
 from torch import nn
-import torch._dynamo
-torch._dynamo.config.suppress_errors = True
 
 
 class TransformerBlock(nn.Module):

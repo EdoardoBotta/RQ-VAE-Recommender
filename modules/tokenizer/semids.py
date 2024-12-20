@@ -5,8 +5,8 @@ from data.movie_lens import MovieLensSeqData
 from data.schemas import SeqBatch
 from data.utils import batch_to
 from einops import rearrange
-from einops import repeat
 from einops import pack
+from modules.utils import eval_mode
 from modules.rqvae import RqVae
 from typing import NamedTuple
 from typing import List
@@ -75,6 +75,7 @@ class SemanticIdTokenizer(nn.Module):
         return self.n_layers + 1
     
     @torch.no_grad
+    @eval_mode
     def precompute_corpus_ids(self, movie_dataset: Dataset) -> torch.Tensor:
         cached_ids = None
         dedup_dim = []
@@ -106,6 +107,7 @@ class SemanticIdTokenizer(nn.Module):
         return self.cached_ids
     
     @torch.no_grad
+    @eval_mode
     def forward(self, batch: SeqBatch) -> TokenizedSeqBatch:
         # TODO: Handle output inconstency in If-else.
         # If block has to return 3-sized ids for use in precompute_corpus_ids
@@ -122,8 +124,7 @@ class SemanticIdTokenizer(nn.Module):
             seq_mask = batch.seq_mask.repeat_interleave(D, dim=1)
             sem_ids[~seq_mask] = -1
         
-        token_type_ids = torch.arange(D, device=sem_ids.device).repeat(N)
-        
+        token_type_ids = torch.arange(D, device=sem_ids.device).repeat(B, N)
         return TokenizedSeqBatch(
             user_ids=batch.user_ids,
             sem_ids=sem_ids,

@@ -1,18 +1,17 @@
 import torch
 
-from torch import nn
-from typing import List
-from typing import NamedTuple
-
 from data.schemas import SeqBatch
 from einops import rearrange
-from .encoder import MLP
-from .loss import CategoricalReconstuctionLoss
-from .loss import ReconstructionLoss
-from .loss import RqVaeLoss
-from .normalize import l2norm
-from .quantize import Quantize
-from .quantize import QuantizeForwardMode
+from modules.encoder import MLP
+from modules.loss import CategoricalReconstuctionLoss
+from modules.loss import ReconstructionLoss
+from modules.loss import RqVaeLoss
+from modules.normalize import l2norm
+from modules.quantize import Quantize
+from modules.quantize import QuantizeForwardMode
+from typing import List
+from typing import NamedTuple
+from torch import nn
 
 
 class RqVaeOutput(NamedTuple):
@@ -60,9 +59,9 @@ class RqVae(nn.Module):
                 n_embed=codebook_size,
                 forward_mode=codebook_mode,
                 do_kmeans_init=codebook_kmeans_init,
-                codebook_normalize=l == 0 and codebook_normalize,
+                codebook_normalize=i == 0 and codebook_normalize,
                 sim_vq=codebook_sim_vq
-            ) for l in range(n_layers)
+            ) for i in range(n_layers)
         ])
 
         self.encoder = MLP(
@@ -120,7 +119,7 @@ class RqVae(nn.Module):
             sem_ids=rearrange(sem_ids, "b d -> d b")
         )
 
-    def forward(self, batch: SeqBatch, gumbel_t: float, debug=False) -> RqVaeComputedLosses:
+    def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)
         embs, residuals = quantized.embeddings, quantized.residuals
