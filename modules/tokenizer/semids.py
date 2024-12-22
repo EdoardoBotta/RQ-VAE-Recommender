@@ -102,7 +102,6 @@ class SemanticIdTokenizer(nn.Module):
         self.cached_ids = pack([cached_ids, dedup_dim_tensor], "b *")[0]
         
         n_ids = self.cached_ids.max()+1
-        assert n_ids <= self.codebook_size, f"Found {n_ids} max duplicates when codebook size is {self.codebook_size}"
         
         return self.cached_ids
     

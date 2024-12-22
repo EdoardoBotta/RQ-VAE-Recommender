@@ -13,6 +13,7 @@ from typing import List
 from typing import NamedTuple
 from torch import nn
 
+torch.set_float32_matmul_precision('high')
 
 class RqVaeOutput(NamedTuple):
     embeddings: torch.Tensor
@@ -119,6 +120,7 @@ class RqVae(nn.Module):
             sem_ids=rearrange(sem_ids, "b d -> d b")
         )
 
+    @torch.compile
     def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)
