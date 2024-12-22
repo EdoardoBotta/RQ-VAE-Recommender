@@ -1,4 +1,6 @@
 import torch
+import torch.nn.functional as F
+
 from typing import Optional
 from torch import nn
 
@@ -14,6 +16,21 @@ class Attend(nn.Module):
         self.head_dim = head_dim
         self.d_out = d_out
         self.dropout = dropout
+    
+    def jagged_causal_forward(self, qkv: torch.nested.Tensor) -> torch.nested.Tensor:
+        q, k, v = torch.chunk(qkv, 3, dim=-1)
+            
+        queries = q.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        keys = k.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        values = v.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+
+        dropout_p = 0. if not self.training else self.dropout
+
+        context_vec = F.scaled_dot_product_attention(
+            queries, keys, values, dropout_p=dropout_p, is_causal=True)
+        
+        context_vec = context_vec.transpose(1, 2).flatten(-2)
+        return context_vec
 
     def forward(self, qkv: torch.Tensor, attn_mask: torch.Tensor) -> torch.Tensor:
         batch_size, num_tokens, embed_dim = qkv.shape
@@ -28,7 +45,7 @@ class Attend(nn.Module):
 
         use_dropout = 0. if not self.training else self.dropout
 
-        context_vec = nn.functional.scaled_dot_product_attention(
+        context_vec = F.scaled_dot_product_attention(
             queries, keys, values, attn_mask=attn_mask, dropout_p=use_dropout, is_causal=attn_mask is None)
 
         # Combine heads, where self.d_out = self.num_heads * self.head_dim
@@ -61,7 +78,9 @@ class MultiHeadAttention(nn.Module):
     def forward(self,
                 x: torch.Tensor,
                 x_kv: Optional[torch.Tensor] = None,
-                attn_mask: Optional[torch.Tensor] = None
+                padding_mask: Optional[torch.Tensor] = None,
+                attn_mask: Optional[torch.Tensor] = None,
+                jagged: bool = False
                 ) -> torch.Tensor:
         # (b, num_tokens, embed_dim) --> (b, num_tokens, 3 * embed_dim)
         assert not self.cross_attn or x_kv is not None, "Found null x_kv in cross attn. layer"
@@ -71,8 +90,12 @@ class MultiHeadAttention(nn.Module):
             qkv = torch.cat([q, kv], axis=2)
         else:
             qkv = self.qkv(x)
-
-        context_vec = self.attend(qkv, attn_mask)
+        
+        if jagged:
+            assert attn_mask is None, "Mask not supported by jagged attention"
+            context_vec = self.attend.jagged_causal_forward(qkv)
+        else:
+            context_vec = self.attend(qkv, attn_mask)
+    
         context_vec = self.proj(context_vec)
-
         return context_vec

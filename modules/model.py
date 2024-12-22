@@ -1,5 +1,4 @@
 import torch
-import torch._dynamo
 
 from einops import rearrange
 from modules.embedding.id_embedder import SemIdEmbedder
@@ -38,8 +37,11 @@ class DecoderRetrievalModel(nn.Module):
                  n_layers,
                  num_embeddings,
                  sem_id_dim,
-                 max_pos=2048) -> None:
+                 max_pos=2048,
+                 jagged_training: bool = True) -> None:
         super().__init__()
+
+        self.jagged_training = jagged_training
         self.num_embeddings = num_embeddings
         self.sem_id_dim = sem_id_dim
         
@@ -73,7 +75,16 @@ class DecoderRetrievalModel(nn.Module):
         wpe = self.wpe(pos)
 
         input_embedding = user_emb.unsqueeze(1) + wpe.unsqueeze(0) + sem_ids_emb
-        transformer_output = self.decoder(input_embedding)
+
+        jagged_mode = self.training and self.jagged_training
+        if jagged_mode:
+            seq_lens = batch.seq_mask.sum(axis=1)
+            input_embedding = torch.nested.nested_tensor(
+                [input_embedding[i, :seq_lens[i]] for i in range(input_embedding.shape[0])], 
+                layout=torch.jagged,
+                device=input_embedding.device
+            )
+        transformer_output = self.decoder(input_embedding, padding_mask=batch.seq_mask, jagged=jagged_mode)
 
         return transformer_output
 
@@ -160,19 +171,28 @@ class DecoderRetrievalModel(nn.Module):
             log_probas=log_probas.squeeze()
         )
             
-    # @torch.compile
+    @torch.compile
     def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         B, N = seq_mask.shape
 
         trnsf_out = self._predict(batch)
-
         if self.training:
-            logits = self.out_proj(trnsf_out)
-            target_mask = seq_mask[:, 1:]
-            out = logits[:, :-1, :][target_mask, :]
-            target = batch.sem_ids[:, 1:][target_mask]
-            loss = F.cross_entropy(out, target)
+            predict_out = self.out_proj(trnsf_out)
+            # Nested only supported at training time due to lack of support for nested KV cache
+            if self.jagged_training:
+                logits = torch.cat(predict_out.unbind())
+                target = torch.cat([
+                    batch.sem_ids[:,1:], 
+                    -torch.ones(B,1, device=batch.sem_ids.device, dtype=batch.sem_ids.dtype)
+                ], axis=1)[seq_mask]
+                loss = F.cross_entropy(logits, target, ignore_index=-1)
+            else:
+                logits = predict_out
+                target_mask = seq_mask[:, 1:]
+                out = logits[:, :-1, :][target_mask, :]
+                target = batch.sem_ids[:, 1:][target_mask]
+                loss = F.cross_entropy(out, target)
         else:
             last_token_pos = seq_mask.sum(axis=-1) - 1
             logits = self.out_proj(trnsf_out[torch.arange(B, device=trnsf_out.device), last_token_pos])
