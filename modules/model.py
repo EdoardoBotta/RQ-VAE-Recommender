@@ -1,11 +1,14 @@
 import torch
 import torch._dynamo
 
+from einops import rearrange
 from modules.embedding.id_embedder import SemIdEmbedder
 from modules.embedding.id_embedder import UserIdEmbedder
 from modules.tokenizer.semids import TokenizedSeqBatch
 from modules.transformer.model import TransformerDecoder
 from modules.utils import eval_mode
+from modules.utils import maybe_repeat_interleave
+from modules.utils import select_columns_per_row
 from typing import NamedTuple
 from torch import nn
 from torch.nn import functional as F
@@ -76,44 +79,85 @@ class DecoderRetrievalModel(nn.Module):
 
     @torch.no_grad
     @eval_mode
-    def generate(self, batch: TokenizedSeqBatch, generate_length: int = 1, temperature: int = 1) -> GenerationOutput:
+    def generate_next_sem_id(self, batch: TokenizedSeqBatch, temperature: int = 1, top_k: bool = False) -> GenerationOutput:
         B, N = batch.sem_ids.shape
-        generated, log_probas = None, None
-        batch_idx = torch.arange(B, device=batch.sem_ids.device)
+        generated, log_probas = None, 0
+        k = 10 if top_k else 1
+        n_top_k_candidates = 2*k if top_k else 1
 
         batch = TokenizedSeqBatch(*[v.detach().clone() for _, v in batch._asdict().items()])
         seq_mask = batch.seq_mask
         sem_ids = batch.sem_ids
 
-        for _ in range(generate_length):
-            next_token_pos = seq_mask.sum(axis=1)
-            # Ensure at least self.sem_id_dim empty slots are available in every sequence
-            # by rolling overflown sequences forward.
-            to_shift = next_token_pos > N - self.sem_id_dim
-            sem_ids[to_shift, :] = sem_ids[to_shift].roll(-self.sem_id_dim, dims=1)
-            sem_ids[to_shift, N - self.sem_id_dim:] = -1
-            seq_mask[to_shift, N - self.sem_id_dim:] = False
+        next_token_pos = seq_mask.sum(axis=1)
+        # Ensure at least self.sem_id_dim empty slots are available in every sequence
+        # by rolling overflown sequences forward.
+        to_shift = next_token_pos > N - self.sem_id_dim
+        sem_ids[to_shift, :] = sem_ids[to_shift].roll(-self.sem_id_dim, dims=1)
+        sem_ids[to_shift, N - self.sem_id_dim:] = -1
+        seq_mask[to_shift, N - self.sem_id_dim:] = False
 
-            next_token_pos = seq_mask.sum(axis=1)
+        next_token_pos = seq_mask.sum(axis=1).repeat_interleave(k)
 
-            for _ in range(self.sem_id_dim):
-                logits = self.forward(batch).logits
-                probas = F.softmax(logits / temperature, dim=-1)
-                samples = torch.multinomial(probas, num_samples=k)
-                sampled_log_probas = torch.log(probas[batch_idx, samples.squeeze()]).unsqueeze(-1)
+        for _ in range(self.sem_id_dim):
+            logits = self.forward(batch).logits
+            probas = F.softmax(logits / temperature, dim=-1)
+            samples = torch.multinomial(probas, num_samples=n_top_k_candidates)
+            samples = samples.reshape(B, -1)
+            probas = probas.reshape(B, -1)
+            sampled_log_probas = torch.log(select_columns_per_row(probas, samples))
 
-                generated = samples if generated is None else torch.cat([generated, samples], axis=-1)
-                log_probas = (
-                    sampled_log_probas if log_probas is None
-                    else torch.cat([log_probas, sampled_log_probas], axis=-1)
+            # Get top-K:
+            sorted_log_probas, sorted_indices = (
+                sampled_log_probas + maybe_repeat_interleave(log_probas, n_top_k_candidates, dim=1)
+            ).sort(-1, descending=True)
+            top_k_log_probas, top_k_indices = sorted_log_probas[:, :k], sorted_indices[:, :k]
+            top_k_samples = select_columns_per_row(samples, top_k_indices)
+            
+            if generated is not None:
+                parent_id = select_columns_per_row(generated, top_k_indices // n_top_k_candidates)
+                top_k_samples = torch.cat([parent_id, top_k_samples.unsqueeze(-1)], axis=-1)
+
+                slice_length = generated.shape[2] + 1
+                col_idx = (
+                    rearrange(next_token_pos, "b -> b 1") -
+                    torch.arange(slice_length-1, -1, -1, device=next_token_pos.device)
                 )
-                sem_ids[batch_idx, next_token_pos] = samples.squeeze()
-                seq_mask[batch_idx, next_token_pos] = True
-                next_token_pos += 1
-        
+
+                batch.sem_ids[
+                    torch.arange(batch.sem_ids.shape[0], device=batch.sem_ids.device).unsqueeze(1),
+                    col_idx
+                ] = top_k_samples.flatten(end_dim=1)
+
+                generated = torch.clone(top_k_samples.detach())
+                log_probas = torch.clone(top_k_log_probas.detach())
+            else:
+                sem_ids = batch.sem_ids.repeat_interleave(k, dim=0)
+                sem_ids[
+                    torch.arange(sem_ids.shape[0], device=sem_ids.device),
+                    next_token_pos
+                ] = top_k_samples.flatten()
+
+                batch = TokenizedSeqBatch(
+                    user_ids=batch.user_ids.repeat_interleave(k, dim=0),
+                    sem_ids=sem_ids,
+                    seq_mask=seq_mask.repeat_interleave(k, dim=0),
+                    token_type_ids=batch.token_type_ids.repeat_interleave(k, dim=0)
+                )
+
+                generated = top_k_samples.unsqueeze(-1)
+                log_probas = torch.clone(top_k_log_probas.detach())
+
+            batch.seq_mask[
+                torch.arange(batch.seq_mask.shape[0]),
+                next_token_pos
+            ] = True
+            
+            next_token_pos += 1
+
         return GenerationOutput(
-            sem_ids=generated,
-            log_probas=log_probas
+            sem_ids=generated.squeeze(),
+            log_probas=log_probas.squeeze()
         )
             
     # @torch.compile

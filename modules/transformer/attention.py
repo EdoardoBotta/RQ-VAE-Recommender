@@ -36,49 +36,42 @@ class Attend(nn.Module):
         return context_vec
 
 
-class MultiHeadSelfAttention(nn.Module):
-    def __init__(self, d_in, d_out, num_heads, dropout=0.0, qkv_bias=False) -> None:
+class MultiHeadAttention(nn.Module):
+    def __init__(self, d_in, d_out, num_heads, cross_attn=False, dropout=0.0, qkv_bias=False) -> None:
         super().__init__()
 
         assert d_out % num_heads == 0, "embed_dim is indivisible by num_heads"
 
+        self.cross_attn = cross_attn
         self.num_heads = num_heads
         self.head_dim = d_out // num_heads
         self.d_out = d_out
 
-        self.qkv = nn.Linear(d_in, 3 * d_out, bias=qkv_bias)
-        self.proj = nn.Linear(d_out, d_out)
-        self.dropout = dropout
-
-        self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
-
-    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        # (b, num_tokens, embed_dim) --> (b, num_tokens, 3 * embed_dim)
-        qkv = self.qkv(x)
-        context_vec = self.attend(qkv, attn_mask)
-        context_vec = self.proj(context_vec)
-
-        return context_vec
-
-  
-class MultiHeadCrossAttention(nn.Module):
-    def __init__(self, d_in, d_out, num_heads, dropout=0.0, qkv_bias=False) -> None:
-        assert d_out % num_heads == 0, "embed_dim is indivisible by num_heads"
-
-        self.num_heads = num_heads
-        self.head_dim = d_out // num_heads
-        self.d_out = d_out
-
-        self.q = nn.Linear(d_in, d_out, bias=qkv_bias)
-        self.kv = nn.Linear(d_in, 2 * d_out, bias=qkv_bias)
-        self.proj = nn.Linear(d_out, d_out)
-        self.dropout = dropout
-
-        self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
+        if self.cross_attn:
+            self.q = nn.Linear(d_in, d_out, bias=qkv_bias)
+            self.kv = nn.Linear(d_in, 2 * d_out, bias=qkv_bias)
+        else:
+            self.qkv = nn.Linear(d_in, 3 * d_out, bias=qkv_bias)
     
-    def forward(self, x_q: torch.Tensor, x_kv: torch.Tensor, attn_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        q, kv = self.q(x_q), self.kv(x_kv)
-        qkv = torch.cat([q, kv], axis=2)
+        self.proj = nn.Linear(d_out, d_out)
+        self.dropout = dropout
+
+        self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
+
+    def forward(self,
+                x: torch.Tensor,
+                x_kv: Optional[torch.Tensor] = None,
+                attn_mask: Optional[torch.Tensor] = None
+                ) -> torch.Tensor:
+        # (b, num_tokens, embed_dim) --> (b, num_tokens, 3 * embed_dim)
+        assert not self.cross_attn or x_kv is not None, "Found null x_kv in cross attn. layer"
+        
+        if self.cross_attn:
+            q, kv = self.q(x), self.kv(x_kv)
+            qkv = torch.cat([q, kv], axis=2)
+        else:
+            qkv = self.qkv(x)
+
         context_vec = self.attend(qkv, attn_mask)
         context_vec = self.proj(context_vec)
 

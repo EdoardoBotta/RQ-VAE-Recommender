@@ -1,6 +1,5 @@
 import torch
-from modules.transformer.attention import MultiHeadSelfAttention
-from modules.transformer.attention import MultiHeadCrossAttention
+from modules.transformer.attention import MultiHeadAttention
 from modules.normalize import RMSNorm
 from typing import Optional
 from torch import nn
@@ -23,8 +22,8 @@ class TransformerBlock(nn.Module):
         self.qkv_bias = qkv_bias
         self.do_cross_attn = do_cross_attn
 
-        self.attention = MultiHeadSelfAttention(
-            d_in=d_in, d_out=d_out, num_heads=num_heads, dropout=dropout, qkv_bias=qkv_bias
+        self.attention = MultiHeadAttention(
+            d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=False, dropout=dropout, qkv_bias=qkv_bias
         )
 
         self.ff = nn.Linear(d_out, d_out, bias=False)
@@ -33,8 +32,8 @@ class TransformerBlock(nn.Module):
         self.ffn_norm = RMSNorm(d_out)
 
         if self.do_cross_attn:
-            self.cross_attention = MultiHeadCrossAttention(
-                d_in=d_in, d_out=d_out, num_heads=num_heads, dropout=dropout, qkv_bias=qkv_bias
+            self.cross_attention = MultiHeadAttention(
+                d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=True, dropout=dropout, qkv_bias=qkv_bias
             )
             self.cross_attn_norm = RMSNorm(d_out)
     
@@ -44,32 +43,6 @@ class TransformerBlock(nn.Module):
             attn_out = self.cross_attn_norm(attn_out + self.cross_attention(x_q=x, x_kv=x_kv, attn_mask=attn_mask))
         proj_out = self.ffn_norm(attn_out + self.ff(attn_out))
         return proj_out
-
-
-class TransformerEncoder(nn.Module):
-    def __init__(self,
-                 d_in: int,
-                 d_out: int,
-                 dropout: float,
-                 num_heads: int,
-                 n_layers: int) -> None:
-        super().__init__()
-
-        self.layers = nn.ModuleList([
-            TransformerBlock(
-                d_in=d_in,
-                d_out=d_out,
-                dropout=dropout,
-                num_heads=num_heads,
-                qkv_bias=False,
-                do_cross_attn=False
-            ) for _ in range(n_layers)
-        ])
-    
-    def forward(self, x: torch.Tensor, attn_mask: torch.Tensor) -> torch.Tensor:
-        for layer in self.layers:
-            x = layer(x=x, attn_mask=attn_mask)
-        return x
 
 
 class TransformerDecoder(nn.Module):
