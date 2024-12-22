@@ -118,7 +118,7 @@ def train(
                 tokenized_data = tokenizer(data)
 
                 with accelerator.autocast():
-                    # model.generate_next_sem_id(tokenized_data)
+                    model.generate_next_sem_id(tokenized_data)
                     loss = model(tokenized_data).loss
                     loss = loss / gradient_accumulate_every
                     total_loss += loss

@@ -90,25 +90,21 @@ class DecoderRetrievalModel(nn.Module):
 
     @torch.no_grad
     @eval_mode
-    def generate_next_sem_id(self, batch: TokenizedSeqBatch, temperature: int = 1, top_k: bool = False) -> GenerationOutput:
+    def generate_next_sem_id(self, batch: TokenizedSeqBatch, temperature: int = 1, top_k: bool = True) -> GenerationOutput:
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
         k = 10 if top_k else 1
         n_top_k_candidates = 2*k if top_k else 1
 
-        batch = TokenizedSeqBatch(*[v.detach().clone() for _, v in batch._asdict().items()])
-        seq_mask = batch.seq_mask
-        sem_ids = batch.sem_ids
-
-        next_token_pos = seq_mask.sum(axis=1)
+        next_token_pos = batch.seq_mask.sum(axis=1)
         # Ensure at least self.sem_id_dim empty slots are available in every sequence
         # by rolling overflown sequences forward.
         to_shift = next_token_pos > N - self.sem_id_dim
-        sem_ids[to_shift, :] = sem_ids[to_shift].roll(-self.sem_id_dim, dims=1)
-        sem_ids[to_shift, N - self.sem_id_dim:] = -1
-        seq_mask[to_shift, N - self.sem_id_dim:] = False
+        batch.sem_ids[to_shift, :] = batch.sem_ids[to_shift].roll(-self.sem_id_dim, dims=1)
+        batch.sem_ids[to_shift, N - self.sem_id_dim:] = -1
+        batch.seq_mask[to_shift, N - self.sem_id_dim:] = False
 
-        next_token_pos = seq_mask.sum(axis=1).repeat_interleave(k)
+        next_token_pos = batch.seq_mask.sum(axis=1).repeat_interleave(k)
 
         for _ in range(self.sem_id_dim):
             logits = self.forward(batch).logits
@@ -139,6 +135,14 @@ class DecoderRetrievalModel(nn.Module):
                     torch.arange(batch.sem_ids.shape[0], device=batch.sem_ids.device).unsqueeze(1),
                     col_idx
                 ] = top_k_samples.flatten(end_dim=1)
+                import pdb; pdb.set_trace()
+
+                batch = TokenizedSeqBatch(
+                    user_ids=batch.user_ids,
+                    sem_ids=top_k_samples.reshape(-1, 1),
+                    seq_mask=batch.seq_mask,
+                    token_type_ids=batch.token_type_ids+1
+                )
 
                 generated = torch.clone(top_k_samples.detach())
                 log_probas = torch.clone(top_k_log_probas.detach())
@@ -149,11 +153,14 @@ class DecoderRetrievalModel(nn.Module):
                     next_token_pos
                 ] = top_k_samples.flatten()
 
+                import pdb; pdb.set_trace()
+                next_sem_ids = top_k_samples.reshape(-1, 1)
+
                 batch = TokenizedSeqBatch(
                     user_ids=batch.user_ids.repeat_interleave(k, dim=0),
-                    sem_ids=sem_ids,
-                    seq_mask=seq_mask.repeat_interleave(k, dim=0),
-                    token_type_ids=batch.token_type_ids.repeat_interleave(k, dim=0)
+                    sem_ids=next_sem_ids,
+                    seq_mask=torch.ones(next_sem_ids.shape[0], 1, dtype=bool, device=next_sem_ids.device),
+                    token_type_ids=torch.zeros(next_sem_ids.shape[0], 1, device=next_sem_ids.device)
                 )
 
                 generated = top_k_samples.unsqueeze(-1)
@@ -171,7 +178,7 @@ class DecoderRetrievalModel(nn.Module):
             log_probas=log_probas.squeeze()
         )
             
-    @torch.compile
+    #@torch.compile
     def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         B, N = seq_mask.shape
@@ -199,3 +206,4 @@ class DecoderRetrievalModel(nn.Module):
             loss = None
 
         return ModelOutput(loss=loss, logits=logits)
+

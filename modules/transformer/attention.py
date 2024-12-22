@@ -17,9 +17,7 @@ class Attend(nn.Module):
         self.d_out = d_out
         self.dropout = dropout
     
-    def jagged_causal_forward(self, qkv: torch.nested.Tensor) -> torch.nested.Tensor:
-        q, k, v = torch.chunk(qkv, 3, dim=-1)
-            
+    def jagged_forward(self, q: torch.nested.Tensor, k: torch.nested.Tensor, v: torch.nested.Tensor, is_causal: bool) -> torch.nested.Tensor:
         queries = q.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
         keys = k.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
         values = v.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
@@ -27,7 +25,7 @@ class Attend(nn.Module):
         dropout_p = 0. if not self.training else self.dropout
 
         context_vec = F.scaled_dot_product_attention(
-            queries, keys, values, dropout_p=dropout_p, is_causal=True)
+            queries, keys, values, dropout_p=dropout_p, is_causal=is_causal)
         
         context_vec = context_vec.transpose(1, 2).flatten(-2)
         return context_vec
@@ -75,12 +73,17 @@ class MultiHeadAttention(nn.Module):
 
         self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
 
+        self.register_buffer("kv_cache", torch.zeros(2, 640, 800, 64, requires_grad=False))
+        self.register_buffer("last_cache_pos", torch.zeros(640, 1, requires_grad=False))
+        self.cache_empty = True
+
     def forward(self,
                 x: torch.Tensor,
                 x_kv: Optional[torch.Tensor] = None,
                 padding_mask: Optional[torch.Tensor] = None,
                 attn_mask: Optional[torch.Tensor] = None,
-                jagged: bool = False
+                jagged: bool = False,
+                use_cache: bool = False,
                 ) -> torch.Tensor:
         # (b, num_tokens, embed_dim) --> (b, num_tokens, 3 * embed_dim)
         assert not self.cross_attn or x_kv is not None, "Found null x_kv in cross attn. layer"
@@ -91,9 +94,43 @@ class MultiHeadAttention(nn.Module):
         else:
             qkv = self.qkv(x)
         
+        if use_cache and self.cache_empty:
+            assert padding_mask is not None
+            B, N = padding_mask.shape
+            queries, keys, values = qkv.chunk(3, dim=-1)
+            
+            self.kv_cache[0][:B, :N, :][padding_mask] = torch.cat(keys.unbind().detach())[:,:]
+            self.kv_cache[1][:B, :N, :][padding_mask] = torch.cat(values.unbind().detach())[:,:]
+            
+            self.last_cache_pos[:B] = padding_mask.sum(axis=-1)
+            self.cache_empty = False
+        
+        elif use_cache and not self.cache_empty:
+            assert padding_mask is not None
+            B, N = padding_mask.shape
+            queries, keys, values = torch.cat(qkv.unbind()).chunk(3, dim=-1)
+
+            next_token_pos = padding_mask.sum(axis=-1)
+            self.kv_cache[0][:B, :N, :][torch.arange(B, device=self.kv_cache.device), self.last_cache_pos.unsqueeze(1)] = keys.detach()[:,:]
+            self.kv_cache[1][:B, :N, :][torch.arange(B, device=self.kv_cache.device), self.last_cache_pos.unsqueeze(1)] = values.detach()[:,:]
+
+            keys = torch.nested.nested_tensor(
+                [self.kv_cache[0][:B, :N, :][i, :self.last_cache_pos.squeeze()[i]+1] for i in range(B)], 
+                layout=torch.jagged,
+                device=self.kv_cache.device
+            )
+
+            values = torch.nested.nested_tensor(
+                [self.kv_cache[1][:B, :N, :][i, :self.last_cache_pos.squeeze()[i]+1] for i in range(B)], 
+                layout=torch.jagged,
+                device=self.kv_cache.device
+            )
+        elif jagged:
+            queries, keys, values = torch.chunk(qkv, 3, dim=-1)
+
         if jagged:
             assert attn_mask is None, "Mask not supported by jagged attention"
-            context_vec = self.attend.jagged_causal_forward(qkv)
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=True)
         else:
             context_vec = self.attend(qkv, attn_mask)
     
