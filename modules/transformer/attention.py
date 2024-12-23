@@ -14,6 +14,56 @@ torch.backends.cuda.enable_flash_sdp(True)
 AttentionInput = Union[Tensor, NestedTensor]
 
 
+class KVCache(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        assert len(dim) == 3, "Cache only supports 3d tensors"
+        self.register_buffer("k_cache", torch.zeros(*dim, requires_grad=False))
+        self.register_buffer("v_cache", torch.zeros(*dim, requires_grad=False))
+        self.dim = dim
+        
+        self._reset_limits()
+        self.is_empty = True
+    
+    def _reset_limits(self):
+        self.cache_limits = [0 for _ in self.dim]
+    
+    def reset(self):
+        self.k_cache.fill_(0)
+        self.v_cache.fill_(0)
+        
+        self._reset_limits()
+        self.is_empty = True
+    
+    @property
+    def keys(self):
+        return self.k_cache
+    
+    @property
+    def values(self):
+        return self.v_cache
+    
+    @torch.no_grad
+    def store_jagged(self, keys: NestedTensor, values: NestedTensor, mask: Tensor) -> None:
+        B, N = mask.shape
+        self.k_cache[:B, :N, :][mask] = jagged_to_flattened_tensor(keys.detach())[:, :]
+        self.v_cache[:B, :N, :][mask] = jagged_to_flattened_tensor(values.detach())[:, :]
+
+        self.cache_limits = [B, N, self.dim[-1]]
+        self.is_empty = False
+    
+    @torch.no_grad
+    def apply(self, fn) -> None:
+        B, N, D = self.cache_limits
+        k_transformed, v_transformed = fn(self.k_cache[:B, :N, :D]), fn(self.v_cache[:B, :N, :D])
+        B, N, D = k_transformed.shape
+
+        self.reset()
+        self.k_cache[:B, :N, :D] = k_transformed
+        self.v_cache[:B, :N, :D] = v_transformed
+        self.cache_limits = [B, N, D]
+
+
 class Attend(nn.Module):
     def __init__(self, d_out, num_heads, head_dim, dropout):
         super().__init__()
@@ -87,9 +137,13 @@ class MultiHeadAttention(nn.Module):
 
         self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
 
-        self.register_buffer("kv_cache", torch.zeros(2, 640, 800, 64, requires_grad=False))
         self.register_buffer("last_cache_pos", torch.zeros(640, 1, requires_grad=False))
+        self._kv_cache = KVCache((640, 800, 64))
         self.cache_empty = True
+    
+    @property
+    def kv_cache(self) -> KVCache:
+        return self._kv_cache
 
     def forward(
         self,
@@ -114,12 +168,9 @@ class MultiHeadAttention(nn.Module):
             B, N = padding_mask.shape
             queries, keys, values = qkv.chunk(3, dim=-1)
             
-            self.kv_cache[0][:B, :N, :][padding_mask] = torch.cat(keys.unbind().detach())[:,:]
-            self.kv_cache[1][:B, :N, :][padding_mask] = torch.cat(values.unbind().detach())[:,:]
-            
+            self.kv_cache.store_jagged(keys=keys, values=values, mask=padding_mask)
             self.last_cache_pos[:B] = padding_mask.sum(axis=-1)
-            self.cache_empty = False
-        
+
         elif use_cache and not self.cache_empty:
             assert padding_mask is not None
             B, N = padding_mask.shape
@@ -129,8 +180,8 @@ class MultiHeadAttention(nn.Module):
             self.kv_cache[0][:B, :N, :][torch.arange(B, device=self.kv_cache.device), self.last_cache_pos.unsqueeze(1)] = keys.detach()[:,:]
             self.kv_cache[1][:B, :N, :][torch.arange(B, device=self.kv_cache.device), self.last_cache_pos.unsqueeze(1)] = values.detach()[:,:]
 
-            keys = padded_to_jagged_tensor(self.kv_cache[0][:B, :N, :], self.last_cache_pos.squeeze()+1)
-            values = padded_to_jagged_tensor(self.kv_cache[1][:B, :N, :], self.last_cache_pos.squeeze()+1)
+            keys = padded_to_jagged_tensor(self.kv_cache.keys[:B, :N, :], self.last_cache_pos.squeeze()+1)
+            values = padded_to_jagged_tensor(self.kv_cache.values[:B, :N, :], self.last_cache_pos.squeeze()+1)
         
         elif jagged:
             queries, keys, values = torch.chunk(qkv, 3, dim=-1)

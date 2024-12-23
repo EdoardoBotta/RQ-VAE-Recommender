@@ -138,15 +138,16 @@ class DecoderRetrievalModel(nn.Module):
                     torch.arange(slice_length-1, -1, -1, device=next_token_pos.device)
                 )
 
-                batch.sem_ids[
-                    torch.arange(batch.sem_ids.shape[0], device=batch.sem_ids.device).unsqueeze(1),
-                    col_idx
-                ] = top_k_samples.flatten(end_dim=1)
                 import pdb; pdb.set_trace()
+                # batch.sem_ids[
+                #     torch.arange(batch.sem_ids.shape[0], device=batch.sem_ids.device).unsqueeze(1),
+                #    col_idx
+                #] = top_k_samples.flatten(end_dim=1)
+                # import pdb; pdb.set_trace()
 
                 batch = TokenizedSeqBatch(
                     user_ids=batch.user_ids,
-                    sem_ids=top_k_samples.reshape(-1, 1),
+                    sem_ids=top_k_samples[:, :, -1].reshape(-1, 1),
                     seq_mask=batch.seq_mask,
                     token_type_ids=batch.token_type_ids+1
                 )
@@ -160,26 +161,27 @@ class DecoderRetrievalModel(nn.Module):
                     next_token_pos
                 ] = top_k_samples.flatten()
 
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
                 next_sem_ids = top_k_samples.reshape(-1, 1)
+                next_batch_size = next_sem_ids.shape[0]
 
                 batch = TokenizedSeqBatch(
                     user_ids=batch.user_ids.repeat_interleave(k, dim=0),
                     sem_ids=next_sem_ids,
-                    seq_mask=torch.ones(next_sem_ids.shape[0], 1, dtype=bool, device=next_sem_ids.device),
-                    token_type_ids=torch.zeros(next_sem_ids.shape[0], 1, device=next_sem_ids.device)
+                    seq_mask=torch.ones(next_batch_size, 1, dtype=bool, device=next_sem_ids.device),
+                    token_type_ids=torch.zeros(next_batch_size, 1, dtype=torch.int32, device=next_sem_ids.device)
                 )
 
+                self.decoder.apply_to_kv_cache(lambda x: x.repeat_interleave(k, axis=0))
+                import pdb; pdb.set_trace()
+
+                # TODO: Repeat interleave kv cache
                 generated = top_k_samples.unsqueeze(-1)
                 log_probas = torch.clone(top_k_log_probas.detach())
-
-            batch.seq_mask[
-                torch.arange(batch.seq_mask.shape[0]),
-                next_token_pos
-            ] = True
             
             next_token_pos += 1
-
+        
+        import pdb; pdb.set_trace()
         return GenerationOutput(
             sem_ids=generated.squeeze(),
             log_probas=log_probas.squeeze()

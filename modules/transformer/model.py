@@ -59,6 +59,11 @@ class TransformerBlock(nn.Module):
         proj_out = self.ffn_norm(attn_out + self.ff(attn_out))
         return proj_out
 
+    def apply_to_kv_cache(self, fn):
+        self.attention.kv_cache.apply(fn)
+        if self.do_cross_attn:
+            self.cross_attention.kv_cache.apply(fn)
+
 
 class TransformerDecoder(nn.Module):
     def __init__(
@@ -96,4 +101,8 @@ class TransformerDecoder(nn.Module):
         for layer in self.layers:
             x = layer(x=x, x_kv=context, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged)
         return x
+    
+    def apply_to_kv_cache(self, fn) -> None:
+        for layer in self.layers:
+            layer.apply_to_kv_cache(fn)
 
