@@ -1,4 +1,3 @@
-import torch
 from modules.normalize import L2NormalizationLayer
 from typing import List
 from torch import nn

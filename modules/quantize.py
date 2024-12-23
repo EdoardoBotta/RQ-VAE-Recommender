@@ -18,8 +18,8 @@ class QuantizeForwardMode(Enum):
 
 
 class QuantizeOutput(NamedTuple):
-    embeddings: torch.Tensor
-    ids: torch.Tensor
+    embeddings: Tensor
+    ids: Tensor
 
 
 def efficient_rotation_trick_transform(u, q, e):
@@ -63,7 +63,7 @@ class Quantize(nn.Module):
         self._init_weights()
 
     @property
-    def weight(self) -> torch.Tensor:
+    def weight(self) -> Tensor:
         return self.embedding.weight
 
     @property
@@ -80,7 +80,7 @@ class Quantize(nn.Module):
         kmeans_init_(self.embedding.weight, x=x)
         self.kmeans_initted = True
 
-    def get_item_embeddings(self, item_ids) -> torch.Tensor:
+    def get_item_embeddings(self, item_ids) -> Tensor:
         return self.out_proj(self.embedding(item_ids))
 
     def forward(self, x, temperature) -> QuantizeOutput:
