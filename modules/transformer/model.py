@@ -1,18 +1,21 @@
-import torch
+from modules.transformer.attention import AttentionInput
 from modules.transformer.attention import MultiHeadAttention
 from modules.normalize import RMSNorm
 from typing import Optional
 from torch import nn
+from torch import Tensor
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self,
-                 d_in: int,
-                 d_out: int,
-                 dropout: float,
-                 num_heads: int,
-                 qkv_bias: bool,
-                 do_cross_attn: bool = False) -> None:
+    def __init__(
+        self,
+        d_in: int,
+        d_out: int,
+        dropout: float,
+        num_heads: int,
+        qkv_bias: bool,
+        do_cross_attn: bool = False
+    ) -> None:
         super().__init__()
         
         self.d_in = d_in
@@ -37,28 +40,36 @@ class TransformerBlock(nn.Module):
             )
             self.cross_attn_norm = RMSNorm(d_out)
     
-    def forward(self, 
-                x: torch.Tensor, 
-                x_kv: Optional[torch.Tensor] = None, 
-                padding_mask: Optional[torch.Tensor] = None, 
-                attn_mask: Optional[torch.Tensor] = None,
-                jagged: Optional[bool] = False
-                ) -> torch.Tensor:
+    def forward(
+        self,
+        x: AttentionInput,
+        x_kv: Optional[Tensor] = None,
+        padding_mask: Optional[Tensor] = None,
+        attn_mask: Optional[Tensor] = None,
+        jagged: Optional[bool] = False
+    ) -> AttentionInput:
         attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged))
         if self.do_cross_attn:
-            attn_out = self.cross_attn_norm(attn_out + self.cross_attention(x_q=x, x_kv=x_kv, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged))
+            attn_out = self.cross_attn_norm(
+                attn_out +
+                self.cross_attention(
+                    x_q=attn_out, x_kv=x_kv, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged
+                )
+            )
         proj_out = self.ffn_norm(attn_out + self.ff(attn_out))
         return proj_out
 
 
 class TransformerDecoder(nn.Module):
-    def __init__(self,
-                 d_in: int,
-                 d_out: int,
-                 dropout: float,
-                 num_heads: int,
-                 n_layers: int,
-                 do_cross_attn: bool = False) -> None:
+    def __init__(
+        self,
+        d_in: int,
+        d_out: int,
+        dropout: float,
+        num_heads: int,
+        n_layers: int,
+        do_cross_attn: bool = False
+    ) -> None:
         super().__init__()
 
         self.do_cross_attn = do_cross_attn
@@ -74,13 +85,14 @@ class TransformerDecoder(nn.Module):
             ) for _ in range(n_layers)
         ])
 
-    def forward(self,
-                x: torch.Tensor,
-                padding_mask: Optional[torch.Tensor] = None,
-                attn_mask: Optional[torch.Tensor] = None,
-                context: Optional[torch.Tensor] = None,
-                jagged: Optional[bool] = None
-                ) -> torch.Tensor:
+    def forward(
+        self,
+        x: AttentionInput,
+        padding_mask: Optional[Tensor] = None,
+        attn_mask: Optional[Tensor] = None,
+        context: Optional[Tensor] = None,
+        jagged: Optional[bool] = None
+    ) -> AttentionInput:
         for layer in self.layers:
             x = layer(x=x, x_kv=context, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged)
         return x

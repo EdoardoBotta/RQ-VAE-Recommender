@@ -51,11 +51,13 @@ class MovieLens32M(InMemoryDataset):
 
 
 class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
-    def __init__(self,
-                 root,
-                 transform=None,
-                 pre_transform=None,
-                 force_reload=False) -> None:
+    def __init__(
+        self,
+        root,
+        transform=None,
+        pre_transform=None,
+        force_reload=False
+    ) -> None:
         super(RawMovieLens32M, self).__init__(
             root, transform, pre_transform, force_reload
         )

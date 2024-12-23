@@ -2,6 +2,7 @@ import torch
 from modules.normalize import L2NormalizationLayer
 from typing import List
 from torch import nn
+from torch import Tensor
 
 
 class MLP(nn.Module):
@@ -27,7 +28,7 @@ class MLP(nn.Module):
                 self.mlp.append(nn.SiLU())
         self.mlp.append(L2NormalizationLayer() if normalize else nn.Identity())
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         assert x.shape[-1] == self.input_dim, f"Invalid input dim: Expected {self.input_dim}, found {x.shape[-1]}"
         return self.mlp(x)
 

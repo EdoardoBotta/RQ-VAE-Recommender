@@ -1,5 +1,7 @@
 import torch
 from einops import rearrange
+from torch import Tensor
+from torch.nested import Tensor as NestedTensor
 
 
 def eval_mode(fn):
@@ -13,7 +15,7 @@ def eval_mode(fn):
     return inner
 
 
-def select_columns_per_row(x: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
+def select_columns_per_row(x: Tensor, indices: Tensor) -> torch.Tensor:
     assert x.shape[0] == indices.shape[0]
     assert indices.shape[1] <= x.shape[1]
 
@@ -24,6 +26,18 @@ def select_columns_per_row(x: torch.Tensor, indices: torch.Tensor) -> torch.Tens
 
 
 def maybe_repeat_interleave(x, repeats, dim):
-    if not isinstance(x, torch.Tensor):
+    if not isinstance(x, Tensor):
         return x
     return x.repeat_interleave(repeats, dim=dim)
+
+
+def padded_to_jagged_tensor(x: Tensor, lengths: Tensor) -> NestedTensor:
+    return torch.nested.nested_tensor(
+        [i[:j.item()] for i, j in zip(x, lengths)],
+        layout=torch.jagged,
+        device=x.device
+    )
+
+
+def jagged_to_flattened_tensor(x: NestedTensor) -> Tensor:
+    return torch.cat(x.unbind())

@@ -57,12 +57,12 @@ class MovieLensMovieData(Dataset):
 
 class MovieLensSeqData(Dataset):
     def __init__(
-            self,
-            root: str,
-            *args,
-            force_process: bool = False,
-            dataset_size: MovieLensSize = MovieLensSize._1M,
-            **kwargs
+        self,
+        root: str,
+        *args,
+        force_process: bool = False,
+        dataset_size: MovieLensSize = MovieLensSize._1M,
+        **kwargs
     ) -> None:
 
         processed_data_path = root + PROCESSED_MOVIE_LENS_SUFFIX

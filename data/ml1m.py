@@ -11,11 +11,13 @@ class RawMovieLens1M(MovieLens1M, MovieLensPreprocessingMixin):
     USER_HEADERS = ["userId", "gender", "age", "occupation", "zipCode"]
     RATING_HEADERS = ['userId', 'movieId', 'rating', 'timestamp']
 
-    def __init__(self,
-                 root,
-                 transform=None,
-                 pre_transform=None,
-                 force_reload=False) -> None:
+    def __init__(
+        self,
+        root,
+        transform=None,
+        pre_transform=None,
+        force_reload=False
+    ) -> None:
         super(RawMovieLens1M, self).__init__(
             root, transform, pre_transform, force_reload
         )
@@ -30,7 +32,6 @@ class RawMovieLens1M(MovieLens1M, MovieLensPreprocessingMixin):
             engine='python',
         )
     
-
     def process(self, max_seq_len=None) -> None:
         data = HeteroData()
         ratings_df = self._load_ratings()

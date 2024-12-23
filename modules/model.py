@@ -3,13 +3,17 @@ import torch
 from einops import rearrange
 from modules.embedding.id_embedder import SemIdEmbedder
 from modules.embedding.id_embedder import UserIdEmbedder
+from modules.transformer.attention import AttentionInput
 from modules.tokenizer.semids import TokenizedSeqBatch
 from modules.transformer.model import TransformerDecoder
 from modules.utils import eval_mode
+from modules.utils import jagged_to_flattened_tensor
 from modules.utils import maybe_repeat_interleave
+from modules.utils import padded_to_jagged_tensor
 from modules.utils import select_columns_per_row
 from typing import NamedTuple
 from torch import nn
+from torch import Tensor
 from torch.nn import functional as F
 
 # Needed to make torch.compile succeed
@@ -19,26 +23,28 @@ torch.set_float32_matmul_precision('high')
 
 
 class ModelOutput(NamedTuple):
-    loss: torch.Tensor
-    logits: torch.Tensor
+    loss: Tensor
+    logits: Tensor
 
 
 class GenerationOutput(NamedTuple):
-    sem_ids: torch.Tensor
-    log_probas: torch.Tensor
+    sem_ids: Tensor
+    log_probas: Tensor
 
 
 class DecoderRetrievalModel(nn.Module):
-    def __init__(self,
-                 embedding_dim,
-                 d_out,
-                 dropout,
-                 num_heads,
-                 n_layers,
-                 num_embeddings,
-                 sem_id_dim,
-                 max_pos=2048,
-                 jagged_training: bool = True) -> None:
+    def __init__(
+        self,
+        embedding_dim,
+        d_out,
+        dropout,
+        num_heads,
+        n_layers,
+        num_embeddings,
+        sem_id_dim,
+        max_pos=2048,
+        jagged_training: bool = True
+    ) -> None:
         super().__init__()
 
         self.jagged_training = jagged_training
@@ -65,7 +71,7 @@ class DecoderRetrievalModel(nn.Module):
 
         self.out_proj = nn.Linear(d_out, num_embeddings, bias=False)
     
-    def _predict(self, batch: TokenizedSeqBatch) -> torch.Tensor:
+    def _predict(self, batch: TokenizedSeqBatch) -> AttentionInput:
         user_emb = self.user_id_embedder(batch.user_ids)
         sem_ids_emb = self.sem_id_embedder(batch)
         
@@ -78,19 +84,20 @@ class DecoderRetrievalModel(nn.Module):
 
         jagged_mode = self.training and self.jagged_training
         if jagged_mode:
-            seq_lens = batch.seq_mask.sum(axis=1)
-            input_embedding = torch.nested.nested_tensor(
-                [input_embedding[i, :seq_lens[i]] for i in range(input_embedding.shape[0])], 
-                layout=torch.jagged,
-                device=input_embedding.device
-            )
+            seq_lengths = batch.seq_mask.sum(axis=1)
+            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
         transformer_output = self.decoder(input_embedding, padding_mask=batch.seq_mask, jagged=jagged_mode)
 
         return transformer_output
 
     @torch.no_grad
     @eval_mode
-    def generate_next_sem_id(self, batch: TokenizedSeqBatch, temperature: int = 1, top_k: bool = True) -> GenerationOutput:
+    def generate_next_sem_id(
+        self,
+        batch: TokenizedSeqBatch,
+        temperature: int = 1,
+        top_k: bool = True
+    ) -> GenerationOutput:
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
         k = 10 if top_k else 1
@@ -188,10 +195,10 @@ class DecoderRetrievalModel(nn.Module):
             predict_out = self.out_proj(trnsf_out)
             # Nested only supported at training time due to lack of support for nested KV cache
             if self.jagged_training:
-                logits = torch.cat(predict_out.unbind())
+                logits = jagged_to_flattened_tensor(predict_out.unbind())
                 target = torch.cat([
-                    batch.sem_ids[:,1:], 
-                    -torch.ones(B,1, device=batch.sem_ids.device, dtype=batch.sem_ids.dtype)
+                    batch.sem_ids[:, 1:],
+                    -torch.ones(B, 1, device=batch.sem_ids.device, dtype=batch.sem_ids.dtype)
                 ], axis=1)[seq_mask]
                 loss = F.cross_entropy(logits, target, ignore_index=-1)
             else:

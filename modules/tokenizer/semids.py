@@ -29,17 +29,19 @@ class SemanticIdTokenizer(nn.Module):
     """
         Tokenizes a batch of sequences of item features into a batch of sequences of semantic ids.
     """
-    def __init__(self,
-                 input_dim: int,
-                 output_dim: int,
-                 hidden_dims: List[int],
-                 codebook_size: int,
-                 n_layers: int = 3,
-                 n_cat_feats: int = 18,
-                 commitment_weight: float = 0.25,
-                 rqvae_weights_path: Optional[str] = None,
-                 rqvae_codebook_normalize: bool = False,
-                 rqvae_sim_vq: bool = False) -> None:
+    def __init__(
+        self,
+        input_dim: int,
+        output_dim: int,
+        hidden_dims: List[int],
+        codebook_size: int,
+        n_layers: int = 3,
+        n_cat_feats: int = 18,
+        commitment_weight: float = 0.25,
+        rqvae_weights_path: Optional[str] = None,
+        rqvae_codebook_normalize: bool = False,
+        rqvae_sim_vq: bool = False
+    ) -> None:
         super().__init__()
 
         self.rq_vae = RqVae(

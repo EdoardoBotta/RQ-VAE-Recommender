@@ -7,6 +7,7 @@ from init.kmeans import kmeans_init_
 from modules.normalize import L2NormalizationLayer
 from typing import NamedTuple
 from torch import nn
+from torch import Tensor
 from torch.nn import functional as F
 
 
