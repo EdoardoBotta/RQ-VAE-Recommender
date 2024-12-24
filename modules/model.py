@@ -43,11 +43,11 @@ class DecoderRetrievalModel(nn.Module):
         num_embeddings,
         sem_id_dim,
         max_pos=2048,
-        jagged_training: bool = True
+        jagged_mode: bool = True
     ) -> None:
         super().__init__()
 
-        self.jagged_training = jagged_training
+        self.jagged_mode = jagged_mode
         self.num_embeddings = num_embeddings
         self.sem_id_dim = sem_id_dim
         
@@ -82,11 +82,10 @@ class DecoderRetrievalModel(nn.Module):
 
         input_embedding = user_emb.unsqueeze(1) + wpe.unsqueeze(0) + sem_ids_emb
 
-        jagged_mode = self.training and self.jagged_training
-        if jagged_mode:
+        if self.jagged_mode:
             seq_lengths = batch.seq_mask.sum(axis=1)
             input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
-        transformer_output = self.decoder(input_embedding, padding_mask=batch.seq_mask, jagged=jagged_mode)
+        transformer_output = self.decoder(input_embedding, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
 
         return transformer_output
 
@@ -187,7 +186,7 @@ class DecoderRetrievalModel(nn.Module):
             log_probas=log_probas.squeeze()
         )
             
-    #@torch.compile
+    # @torch.compile
     def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         B, N = seq_mask.shape
@@ -196,7 +195,7 @@ class DecoderRetrievalModel(nn.Module):
         if self.training:
             predict_out = self.out_proj(trnsf_out)
             # Nested only supported at training time due to lack of support for nested KV cache
-            if self.jagged_training:
+            if self.jagged_mode:
                 logits = jagged_to_flattened_tensor(predict_out.unbind())
                 target = torch.cat([
                     batch.sem_ids[:, 1:],

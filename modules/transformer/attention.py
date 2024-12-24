@@ -27,6 +27,7 @@ class KVCache(nn.Module):
     
     def _reset_limits(self):
         self.cache_limits = [0 for _ in self.dim]
+        self.next_seq_pos = None
     
     def reset(self):
         self.k_cache.fill_(0)
@@ -36,22 +37,52 @@ class KVCache(nn.Module):
         self.is_empty = True
     
     @property
+    def device(self):
+        return self.k_cache.device
+    
+    @property
     def keys(self):
-        return self.k_cache
+        B, N, D = self.cache_limits
+        return self.k_cache[:B, :N, :D]
     
     @property
     def values(self):
-        return self.v_cache
+        B, N, D = self.cache_limits
+        return self.v_cache[:B, :N, :D]
+    
+    @property
+    def seq_lenghts(self):
+        return self.next_seq_pos.squeeze()
     
     @torch.no_grad
-    def store_jagged(self, keys: NestedTensor, values: NestedTensor, mask: Tensor) -> None:
+    def store(self, keys: Tensor, values: Tensor, mask: Tensor) -> None:
         B, N = mask.shape
-        self.k_cache[:B, :N, :][mask] = jagged_to_flattened_tensor(keys.detach())[:, :]
-        self.v_cache[:B, :N, :][mask] = jagged_to_flattened_tensor(values.detach())[:, :]
+        self.k_cache[:B, :N, :][mask] = keys.detach()[:, :]
+        self.v_cache[:B, :N, :][mask] = values.detach()[:, :]
 
         self.cache_limits = [B, N, self.dim[-1]]
+        self.next_seq_pos = mask.sum(axis=1).unsqueeze(-1)
         self.is_empty = False
     
+    @torch.no_grad
+    def append_column(self, keys: Tensor, values: Tensor) -> None:
+        B, N, D = self.cache_limits
+
+        row_idx = torch.arange(B, device=self.kv_cache.device)
+        self.k_cache[:B, :][row_idx, self.next_seq_pos] = keys.detach()[:, :]
+        self.v_cache[:B, :][row_idx, self.next_seq_pos] = values.detach()[:, :]
+
+        max_pos_appended = self.next_seq_pos.max()
+        if max_pos_appended >= N:
+            self.cache_limits[1] = max_pos_appended + 1
+        self.next_seq_pos += 1
+    
+    @torch.no_grad
+    def as_jagged(self):
+        keys_jagged = padded_to_jagged_tensor(self.keys, self.seq_lenghts)
+        values_jagged = padded_to_jagged_tensor(self.values, self.seq_lenghts)
+        return keys_jagged, values_jagged
+
     @torch.no_grad
     def apply(self, fn) -> None:
         B, N, D = self.cache_limits
@@ -137,9 +168,7 @@ class MultiHeadAttention(nn.Module):
 
         self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
 
-        self.register_buffer("last_cache_pos", torch.zeros(640, 1, requires_grad=False))
         self._kv_cache = KVCache((640, 800, 64))
-        self.cache_empty = True
     
     @property
     def kv_cache(self) -> KVCache:
@@ -163,25 +192,21 @@ class MultiHeadAttention(nn.Module):
         else:
             qkv = self.qkv(x)
         
-        if use_cache and self.cache_empty:
-            assert padding_mask is not None
-            B, N = padding_mask.shape
-            queries, keys, values = qkv.chunk(3, dim=-1)
-            
-            self.kv_cache.store_jagged(keys=keys, values=values, mask=padding_mask)
-            self.last_cache_pos[:B] = padding_mask.sum(axis=-1)
-
-        elif use_cache and not self.cache_empty:
+        if use_cache and self.kv_cache.is_empty:
             assert padding_mask is not None
             B, N = padding_mask.shape
             queries, keys, values = jagged_to_flattened_tensor(qkv).chunk(3, dim=-1)
+            
+            self.kv_cache.store(keys=keys, values=values, mask=padding_mask)
 
-            next_token_pos = padding_mask.sum(axis=-1)
-            self.kv_cache[0][:B, :N, :][torch.arange(B, device=self.kv_cache.device), self.last_cache_pos.unsqueeze(1)] = keys.detach()[:,:]
-            self.kv_cache[1][:B, :N, :][torch.arange(B, device=self.kv_cache.device), self.last_cache_pos.unsqueeze(1)] = values.detach()[:,:]
+        elif use_cache and not self.kv_cache.is_empty:
+            assert padding_mask is not None
+            B, N = padding_mask.shape
+            queries, keys, values = qkv.chunk(3, dim=-1)
+            keys, values = jagged_to_flattened_tensor(keys), jagged_to_flattened_tensor(values)
 
-            keys = padded_to_jagged_tensor(self.kv_cache.keys[:B, :N, :], self.last_cache_pos.squeeze()+1)
-            values = padded_to_jagged_tensor(self.kv_cache.values[:B, :N, :], self.last_cache_pos.squeeze()+1)
+            self.kv_cache.append_column(keys=keys, values=values)
+            keys, values = self.kv_cache.as_jagged()
         
         elif jagged:
             queries, keys, values = torch.chunk(qkv, 3, dim=-1)
