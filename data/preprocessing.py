@@ -63,6 +63,11 @@ class MovieLensPreprocessingMixin:
             ).map(torch.tensor) for i, name in enumerate(features)
         })
         return rolling_df
+    
+    def _ordered_train_test_split(df, on, train_split=0.8):
+        threshold = df.select(pl.quantile(on, train_split)).item()
+        return df.with_columns(is_train=pl.col(on) <= threshold)
+
 
     @staticmethod
     def _generate_user_history(
@@ -84,7 +89,8 @@ class MovieLensPreprocessingMixin:
                 by="userId")
             .agg(
                 *(pl.col(feat) for feat in features),
-                seq_len=pl.col(features[0]).len()
+                seq_len=pl.col(features[0]).len(),
+                max_timestamp=pl.max("timestamp")
             )
         )
         
@@ -93,11 +99,13 @@ class MovieLensPreprocessingMixin:
             .with_columns(pad_len=max_seq_len-pl.col("seq_len"))
             .select(
                 pl.col("userId"),
+                pl.col("max_timestamp"),
                 *(pl.col(feat).list.concat(
                     pl.lit(-1, dtype=pl.Int64).repeat_by(pl.col("pad_len"))
                 ).list.to_array(max_seq_len) for feat in features)
             )
         )
+        padded_history = self._ordered_train_test_split(padded_history, "max_timestamp", 0.8)
 
         out = {
             feat: torch.from_numpy(
@@ -107,5 +115,7 @@ class MovieLensPreprocessingMixin:
             ) for feat in features
         }
         out["userId"] = torch.from_numpy(padded_history.select("userId").to_numpy())
+        out["isTrain"] = torch.from_numpy(padded_history.select("is_train").to_numpy())
         
         return out
+

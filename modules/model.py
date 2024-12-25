@@ -10,6 +10,7 @@ from modules.utils import eval_mode
 from modules.utils import jagged_to_flattened_tensor
 from modules.utils import maybe_repeat_interleave
 from modules.utils import padded_to_jagged_tensor
+from modules.utils import reset_kv_cache
 from modules.utils import select_columns_per_row
 from typing import NamedTuple
 from torch import nn
@@ -89,8 +90,9 @@ class DecoderRetrievalModel(nn.Module):
 
         return transformer_output
 
-    @torch.no_grad
     @eval_mode
+    @reset_kv_cache
+    @torch.no_grad
     def generate_next_sem_id(
         self,
         batch: TokenizedSeqBatch,
@@ -131,18 +133,12 @@ class DecoderRetrievalModel(nn.Module):
                 parent_id = select_columns_per_row(generated, top_k_indices // n_top_k_candidates)
                 top_k_samples = torch.cat([parent_id, top_k_samples.unsqueeze(-1)], axis=-1)
 
-                slice_length = generated.shape[2] + 1
-                col_idx = (
-                    rearrange(next_token_pos, "b -> b 1") -
-                    torch.arange(slice_length-1, -1, -1, device=next_token_pos.device)
-                )
+                cache_idx = (
+                    (torch.arange(B, device=top_k_indices.device).unsqueeze(-1)*k) + 
+                    top_k_indices // n_top_k_candidates
+                ).flatten()
 
-                import pdb; pdb.set_trace()
-                # batch.sem_ids[
-                #     torch.arange(batch.sem_ids.shape[0], device=batch.sem_ids.device).unsqueeze(1),
-                #    col_idx
-                #] = top_k_samples.flatten(end_dim=1)
-                # import pdb; pdb.set_trace()
+                self.decoder.apply_to_kv_cache(lambda x: x[cache_idx])
 
                 batch = TokenizedSeqBatch(
                     user_ids=batch.user_ids,
@@ -160,7 +156,6 @@ class DecoderRetrievalModel(nn.Module):
                     next_token_pos
                 ] = top_k_samples.flatten()
 
-                # import pdb; pdb.set_trace()
                 next_sem_ids = top_k_samples.reshape(-1, 1)
                 next_batch_size = next_sem_ids.shape[0]
 
@@ -172,9 +167,7 @@ class DecoderRetrievalModel(nn.Module):
                 )
 
                 self.decoder.apply_to_kv_cache(lambda x: x.repeat_interleave(k, axis=0))
-                import pdb; pdb.set_trace()
 
-                # TODO: Repeat interleave kv cache
                 generated = top_k_samples.unsqueeze(-1)
                 log_probas = torch.clone(top_k_log_probas.detach())
             
@@ -186,7 +179,7 @@ class DecoderRetrievalModel(nn.Module):
             log_probas=log_probas.squeeze()
         )
             
-    # @torch.compile
+    #@torch.compile
     def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         B, N = seq_mask.shape
@@ -194,9 +187,8 @@ class DecoderRetrievalModel(nn.Module):
         trnsf_out = self._predict(batch)
         if self.training:
             predict_out = self.out_proj(trnsf_out)
-            # Nested only supported at training time due to lack of support for nested KV cache
             if self.jagged_mode:
-                logits = jagged_to_flattened_tensor(predict_out.unbind())
+                logits = jagged_to_flattened_tensor(predict_out)
                 target = torch.cat([
                     batch.sem_ids[:, 1:],
                     -torch.ones(B, 1, device=batch.sem_ids.device, dtype=batch.sem_ids.dtype)
@@ -208,6 +200,12 @@ class DecoderRetrievalModel(nn.Module):
                 out = logits[:, :-1, :][target_mask, :]
                 target = batch.sem_ids[:, 1:][target_mask]
                 loss = F.cross_entropy(out, target)
+        elif self.jagged_mode:
+            trnsf_out = trnsf_out.contiguous()
+            last_token_pos = trnsf_out.offsets()[1:]-1
+            trnsf_out_flattened = jagged_to_flattened_tensor(trnsf_out)
+            logits = self.out_proj(trnsf_out_flattened[last_token_pos, :])
+            loss = None
         else:
             last_token_pos = seq_mask.sum(axis=-1) - 1
             logits = self.out_proj(trnsf_out[torch.arange(B, device=trnsf_out.device), last_token_pos])

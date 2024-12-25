@@ -68,7 +68,7 @@ class KVCache(nn.Module):
     def append_column(self, keys: Tensor, values: Tensor) -> None:
         B, N, D = self.cache_limits
 
-        row_idx = torch.arange(B, device=self.kv_cache.device)
+        row_idx = torch.arange(B, device=self.k_cache.device)
         self.k_cache[:B, :][row_idx, self.next_seq_pos] = keys.detach()[:, :]
         self.v_cache[:B, :][row_idx, self.next_seq_pos] = values.detach()[:, :]
 
@@ -78,6 +78,7 @@ class KVCache(nn.Module):
         self.next_seq_pos += 1
     
     @torch.no_grad
+    @torch.compiler.disable
     def as_jagged(self):
         keys_jagged = padded_to_jagged_tensor(self.keys, self.seq_lenghts)
         values_jagged = padded_to_jagged_tensor(self.values, self.seq_lenghts)
@@ -87,12 +88,15 @@ class KVCache(nn.Module):
     def apply(self, fn) -> None:
         B, N, D = self.cache_limits
         k_transformed, v_transformed = fn(self.k_cache[:B, :N, :D]), fn(self.v_cache[:B, :N, :D])
+        next_seq_pos_transformed = fn(self.next_seq_pos)
         B, N, D = k_transformed.shape
 
         self.reset()
         self.k_cache[:B, :N, :D] = k_transformed
         self.v_cache[:B, :N, :D] = v_transformed
+        self.next_seq_pos = next_seq_pos_transformed
         self.cache_limits = [B, N, D]
+        self.is_empty = False
 
 
 class Attend(nn.Module):
@@ -192,19 +196,24 @@ class MultiHeadAttention(nn.Module):
         else:
             qkv = self.qkv(x)
         
-        if use_cache and self.kv_cache.is_empty:
-            assert padding_mask is not None
-            B, N = padding_mask.shape
-            queries, keys, values = jagged_to_flattened_tensor(qkv).chunk(3, dim=-1)
-            
-            self.kv_cache.store(keys=keys, values=values, mask=padding_mask)
-
-        elif use_cache and not self.kv_cache.is_empty:
+        if not self.training and use_cache and self.kv_cache.is_empty:
             assert padding_mask is not None
             B, N = padding_mask.shape
             queries, keys, values = qkv.chunk(3, dim=-1)
-            keys, values = jagged_to_flattened_tensor(keys), jagged_to_flattened_tensor(values)
+            
+            self.kv_cache.store(
+                keys=jagged_to_flattened_tensor(keys), 
+                values=jagged_to_flattened_tensor(values), 
+                mask=padding_mask
+            )
 
+        elif not self.training and use_cache and not self.kv_cache.is_empty:
+            assert padding_mask is not None
+            B, N = padding_mask.shape
+            queries, keys, values = qkv.chunk(3, dim=-1)
+
+            keys, values = jagged_to_flattened_tensor(keys), jagged_to_flattened_tensor(values)
+            
             self.kv_cache.append_column(keys=keys, values=values)
             keys, values = self.kv_cache.as_jagged()
         

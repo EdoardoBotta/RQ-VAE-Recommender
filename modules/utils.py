@@ -4,6 +4,16 @@ from torch import Tensor
 from torch.nested import Tensor as NestedTensor
 
 
+def reset_kv_cache(fn):
+    def inner(self, *args, **kwargs):
+        self.decoder.reset_kv_cache()
+        out = fn(self, *args, **kwargs)
+        self.decoder.reset_kv_cache()
+        return out
+    
+    return inner
+
+
 def eval_mode(fn):
     def inner(self, *args, **kwargs):
         was_training = self.training
@@ -30,7 +40,7 @@ def maybe_repeat_interleave(x, repeats, dim):
         return x
     return x.repeat_interleave(repeats, dim=dim)
 
-
+@torch.compiler.disable
 def padded_to_jagged_tensor(x: Tensor, lengths: Tensor) -> NestedTensor:
     return torch.nested.nested_tensor(
         [i[:j.item()] for i, j in zip(x, lengths)],
@@ -40,4 +50,4 @@ def padded_to_jagged_tensor(x: Tensor, lengths: Tensor) -> NestedTensor:
 
 
 def jagged_to_flattened_tensor(x: NestedTensor) -> Tensor:
-    return torch.cat(x.unbind())
+    return x.values()

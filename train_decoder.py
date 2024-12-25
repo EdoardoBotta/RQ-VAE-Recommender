@@ -119,7 +119,7 @@ def train(
 
                 with accelerator.autocast():
                     model.generate_next_sem_id(tokenized_data)
-                    loss = model(tokenized_data).loss
+                    #loss = model(tokenized_data).loss
                     loss = loss / gradient_accumulate_every
                     total_loss += loss
 
@@ -173,4 +173,5 @@ if __name__ == "__main__":
         save_dir_root="out/decoder/",
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
+        force_dataset_process=True
     )

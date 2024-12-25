@@ -1,3 +1,5 @@
+import torch
+
 from modules.transformer.attention import AttentionInput
 from modules.transformer.attention import MultiHeadAttention
 from modules.normalize import RMSNorm
@@ -48,16 +50,21 @@ class TransformerBlock(nn.Module):
         attn_mask: Optional[Tensor] = None,
         jagged: Optional[bool] = False
     ) -> AttentionInput:
-        attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged))
+        attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged, use_cache=not self.training))
         if self.do_cross_attn:
             attn_out = self.cross_attn_norm(
                 attn_out +
                 self.cross_attention(
-                    x_q=attn_out, x_kv=x_kv, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged
+                    x_q=attn_out, x_kv=x_kv, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged, use_cache=not self.training
                 )
             )
         proj_out = self.ffn_norm(attn_out + self.ff(attn_out))
         return proj_out
+    
+    def reset_kv_cache(self):
+        self.attention.kv_cache.reset()
+        if self.do_cross_attn:
+            self.cross_attention.kv_cache.reset()
 
     def apply_to_kv_cache(self, fn):
         self.attention.kv_cache.apply(fn)
@@ -101,6 +108,10 @@ class TransformerDecoder(nn.Module):
         for layer in self.layers:
             x = layer(x=x, x_kv=context, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged)
         return x
+    
+    def reset_kv_cache(self) -> None:
+        for layer in self.layers:
+            layer.reset_kv_cache()
     
     def apply_to_kv_cache(self, fn) -> None:
         for layer in self.layers:
