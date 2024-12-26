@@ -119,6 +119,7 @@ class MovieLensPreprocessingMixin:
         split_grouped_by_user = MovieLensPreprocessingMixin._ordered_train_test_split(grouped_by_user, "max_timestamp", 0.8)
         padded_history = (split_grouped_by_user
             .with_columns(pad_len=max_seq_len-pl.col("seq_len"))
+            .filter(pl.col("is_train").or_(pl.col("seq_len") > 1))
             .select(
                 pl.col("userId"),
                 pl.col("max_timestamp"),

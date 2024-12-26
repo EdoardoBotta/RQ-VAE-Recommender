@@ -150,12 +150,6 @@ class DecoderRetrievalModel(nn.Module):
                 generated = torch.clone(top_k_samples.detach())
                 log_probas = torch.clone(top_k_log_probas.detach())
             else:
-                sem_ids = batch.sem_ids.repeat_interleave(k, dim=0)
-                sem_ids[
-                    torch.arange(sem_ids.shape[0], device=sem_ids.device),
-                    next_token_pos
-                ] = top_k_samples.flatten()
-
                 next_sem_ids = top_k_samples.reshape(-1, 1)
                 next_batch_size = next_sem_ids.shape[0]
 
@@ -171,21 +165,19 @@ class DecoderRetrievalModel(nn.Module):
 
                 generated = top_k_samples.unsqueeze(-1)
                 log_probas = torch.clone(top_k_log_probas.detach())
-            
-            next_token_pos += 1
         
-        import pdb; pdb.set_trace()
         return GenerationOutput(
             sem_ids=generated.squeeze(),
             log_probas=log_probas.squeeze()
         )
             
-    #@torch.compile
+    @torch.compile
     def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         B, N = seq_mask.shape
 
         trnsf_out = self._predict(batch)
+        
         if self.training:
             predict_out = self.out_proj(trnsf_out)
             if self.jagged_mode:

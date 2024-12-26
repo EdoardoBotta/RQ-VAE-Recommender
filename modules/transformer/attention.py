@@ -108,10 +108,10 @@ class Attend(nn.Module):
         self.d_out = d_out
         self.dropout = dropout
     
-    def jagged_forward(self, q: NestedTensor, k: NestedTensor, v: NestedTensor, is_causal: bool) -> NestedTensor:
-        queries = q.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
-        keys = k.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
-        values = v.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+    def jagged_forward(self, qu: NestedTensor, ke: NestedTensor, va: NestedTensor, is_causal: bool) -> NestedTensor:
+        queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
 
         dropout_p = 0. if not self.training else self.dropout
 
@@ -206,6 +206,7 @@ class MultiHeadAttention(nn.Module):
                 values=jagged_to_flattened_tensor(values), 
                 mask=padding_mask
             )
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=True)
 
         elif not self.training and use_cache and not self.kv_cache.is_empty:
             assert padding_mask is not None
@@ -216,14 +217,14 @@ class MultiHeadAttention(nn.Module):
             
             self.kv_cache.append_column(keys=keys, values=values)
             keys, values = self.kv_cache.as_jagged()
+            
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=False)
         
         elif jagged:
             queries, keys, values = torch.chunk(qkv, 3, dim=-1)
-
-        if jagged:
-            assert attn_mask is None, "Mask not supported by jagged attention"
             context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=True)
-        else:
+
+        if not jagged:
             context_vec = self.attend(qkv, attn_mask)
     
         context_vec = self.proj(context_vec)

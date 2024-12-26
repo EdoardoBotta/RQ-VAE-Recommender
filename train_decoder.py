@@ -11,6 +11,7 @@ from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
 from einops import rearrange
+from evaluate.metrics import TopKAccumulator
 from modules.model import DecoderRetrievalModel
 from modules.tokenizer.semids import SemanticIdTokenizer
 from torch.optim import AdamW
@@ -68,7 +69,7 @@ def train(
         )
 
     movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
-    train_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=False)
+    train_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=True)
     eval_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=False)
     
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -116,6 +117,8 @@ def train(
         model, optimizer
     )
 
+    metrics_accumulator = TopKAccumulator(ks=[1,5,10])
+    print(f"Device: {device}")
     with tqdm(initial=0, total=iterations,
               disable=not accelerator.is_main_process) as pbar:
         for iter in range(iterations):
@@ -151,9 +154,15 @@ def train(
 
                         generated = model.generate_next_sem_id(tokenized_data, top_k=True)
                         actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
-                        rank = (rearrange(actual, "b d -> b 1 d") == top_k).all(axis=-1).max(axis=-1).indices
-                        # TODO: Handle rank == 0 when element is not found.
-                        import pdb; pdb.set_trace()
+                        metrics_accumulator.accumulate(actual=actual, top_k=top_k)
+                
+                eval_metrics = metrics_accumulator.reduce()
+                
+                print(eval_metrics)
+                if accelerator.is_main_process and wandb_logging:
+                    wandb.log(eval_metrics)
+                
+                metrics_accumulator.reset()
 
             if accelerator.is_main_process:
                 if (iter+1) % save_model_every == 0 or iter+1 == iterations:
@@ -195,5 +204,5 @@ if __name__ == "__main__":
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
         force_dataset_process=True,
-        eval_every=1
+        eval_every=5000
     )
