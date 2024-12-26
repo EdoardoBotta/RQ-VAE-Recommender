@@ -1,5 +1,3 @@
-import torch
-
 from modules.transformer.attention import AttentionInput
 from modules.transformer.attention import MultiHeadAttention
 from modules.normalize import RMSNorm

@@ -1,6 +1,5 @@
 import torch
 
-from einops import rearrange
 from modules.embedding.id_embedder import SemIdEmbedder
 from modules.embedding.id_embedder import UserIdEmbedder
 from modules.transformer.attention import AttentionInput
@@ -214,4 +213,3 @@ class DecoderRetrievalModel(nn.Module):
             loss = None
 
         return ModelOutput(loss=loss, logits=logits)
-

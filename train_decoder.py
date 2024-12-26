@@ -144,8 +144,7 @@ def train(
 
             if (iter+1) % eval_every == 0:
                 model.eval()
-                with tqdm(eval_dataloader, desc=f'Eval {iter+1}',
-                            disable=not accelerator.is_main_process) as pbar_eval:
+                with tqdm(eval_dataloader, desc=f'Eval {iter+1}', disable=not accelerator.is_main_process) as pbar_eval:
                     for batch in pbar_eval:
                         data = batch_to(batch, device)
                         tokenized_data = tokenizer(data)

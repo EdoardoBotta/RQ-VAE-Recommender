@@ -12,6 +12,7 @@ from typing import NamedTuple
 from typing import List
 from typing import Optional
 from torch import nn
+from torch import Tensor
 from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
@@ -19,10 +20,11 @@ from torch.utils.data import SequentialSampler
 
 
 class TokenizedSeqBatch(NamedTuple):
-    user_ids: torch.Tensor
-    sem_ids: torch.Tensor
-    seq_mask: torch.Tensor
-    token_type_ids: torch.Tensor
+    user_ids: Tensor
+    sem_ids: Tensor
+    sem_ids_fut: Tensor
+    seq_mask: Tensor
+    token_type_ids: Tensor
     
 
 class SemanticIdTokenizer(nn.Module):
@@ -66,7 +68,7 @@ class SemanticIdTokenizer(nn.Module):
         self.n_layers = n_layers
         self.reset()
     
-    def _get_hits(self, query: torch.Tensor, key: torch.Tensor) -> torch.Tensor:
+    def _get_hits(self, query: Tensor, key: Tensor) -> Tensor:
         return (rearrange(key, "b d -> 1 b d") == rearrange(query, "b d -> b 1 d")).all(axis=-1)
     
     def reset(self):
@@ -78,7 +80,7 @@ class SemanticIdTokenizer(nn.Module):
     
     @torch.no_grad
     @eval_mode
-    def precompute_corpus_ids(self, movie_dataset: Dataset) -> torch.Tensor:
+    def precompute_corpus_ids(self, movie_dataset: Dataset) -> Tensor:
         cached_ids = None
         dedup_dim = []
         sampler = BatchSampler(
@@ -103,9 +105,10 @@ class SemanticIdTokenizer(nn.Module):
         dedup_dim_tensor = pack(dedup_dim, "*")[0]
         self.cached_ids = pack([cached_ids, dedup_dim_tensor], "b *")[0]
         
-        n_ids = self.cached_ids.max()+1
-        
         return self.cached_ids
+    
+    def _tokenize_seq_batch_from_cached(self, ids: Tensor) -> Tensor:
+        return rearrange(self.cached_ids[ids.flatten(), :], "(b n) d -> b (n d)", n=ids.shape[1])
     
     @torch.no_grad
     @eval_mode
@@ -117,18 +120,21 @@ class SemanticIdTokenizer(nn.Module):
             B, N = batch.ids.shape
             sem_ids = self.rq_vae.get_semantic_ids(batch.x).sem_ids
             D = sem_ids.shape[-1]
-            seq_mask = None
+            seq_mask, sem_ids_fut = None, None
         else:
             B, N = batch.ids.shape
             _, D = self.cached_ids.shape
-            sem_ids = rearrange(self.cached_ids[batch.ids.flatten(), :], "(b n) d -> b (n d)", n=N)
+            sem_ids = self._tokenize_seq_batch_from_cached(batch.ids)
             seq_mask = batch.seq_mask.repeat_interleave(D, dim=1)
             sem_ids[~seq_mask] = -1
+
+            sem_ids_fut = self._tokenize_seq_batch_from_cached(batch.ids_fut)
         
         token_type_ids = torch.arange(D, device=sem_ids.device).repeat(B, N)
         return TokenizedSeqBatch(
             user_ids=batch.user_ids,
             sem_ids=sem_ids,
+            sem_ids_fut=sem_ids_fut,
             seq_mask=seq_mask,
             token_type_ids=token_type_ids
         )
