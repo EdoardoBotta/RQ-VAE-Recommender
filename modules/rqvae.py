@@ -12,21 +12,23 @@ from modules.quantize import QuantizeForwardMode
 from typing import List
 from typing import NamedTuple
 from torch import nn
+from torch import Tensor
 
 torch.set_float32_matmul_precision('high')
 
+
 class RqVaeOutput(NamedTuple):
-    embeddings: torch.Tensor
-    residuals: torch.Tensor
-    sem_ids: torch.Tensor
+    embeddings: Tensor
+    residuals: Tensor
+    sem_ids: Tensor
 
 
 class RqVaeComputedLosses(NamedTuple):
-    loss: torch.Tensor
-    reconstruction_loss: torch.Tensor
-    rqvae_loss: torch.Tensor
-    embs_norm: torch.Tensor
-    p_unique_ids: torch.Tensor
+    loss: Tensor
+    reconstruction_loss: Tensor
+    rqvae_loss: Tensor
+    embs_norm: Tensor
+    p_unique_ids: Tensor
 
 
 class RqVae(nn.Module):
@@ -94,15 +96,17 @@ class RqVae(nn.Module):
         self.load_state_dict(state["model"])
         print(f"---Loaded RQVAE Iter {state['iter']}---")
 
-    def encode(self, x: torch.Tensor) -> torch.Tensor:
+    def encode(self, x: Tensor) -> Tensor:
         return self.encoder(x)
 
-    def decode(self, x: torch.Tensor) -> torch.Tensor:
+    def decode(self, x: Tensor) -> Tensor:
         return self.decoder(x)
 
-    def get_semantic_ids(self,
-                         x: torch.Tensor,
-                         gumbel_t: float = 0.001) -> RqVaeOutput:
+    def get_semantic_ids(
+        self,
+        x: Tensor,
+        gumbel_t: float = 0.001
+    ) -> RqVaeOutput:
         res = self.encode(x)
         embs, residuals, sem_ids = [], [], []
 

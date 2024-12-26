@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import torch
+from data.schemas import FUT_SUFFIX
 from einops import rearrange
 from sentence_transformers import SentenceTransformer
 from typing import List
@@ -63,13 +64,38 @@ class MovieLensPreprocessingMixin:
             ).map(torch.tensor) for i, name in enumerate(features)
         })
         return rolling_df
+    
+    @staticmethod
+    def _ordered_train_test_split(df, on, train_split=0.8):
+        threshold = df.select(pl.quantile(on, train_split)).item()
+        return df.with_columns(is_train=pl.col(on) <= threshold)
+    
+    @staticmethod
+    def _df_to_tensor_dict(df, features):
+        out = {
+            feat: torch.from_numpy(
+                rearrange(
+                    df.select(feat).to_numpy().squeeze().tolist(), "b d -> b d"
+                )
+            ) for feat in features
+        }
+        fut_out = {
+            feat + FUT_SUFFIX: torch.from_numpy(
+                df.select(feat + FUT_SUFFIX).to_numpy()
+            ) for feat in features
+        }
+        out.update(fut_out)
+        out["userId"] = torch.from_numpy(df.select("userId").to_numpy())
+        return out
+
 
     @staticmethod
     def _generate_user_history(
         ratings_df,
         features: List[str] = ["movieId", "rating"],
         window_size: int = 200,
-        stride: int = 1
+        stride: int = 1,
+        train_split: float = 0.8,
     ) -> torch.Tensor:
         
         if isinstance(ratings_df, pd.DataFrame):
@@ -84,28 +110,53 @@ class MovieLensPreprocessingMixin:
                 by="userId")
             .agg(
                 *(pl.col(feat) for feat in features),
-                seq_len=pl.col(features[0]).len()
+                seq_len=pl.col(features[0]).len(),
+                max_timestamp=pl.max("timestamp")
             )
         )
         
         max_seq_len = grouped_by_user.select(pl.col("seq_len").max()).item()
-        padded_history = (grouped_by_user
+        split_grouped_by_user = MovieLensPreprocessingMixin._ordered_train_test_split(grouped_by_user, "max_timestamp", 0.8)
+        padded_history = (split_grouped_by_user
             .with_columns(pad_len=max_seq_len-pl.col("seq_len"))
+            .filter(pl.col("is_train").or_(pl.col("seq_len") > 1))
             .select(
                 pl.col("userId"),
-                *(pl.col(feat).list.concat(
-                    pl.lit(-1, dtype=pl.Int64).repeat_by(pl.col("pad_len"))
-                ).list.to_array(max_seq_len) for feat in features)
+                pl.col("max_timestamp"),
+                pl.col("is_train"),
+                *(pl.when(pl.col("is_train"))
+                    .then(
+                        pl.col(feat).list.concat(
+                            pl.lit(-1, dtype=pl.Int64).repeat_by(pl.col("pad_len"))
+                        ).list.to_array(max_seq_len)
+                    ).otherwise(
+                        pl.col(feat).list.slice(0, pl.col("seq_len")-1).list.concat(
+                            pl.lit(-1, dtype=pl.Int64).repeat_by(pl.col("pad_len")+1)
+                        ).list.to_array(max_seq_len)
+                    )
+                    for feat in features
+                ),
+                *(pl.when(pl.col("is_train"))
+                    .then(
+                        pl.lit(-1, dtype=pl.Int64)
+                    )
+                    .otherwise(
+                        pl.col(feat).list.get(-1)
+                    ).alias(feat + FUT_SUFFIX)
+                    for feat in features
+                )
             )
         )
-
-        out = {
-            feat: torch.from_numpy(
-                rearrange(
-                    padded_history.select(feat).to_numpy().squeeze().tolist(), "b d -> b d"
-                )
-            ) for feat in features
-        }
-        out["userId"] = torch.from_numpy(padded_history.select("userId").to_numpy())
+        
+        out = {}
+        out["train"] = MovieLensPreprocessingMixin._df_to_tensor_dict(
+            padded_history.filter(pl.col("is_train")),
+            features
+        )
+        out["eval"] = MovieLensPreprocessingMixin._df_to_tensor_dict(
+            padded_history.filter(pl.col("is_train").not_()),
+            features
+        )
         
         return out
+

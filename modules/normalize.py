@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch import Tensor
 from torch.nn import functional as F
 
 
@@ -13,7 +14,7 @@ class L2NormalizationLayer(nn.Module):
         self.dim = dim
         self.eps = eps
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         return l2norm(x, dim=self.dim, eps=self.eps)
 
 
@@ -26,6 +27,6 @@ class RMSNorm(nn.Module):
     def _norm(self, x):
         return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         output = self._norm(x.float()).type_as(x)
         return output * self.weight

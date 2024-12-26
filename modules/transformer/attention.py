@@ -1,11 +1,102 @@
 import torch
 import torch.nn.functional as F
 
-from typing import Optional
+from modules.utils import jagged_to_flattened_tensor
+from modules.utils import padded_to_jagged_tensor
 from torch import nn
-
+from torch import Tensor
+from torch.nested import Tensor as NestedTensor
+from typing import Optional
+from typing import Union
 
 torch.backends.cuda.enable_flash_sdp(True)
+
+AttentionInput = Union[Tensor, NestedTensor]
+
+
+class KVCache(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        assert len(dim) == 3, "Cache only supports 3d tensors"
+        self.register_buffer("k_cache", torch.zeros(*dim, requires_grad=False))
+        self.register_buffer("v_cache", torch.zeros(*dim, requires_grad=False))
+        self.dim = dim
+        
+        self._reset_limits()
+        self.is_empty = True
+    
+    def _reset_limits(self):
+        self.cache_limits = [0 for _ in self.dim]
+        self.next_seq_pos = None
+    
+    def reset(self):
+        self.k_cache.fill_(0)
+        self.v_cache.fill_(0)
+        
+        self._reset_limits()
+        self.is_empty = True
+    
+    @property
+    def device(self):
+        return self.k_cache.device
+    
+    @property
+    def keys(self):
+        B, N, D = self.cache_limits
+        return self.k_cache[:B, :N, :D]
+    
+    @property
+    def values(self):
+        B, N, D = self.cache_limits
+        return self.v_cache[:B, :N, :D]
+    
+    @property
+    def seq_lenghts(self):
+        return self.next_seq_pos.squeeze()
+    
+    @torch.no_grad
+    def store(self, keys: Tensor, values: Tensor, mask: Tensor) -> None:
+        B, N = mask.shape
+        self.k_cache[:B, :N, :][mask] = keys.detach()[:, :]
+        self.v_cache[:B, :N, :][mask] = values.detach()[:, :]
+
+        self.cache_limits = [B, N, self.dim[-1]]
+        self.next_seq_pos = mask.sum(axis=1).unsqueeze(-1)
+        self.is_empty = False
+    
+    @torch.no_grad
+    def append_column(self, keys: Tensor, values: Tensor) -> None:
+        B, N, D = self.cache_limits
+
+        row_idx = torch.arange(B, device=self.k_cache.device)
+        self.k_cache[:B, :][row_idx, self.next_seq_pos] = keys.detach()[:, :]
+        self.v_cache[:B, :][row_idx, self.next_seq_pos] = values.detach()[:, :]
+
+        max_pos_appended = self.next_seq_pos.max()
+        if max_pos_appended >= N:
+            self.cache_limits[1] = max_pos_appended + 1
+        self.next_seq_pos += 1
+    
+    @torch.no_grad
+    @torch.compiler.disable
+    def as_jagged(self):
+        keys_jagged = padded_to_jagged_tensor(self.keys, self.seq_lenghts)
+        values_jagged = padded_to_jagged_tensor(self.values, self.seq_lenghts)
+        return keys_jagged, values_jagged
+
+    @torch.no_grad
+    def apply(self, fn) -> None:
+        B, N, D = self.cache_limits
+        k_transformed, v_transformed = fn(self.k_cache[:B, :N, :D]), fn(self.v_cache[:B, :N, :D])
+        next_seq_pos_transformed = fn(self.next_seq_pos)
+        B, N, D = k_transformed.shape
+
+        self.reset()
+        self.k_cache[:B, :N, :D] = k_transformed
+        self.v_cache[:B, :N, :D] = v_transformed
+        self.next_seq_pos = next_seq_pos_transformed
+        self.cache_limits = [B, N, D]
+        self.is_empty = False
 
 
 class Attend(nn.Module):
@@ -17,22 +108,20 @@ class Attend(nn.Module):
         self.d_out = d_out
         self.dropout = dropout
     
-    def jagged_causal_forward(self, qkv: torch.nested.Tensor) -> torch.nested.Tensor:
-        q, k, v = torch.chunk(qkv, 3, dim=-1)
-            
-        queries = q.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
-        keys = k.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
-        values = v.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+    def jagged_forward(self, qu: NestedTensor, ke: NestedTensor, va: NestedTensor, is_causal: bool) -> NestedTensor:
+        queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
 
         dropout_p = 0. if not self.training else self.dropout
 
         context_vec = F.scaled_dot_product_attention(
-            queries, keys, values, dropout_p=dropout_p, is_causal=True)
+            queries, keys, values, dropout_p=dropout_p, is_causal=is_causal)
         
         context_vec = context_vec.transpose(1, 2).flatten(-2)
         return context_vec
 
-    def forward(self, qkv: torch.Tensor, attn_mask: torch.Tensor) -> torch.Tensor:
+    def forward(self, qkv: Tensor, attn_mask: Tensor) -> Tensor:
         batch_size, num_tokens, embed_dim = qkv.shape
         # (b, num_tokens, 3 * embed_dim) --> (b, num_tokens, 3, num_heads, head_dim)
         qkv = qkv.view(batch_size, num_tokens, 3, self.num_heads, self.head_dim)
@@ -54,7 +143,15 @@ class Attend(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_in, d_out, num_heads, cross_attn=False, dropout=0.0, qkv_bias=False) -> None:
+    def __init__(
+        self,
+        d_in,
+        d_out,
+        num_heads,
+        cross_attn=False,
+        dropout=0.0,
+        qkv_bias=False
+    ) -> None:
         super().__init__()
 
         assert d_out % num_heads == 0, "embed_dim is indivisible by num_heads"
@@ -75,13 +172,21 @@ class MultiHeadAttention(nn.Module):
 
         self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
 
-    def forward(self,
-                x: torch.Tensor,
-                x_kv: Optional[torch.Tensor] = None,
-                padding_mask: Optional[torch.Tensor] = None,
-                attn_mask: Optional[torch.Tensor] = None,
-                jagged: bool = False
-                ) -> torch.Tensor:
+        self._kv_cache = KVCache((640, 800, 64))
+    
+    @property
+    def kv_cache(self) -> KVCache:
+        return self._kv_cache
+
+    def forward(
+        self,
+        x: AttentionInput,
+        x_kv: Optional[AttentionInput] = None,
+        padding_mask: Optional[Tensor] = None,
+        attn_mask: Optional[Tensor] = None,
+        jagged: bool = False,
+        use_cache: bool = False,
+    ) -> AttentionInput:
         # (b, num_tokens, embed_dim) --> (b, num_tokens, 3 * embed_dim)
         assert not self.cross_attn or x_kv is not None, "Found null x_kv in cross attn. layer"
         
@@ -91,10 +196,35 @@ class MultiHeadAttention(nn.Module):
         else:
             qkv = self.qkv(x)
         
-        if jagged:
-            assert attn_mask is None, "Mask not supported by jagged attention"
-            context_vec = self.attend.jagged_causal_forward(qkv)
-        else:
+        if not self.training and use_cache and self.kv_cache.is_empty:
+            assert padding_mask is not None
+            B, N = padding_mask.shape
+            queries, keys, values = qkv.chunk(3, dim=-1)
+            
+            self.kv_cache.store(
+                keys=jagged_to_flattened_tensor(keys), 
+                values=jagged_to_flattened_tensor(values), 
+                mask=padding_mask
+            )
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=True)
+
+        elif not self.training and use_cache and not self.kv_cache.is_empty:
+            assert padding_mask is not None
+            B, N = padding_mask.shape
+            queries, keys, values = qkv.chunk(3, dim=-1)
+
+            keys, values = jagged_to_flattened_tensor(keys), jagged_to_flattened_tensor(values)
+            
+            self.kv_cache.append_column(keys=keys, values=values)
+            keys, values = self.kv_cache.as_jagged()
+            
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=False)
+        
+        elif jagged:
+            queries, keys, values = torch.chunk(qkv, 3, dim=-1)
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=True)
+
+        if not jagged:
             context_vec = self.attend(qkv, attn_mask)
     
         context_vec = self.proj(context_vec)
