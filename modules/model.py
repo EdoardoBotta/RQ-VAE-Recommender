@@ -143,6 +143,7 @@ class DecoderRetrievalModel(nn.Module):
                 batch = TokenizedSeqBatch(
                     user_ids=batch.user_ids,
                     sem_ids=top_k_samples[:, :, -1].reshape(-1, 1),
+                    sem_ids_fut=batch.sem_ids_fut,
                     seq_mask=batch.seq_mask,
                     token_type_ids=batch.token_type_ids+1
                 )
@@ -162,6 +163,7 @@ class DecoderRetrievalModel(nn.Module):
                 batch = TokenizedSeqBatch(
                     user_ids=batch.user_ids.repeat_interleave(k, dim=0),
                     sem_ids=next_sem_ids,
+                    sem_ids_fut=batch.sem_ids_fut,
                     seq_mask=torch.ones(next_batch_size, 1, dtype=bool, device=next_sem_ids.device),
                     token_type_ids=torch.zeros(next_batch_size, 1, dtype=torch.int32, device=next_sem_ids.device)
                 )

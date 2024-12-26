@@ -7,8 +7,10 @@ from accelerate import Accelerator
 from data.movie_lens import MovieLensMovieData
 from data.movie_lens import MovieLensSeqData
 from data.movie_lens import MovieLensSize
+from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
+from einops import rearrange
 from modules.model import DecoderRetrievalModel
 from modules.tokenizer.semids import SemanticIdTokenizer
 from torch.optim import AdamW
@@ -35,6 +37,7 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     save_model_every=1000000,
+    eval_every=10000,
     vae_input_dim=18,
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
@@ -65,10 +68,16 @@ def train(
         )
 
     movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
-    dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    dataloader = cycle(dataloader)
-    dataloader = accelerator.prepare(dataloader)
+    train_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=False)
+    eval_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=False)
+    
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader = cycle(train_dataloader)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=True)
+    
+    train_dataloader, eval_dataloader = accelerator.prepare(
+        train_dataloader, eval_dataloader
+    )
 
     tokenizer = SemanticIdTokenizer(
         input_dim=vae_input_dim,
@@ -94,7 +103,7 @@ def train(
         n_layers=attn_layers,
         num_embeddings=vae_codebook_size,
         sem_id_dim=tokenizer.sem_ids_dim,
-        max_pos=dataset.max_seq_len*tokenizer.sem_ids_dim
+        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim
     )
 
     optimizer = AdamW(
@@ -114,12 +123,11 @@ def train(
             total_loss = 0
             optimizer.zero_grad()
             for _ in range(gradient_accumulate_every):
-                data = next_batch(dataloader, device)
+                data = next_batch(train_dataloader, device)
                 tokenized_data = tokenizer(data)
 
                 with accelerator.autocast():
-                    model.generate_next_sem_id(tokenized_data)
-                    #loss = model(tokenized_data).loss
+                    loss = model(tokenized_data).loss
                     loss = loss / gradient_accumulate_every
                     total_loss += loss
 
@@ -133,6 +141,20 @@ def train(
             optimizer.step()
 
             accelerator.wait_for_everyone()
+
+            if (iter+1) % eval_every == 0:
+                model.eval()
+                with tqdm(eval_dataloader, desc=f'Eval {iter+1}',
+                            disable=not accelerator.is_main_process) as pbar_eval:
+                    for batch in pbar_eval:
+                        data = batch_to(batch, device)
+                        tokenized_data = tokenizer(data)
+
+                        generated = model.generate_next_sem_id(tokenized_data, top_k=True)
+                        actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
+                        rank = (rearrange(actual, "b d -> b 1 d") == top_k).all(axis=-1).max(axis=-1).indices
+                        # TODO: Handle rank == 0 when element is not found.
+                        import pdb; pdb.set_trace()
 
             if accelerator.is_main_process:
                 if (iter+1) % save_model_every == 0 or iter+1 == iterations:
@@ -173,5 +195,6 @@ if __name__ == "__main__":
         save_dir_root="out/decoder/",
         dataset_folder="dataset/ml-32m",
         dataset_size=MovieLensSize._32M,
-        force_dataset_process=True
+        force_dataset_process=True,
+        eval_every=1
     )

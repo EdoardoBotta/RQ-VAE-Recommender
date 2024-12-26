@@ -119,7 +119,8 @@ class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
             df,
             features=["movieId", "rating"],
             window_size=max_seq_len if max_seq_len is not None else 200,
-            stride=180
+            stride=180,
+            train_split=0.8
         )
 
         if self.pre_transform is not None:
