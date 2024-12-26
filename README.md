@@ -16,8 +16,6 @@ RQ_VAE tokenizer model and the retrieval model are trained separately, using two
 * **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py`
 
 ### Next steps
-* Movie Lens Sequence timestamp-based train/test split.
-* Eval loop for decoder. Top-k recall and ranking metrics with semantic ids.
 * Comparison encoder-decoder model vs. decoder-only model.
 
 ### References
