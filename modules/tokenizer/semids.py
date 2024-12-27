@@ -106,6 +106,16 @@ class SemanticIdTokenizer(nn.Module):
         self.cached_ids = pack([cached_ids, dedup_dim_tensor], "b *")[0]
         
         return self.cached_ids
+
+    @torch.no_grad
+    @eval_mode
+    def exists_prefix(self, sem_id_prefix: Tensor) -> Tensor:
+        if self.cached_ids is None:
+            raise Exception("No match can be found in empty cache.")
+
+        prefix_length = sem_id_prefix.shape[-1]
+        prefix_cache = self.cached_ids[:, :prefix_length]
+        return self._get_hits(sem_id_prefix, prefix_cache).any(axis=-1)
     
     def _tokenize_seq_batch_from_cached(self, ids: Tensor) -> Tensor:
         return rearrange(self.cached_ids[ids.flatten(), :], "(b n) d -> b (n d)", n=ids.shape[1])
