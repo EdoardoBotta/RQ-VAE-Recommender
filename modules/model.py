@@ -42,14 +42,16 @@ class DecoderRetrievalModel(nn.Module):
         n_layers,
         num_embeddings,
         sem_id_dim,
+        inference_verifier_fn,
         max_pos=2048,
-        jagged_mode: bool = True
+        jagged_mode: bool = True,
     ) -> None:
         super().__init__()
 
         self.jagged_mode = jagged_mode
         self.num_embeddings = num_embeddings
         self.sem_id_dim = sem_id_dim
+        self.inference_verifier_fn = inference_verifier_fn
         
         self.sem_id_embedder = SemIdEmbedder(
             num_embeddings=num_embeddings,
@@ -117,13 +119,22 @@ class DecoderRetrievalModel(nn.Module):
             logits = self.forward(batch).logits
             probas = F.softmax(logits / temperature, dim=-1)
             samples = torch.multinomial(probas, num_samples=n_top_k_candidates)
+
+            if generated is None:
+                is_valid_prefix = self.inference_verifier_fn(samples.unsqueeze(-1))
+            else:
+                prefix = torch.cat([generated.flatten(0,1).unsqueeze(1).repeat_interleave(n_top_k_candidates, axis=1), samples.unsqueeze(-1)], axis=-1)
+                is_valid_prefix = self.inference_verifier_fn(prefix).reshape(B, -1)
+            
             samples = samples.reshape(B, -1)
             probas = probas.reshape(B, -1)
             sampled_log_probas = torch.log(select_columns_per_row(probas, samples))
 
             # Get top-K:
             sorted_log_probas, sorted_indices = (
-                sampled_log_probas + maybe_repeat_interleave(log_probas, n_top_k_candidates, dim=1)
+                -10000*(~is_valid_prefix) +
+                sampled_log_probas +
+                maybe_repeat_interleave(log_probas, n_top_k_candidates, dim=1)
             ).sort(-1, descending=True)
             top_k_log_probas, top_k_indices = sorted_log_probas[:, :k], sorted_indices[:, :k]
             top_k_samples = select_columns_per_row(samples, top_k_indices)
@@ -133,7 +144,7 @@ class DecoderRetrievalModel(nn.Module):
                 top_k_samples = torch.cat([parent_id, top_k_samples.unsqueeze(-1)], axis=-1)
 
                 cache_idx = (
-                    (torch.arange(B, device=top_k_indices.device).unsqueeze(-1)*k) + 
+                    (torch.arange(B, device=top_k_indices.device).unsqueeze(-1)*k) +
                     top_k_indices // n_top_k_candidates
                 ).flatten()
 

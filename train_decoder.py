@@ -103,6 +103,7 @@ def train(
         num_heads=attn_heads,
         n_layers=attn_layers,
         num_embeddings=vae_codebook_size,
+        inference_verifier_fn=lambda x: tokenizer.exists_prefix(x),
         sem_id_dim=tokenizer.sem_ids_dim,
         max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim
     )
@@ -154,6 +155,7 @@ def train(
 
                         generated = model.generate_next_sem_id(tokenized_data, top_k=True)
                         actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
+
                         metrics_accumulator.accumulate(actual=actual, top_k=top_k)
                 
                 eval_metrics = metrics_accumulator.reduce()
