@@ -115,7 +115,7 @@ class SemanticIdTokenizer(nn.Module):
 
         prefix_length = sem_id_prefix.shape[-1]
         prefix_cache = self.cached_ids[:, :prefix_length]
-        return self._get_hits(sem_id_prefix, prefix_cache).any(axis=-1)
+        return (sem_id_prefix.unsqueeze(-2) == prefix_cache.unsqueeze(-3)).all(axis=-1).any(axis=-1)
     
     def _tokenize_seq_batch_from_cached(self, ids: Tensor) -> Tensor:
         return rearrange(self.cached_ids[ids.flatten(), :], "(b n) d -> b (n d)", n=ids.shape[1])

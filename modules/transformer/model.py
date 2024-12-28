@@ -114,4 +114,3 @@ class TransformerDecoder(nn.Module):
     def apply_to_kv_cache(self, fn) -> None:
         for layer in self.layers:
             layer.apply_to_kv_cache(fn)
-

@@ -40,6 +40,7 @@ def maybe_repeat_interleave(x, repeats, dim):
         return x
     return x.repeat_interleave(repeats, dim=dim)
 
+
 @torch.compiler.disable
 def padded_to_jagged_tensor(x: Tensor, lengths: Tensor) -> NestedTensor:
     return torch.nested.nested_tensor(

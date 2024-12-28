@@ -30,4 +30,3 @@ class MLP(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         assert x.shape[-1] == self.input_dim, f"Invalid input dim: Expected {self.input_dim}, found {x.shape[-1]}"
         return self.mlp(x)
-
