@@ -33,5 +33,6 @@ class UserIdEmbedder(nn.Module):
         self.emb = nn.Embedding(num_buckets, embedding_dim)
     
     def forward(self, x: Tensor) -> Tensor:
-        hashed_indices = torch.tensor([hash(token) % self.num_buckets for token in x], device=x.device)
+        hashed_indices = x % self.num_buckets
+        # hashed_indices = torch.tensor([hash(token) % self.num_buckets for token in x], device=x.device)
         return self.emb(hashed_indices)

@@ -16,7 +16,9 @@ from modules.model import DecoderRetrievalModel
 from modules.tokenizer.semids import SemanticIdTokenizer
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR
+from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
+from torch.utils.data import RandomSampler
 from tqdm import tqdm
 
 
@@ -71,8 +73,10 @@ def train(
     movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
     train_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=True)
     eval_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=False)
+
+    train_sampler = BatchSampler(RandomSampler(train_dataset), batch_size, drop_last=True)
     
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=None, sampler=train_sampler, collate_fn=lambda batch: batch)
     train_dataloader = cycle(train_dataloader)
     eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=True)
     

@@ -5,6 +5,7 @@ numpy==1.24.3
 pandas==1.5.3
 polars==1.9.0
 sentence_transformers==3.3.1
+tlparse==0.3.30
 torch==2.5.1
 torchvision==0.20.1
 torch_geometric==2.6.1
