@@ -6,14 +6,26 @@ The model has two stages:
 ![image](https://github.com/EdoardoBotta/RQ-VAE/assets/64335373/199b38ac-a282-4ba1-bd89-3291617e6aa5).
 
 ### Currently supports
-* **Datasets:** MovieLens 1M, MovieLens 32M
+* **Datasets:** Amazon Reviews (Beauty, Sports, Toys), MovieLens 1M, MovieLens 32M
 * RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training script.
 * Decoder-only retrieval model + Training code with semantic id user sequences from randomly initialized or pretrained RQ-VAE.
 
 ### Executing
-RQ_VAE tokenizer model and the retrieval model are trained separately, using two separate training scripts.
-* **RQ-VAE tokenizer model training:** Trains the RQ-VAE tokenizer on the item corpus. Executed via `python train_rqvae.py`
-* **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py`
+RQ_VAE tokenizer model and the retrieval model are trained separately, using two separate training scripts. 
+#### Custom configs
+Configs are handled using `gin-config`. 
+
+The `train` functions defined under `train_rqvae.py` and `train_decoder.py` are decorated with `@gin.configurable`, which allows all their arguments to be specified with `.gin` files. These include most parameters one may want to experiment with (e.g. dataset, model sizes, output paths, training length). 
+
+Sample configs for the `train.py` functions are provided under `configs/`. Configs are applied by passing the path to the desired config file as argument to the training command. 
+#### Sample usage
+To train both models on the **Amazon Reviews** dataset, run the following commands:
+* **RQ-VAE tokenizer model training:** Trains the RQ-VAE tokenizer on the item corpus. Executed via `python train_rqvae.py configs/rqvae_amazon.gin`
+* **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py configs/decoder_amazon.gin`
+
+To train both models on the **MovieLens 32M** dataset, run the following commands:
+* **RQ-VAE tokenizer model training:** Trains the RQ-VAE tokenizer on the item corpus. Executed via `python train_rqvae.py configs/rqvae_ml32m.gin`
+* **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py configs/decoder_ml32m.gin`
 
 ### Next steps
 * Comparison encoder-decoder model vs. decoder-only model.
