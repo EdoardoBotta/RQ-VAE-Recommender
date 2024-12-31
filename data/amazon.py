@@ -39,6 +39,7 @@ class AmazonReviews(InMemoryDataset, PreprocessingMixin):
         super(AmazonReviews, self).__init__(
             root, transform, pre_transform, force_reload
         )
+        self.load(self.processed_paths[0], data_cls=HeteroData)
     
     @property
     def raw_file_names(self) -> List[str]:
@@ -72,7 +73,7 @@ class AmazonReviews(InMemoryDataset, PreprocessingMixin):
                     items = items[-(max_seq_len + 2):]
                 train_items = items[:-2]
                 sequences["train"]["itemId"].append(train_items + [-1] * (max_seq_len - len(train_items)))
-                sequences["train"]["itemId_fut"].append(None)
+                sequences["train"]["itemId_fut"].append(-1)
                 eval_items = items[:-2] + [-1]
                 if len(eval_items) > max_seq_len:
                     eval_items = eval_items[-(max_seq_len):]

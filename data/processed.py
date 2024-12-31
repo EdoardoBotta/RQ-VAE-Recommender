@@ -1,3 +1,4 @@
+import gin
 import os
 import torch
 
@@ -11,6 +12,7 @@ from torch.utils.data import Dataset
 PROCESSED_MOVIE_LENS_SUFFIX = "/processed/data.pt"
 
 
+@gin.constants_from_enum
 class RecDataset(Enum):
     AMAZON = 1
     ML_1M = 2
@@ -49,7 +51,7 @@ class ItemData(Dataset):
         processed_data_path = raw_data.processed_paths[0]
         if not os.path.exists(processed_data_path) or force_process:
             raw_data.process(max_seq_len=max_seq_len)
-
+        
         self.item_data = raw_data.data["item"]["x"]
 
     def __len__(self):

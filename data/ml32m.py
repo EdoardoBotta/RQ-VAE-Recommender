@@ -56,7 +56,8 @@ class RawMovieLens32M(MovieLens32M, PreprocessingMixin):
         root,
         transform=None,
         pre_transform=None,
-        force_reload=False
+        force_reload=False,
+        split=None
     ) -> None:
         super(RawMovieLens32M, self).__init__(
             root, transform, pre_transform, force_reload

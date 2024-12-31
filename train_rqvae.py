@@ -137,7 +137,7 @@ def train(
             total_loss = 0
             t = 0.2
             if iter == 0 and use_kmeans_init:
-                kmeans_init_data = batch_to(dataset[torch.arange(20000)], device)
+                kmeans_init_data = batch_to(dataset[torch.arange(min(20000, len(dataset)))], device)
                 model(kmeans_init_data, t)
 
             optimizer.zero_grad()
@@ -169,7 +169,7 @@ def train(
 
             optimizer.step()
             if (iter+1) % 750 == 0:
-                scheduler.step()
+               scheduler.step()
             
             accelerator.wait_for_everyone()
 
@@ -225,26 +225,5 @@ def train(
 
 
 if __name__ == "__main__":
-    train(
-        iterations=50000,
-        learning_rate=0.0001,
-        weight_decay=0.01,
-        batch_size=64,
-        vae_input_dim=768,
-        vae_n_cat_feats=0,
-        vae_hidden_dims=[512, 256, 128],
-        vae_embed_dim=64,
-        vae_codebook_size=256,
-        vae_codebook_normalize=False,
-        vae_sim_vq=False,
-        save_model_every=10000,
-        eval_every=10000,
-        dataset_folder="dataset/ml-32m",
-        dataset=RecDataset.ML_32M,
-        save_dir_root="out/ml32m/",
-        wandb_logging=True,
-        commitment_weight=0.25,
-        vae_n_layers=3,
-        vae_codebook_mode=QuantizeForwardMode.ROTATION_TRICK,
-        force_dataset_process=True,
-    )
+    gin.parse_config_file("configs/rqvae_amazon.gin")
+    train()

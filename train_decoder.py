@@ -77,7 +77,7 @@ def train(
         split=dataset_split
     )
     train_dataset = SeqData(root=dataset_folder, dataset=dataset, is_train=True, split=dataset_split)
-    eval_dataset = SeqData(root=dataset_folder, datase=dataset, is_train=False, split=dataset_split)
+    eval_dataset = SeqData(root=dataset_folder, dataset=dataset, is_train=False, split=dataset_split)
 
     train_sampler = BatchSampler(RandomSampler(train_dataset), batch_size, drop_last=True)
     
@@ -201,19 +201,5 @@ def train(
 
 
 if __name__ == "__main__":
-    train(
-        iterations=20000,
-        batch_size=64,
-        vae_input_dim=768,
-        vae_hidden_dims=[512, 256, 128],
-        vae_embed_dim=64,
-        vae_n_cat_feats=0,
-        vae_codebook_size=256,
-        wandb_logging=False,
-        pretrained_rqvae_path="trained_models/checkpoint_high_entropy.pt",
-        save_dir_root="out/decoder/",
-        dataset_folder="dataset/ml-32m",
-        dataset=RecDataset.ML_32M,
-        force_dataset_process=False,
-        eval_every=5000
-    )
+    gin.parse_config_file("configs/decoder_amazon.gin")
+    train()
