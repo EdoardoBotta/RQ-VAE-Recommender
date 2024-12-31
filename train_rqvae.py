@@ -5,8 +5,8 @@ import numpy as np
 import wandb
 
 from accelerate import Accelerator
-from data.movie_lens import MovieLensMovieData
-from data.movie_lens import MovieLensSize
+from data.processed import ItemData
+from data.processed import RecDataset
 from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
@@ -29,7 +29,7 @@ def train(
     learning_rate=0.0001,
     weight_decay=0.01,
     dataset_folder="dataset/ml-1m",
-    dataset_size=MovieLensSize._1M,
+    dataset=RecDataset.ML_1M,
     pretrained_rqvae_path=None,
     save_dir_root="out/",
     use_kmeans_init=True,
@@ -50,7 +50,8 @@ def train(
     vae_codebook_normalize=False,
     vae_codebook_mode=QuantizeForwardMode.GUMBEL_SOFTMAX,
     vae_sim_vq=False,
-    vae_n_layers=3
+    vae_n_layers=3,
+    dataset_split="beauty"
 ):
     if wandb_logging:
         params = locals()
@@ -62,7 +63,7 @@ def train(
 
     device = accelerator.device
 
-    dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
+    dataset = ItemData(root=dataset_folder, dataset=dataset, force_process=force_dataset_process, split=dataset_split)
     sampler = BatchSampler(RandomSampler(dataset), batch_size, False)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=None, collate_fn=lambda batch: batch)
     dataloader = cycle(dataloader)
@@ -239,7 +240,7 @@ if __name__ == "__main__":
         save_model_every=10000,
         eval_every=10000,
         dataset_folder="dataset/ml-32m",
-        dataset_size=MovieLensSize._32M,
+        dataset=RecDataset.ML_32M,
         save_dir_root="out/ml32m/",
         wandb_logging=True,
         commitment_weight=0.25,

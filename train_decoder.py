@@ -4,13 +4,12 @@ import torch
 import wandb
 
 from accelerate import Accelerator
-from data.movie_lens import MovieLensMovieData
-from data.movie_lens import MovieLensSeqData
-from data.movie_lens import MovieLensSize
+from data.processed import ItemData
+from data.processed import RecDataset
+from data.processed import SeqData
 from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
-from einops import rearrange
 from evaluate.metrics import TopKAccumulator
 from modules.model import DecoderRetrievalModel
 from modules.tokenizer.semids import SemanticIdTokenizer
@@ -31,7 +30,7 @@ def train(
     max_grad_norm=1,
     dataset_folder="dataset/ml-1m",
     save_dir_root="out/",
-    dataset_size=MovieLensSize._1M,
+    dataset=RecDataset.ML_1M,
     pretrained_rqvae_path=None,
     split_batches=True,
     amp=False,
@@ -51,7 +50,8 @@ def train(
     vae_n_layers=3,
     attn_heads=8,
     attn_embed_dim=64,
-    attn_layers=4
+    attn_layers=4,
+    dataset_split="beauty"
 ):
     if wandb_logging:
         params = locals()
@@ -70,9 +70,14 @@ def train(
             config=params
         )
 
-    movie_dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
-    train_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=True)
-    eval_dataset = MovieLensSeqData(root=dataset_folder, dataset_size=dataset_size, is_train=False)
+    movie_dataset = ItemData(
+        root=dataset_folder,
+        dataset=dataset,
+        force_process=force_dataset_process,
+        split=dataset_split
+    )
+    train_dataset = SeqData(root=dataset_folder, dataset=dataset, is_train=True, split=dataset_split)
+    eval_dataset = SeqData(root=dataset_folder, datase=dataset, is_train=False, split=dataset_split)
 
     train_sampler = BatchSampler(RandomSampler(train_dataset), batch_size, drop_last=True)
     
@@ -122,7 +127,7 @@ def train(
         model, optimizer
     )
 
-    metrics_accumulator = TopKAccumulator(ks=[1,5,10])
+    metrics_accumulator = TopKAccumulator(ks=[1, 5, 10])
     print(f"Device: {device}")
     with tqdm(initial=0, total=iterations,
               disable=not accelerator.is_main_process) as pbar:
@@ -208,7 +213,7 @@ if __name__ == "__main__":
         pretrained_rqvae_path="trained_models/checkpoint_high_entropy.pt",
         save_dir_root="out/decoder/",
         dataset_folder="dataset/ml-32m",
-        dataset_size=MovieLensSize._32M,
-        force_dataset_process=True,
+        dataset=RecDataset.ML_32M,
+        force_dataset_process=False,
         eval_every=5000
     )

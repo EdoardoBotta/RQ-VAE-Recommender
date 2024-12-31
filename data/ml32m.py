@@ -3,7 +3,7 @@ import os.path as osp
 import pandas as pd
 import torch
 
-from data.preprocessing import MovieLensPreprocessingMixin
+from data.preprocessing import PreprocessingMixin
 from torch_geometric.data import HeteroData
 from torch_geometric.data import InMemoryDataset
 from torch_geometric.data import download_url
@@ -50,7 +50,7 @@ class MovieLens32M(InMemoryDataset):
         pass
 
 
-class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
+class RawMovieLens32M(MovieLens32M, PreprocessingMixin):
     def __init__(
         self,
         root,
@@ -84,7 +84,7 @@ class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
 
         x = torch.cat([titles_emb, genres], axis=1)
 
-        data['movie'].x = x
+        data['item'].x = x
         # Process user data:
         full_df = pd.DataFrame({"userId": ratings_df["userId"].unique()})
         df = self._remove_low_occurrence(ratings_df, full_df, "userId")
@@ -100,24 +100,24 @@ class RawMovieLens32M(MovieLens32M, MovieLensPreprocessingMixin):
         src = [user_mapping[idx] for idx in df['userId']]
         dst = [movie_mapping[idx] for idx in df['movieId']]
         edge_index = torch.tensor([src, dst])
-        data['user', 'rates', 'movie'].edge_index = edge_index
+        data['user', 'rates', 'item'].edge_index = edge_index
 
         rating = torch.from_numpy(df['rating'].values).to(torch.long)
-        data['user', 'rates', 'movie'].rating = rating
+        data['user', 'rates', 'item'].rating = rating
 
         time = torch.from_numpy(df['timestamp'].values)
-        data['user', 'rates', 'movie'].time = time
+        data['user', 'rates', 'item'].time = time
 
-        data['movie', 'rated_by', 'user'].edge_index = edge_index.flip([0])
-        data['movie', 'rated_by', 'user'].rating = rating
-        data['movie', 'rated_by', 'user'].time = time
+        data['item', 'rated_by', 'user'].edge_index = edge_index.flip([0])
+        data['item', 'rated_by', 'user'].rating = rating
+        data['item', 'rated_by', 'user'].time = time
 
-        df["movieId"] = df["movieId"].apply(lambda x: movie_mapping[x])
+        df["itemId"] = df["movieId"].apply(lambda x: movie_mapping[x])
 
         df["rating"] = (2*df["rating"]).astype(int)
-        data["user", "rated", "movie"].history = self._generate_user_history(
+        data["user", "rated", "item"].history = self._generate_user_history(
             df,
-            features=["movieId", "rating"],
+            features=["itemId", "rating"],
             window_size=max_seq_len if max_seq_len is not None else 200,
             stride=180,
             train_split=0.8

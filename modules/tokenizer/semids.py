@@ -1,7 +1,7 @@
 import torch
 
-from data.movie_lens import MovieLensMovieData
-from data.movie_lens import MovieLensSeqData
+from data.processed import ItemData
+from data.processed import SeqData
 from data.schemas import SeqBatch
 from data.utils import batch_to
 from einops import rearrange
@@ -15,7 +15,6 @@ from torch import nn
 from torch import Tensor
 from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
 from torch.utils.data import SequentialSampler
 
 
@@ -80,7 +79,7 @@ class SemanticIdTokenizer(nn.Module):
     
     @torch.no_grad
     @eval_mode
-    def precompute_corpus_ids(self, movie_dataset: Dataset) -> Tensor:
+    def precompute_corpus_ids(self, movie_dataset: ItemData) -> Tensor:
         cached_ids = None
         dedup_dim = []
         sampler = BatchSampler(
@@ -150,11 +149,11 @@ class SemanticIdTokenizer(nn.Module):
         )
 
 if __name__ == "__main__":
-    dataset = MovieLensMovieData("dataset/ml-1m-movie")
+    dataset = ItemData("dataset/ml-1m-movie")
     tokenizer = SemanticIdTokenizer(18, 32, [32], 32)
     tokenizer.precompute_corpus_ids(dataset)
     
-    seq_data = MovieLensSeqData("dataset/ml-1m")
+    seq_data = SeqData("dataset/ml-1m")
     batch = seq_data[:10]
     tokenized = tokenizer(batch)
     import pdb; pdb.set_trace()
