@@ -13,7 +13,9 @@ The model has two stages:
 ### Executing
 RQ_VAE tokenizer model and the retrieval model are trained separately, using two separate training scripts. 
 #### Custom configs
-Configs are handled via `.gin` files. The `train` functions defined under `train_rqvae.py` and `train_decoder.py` are decorated with `@gin.configurable`, which allows all their arguments to be specified with `.gin` files. These include most parameters one may want to experiment with (e.g. dataset, model sizes, output paths, training length). 
+Configs are handled using `gin-config`. 
+
+The `train` functions defined under `train_rqvae.py` and `train_decoder.py` are decorated with `@gin.configurable`, which allows all their arguments to be specified with `.gin` files. These include most parameters one may want to experiment with (e.g. dataset, model sizes, output paths, training length). 
 
 Sample configs for the `train.py` functions are provided under `configs/`. Configs are applied by passing the path to the desired config file as argument to the training command. 
 **Sample usage.** To train both models on the Amazon Reviews dataset, run the following commands:
