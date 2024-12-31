@@ -1,3 +1,4 @@
+import argparse
 import os
 import gin
 import torch
@@ -13,6 +14,7 @@ from data.utils import next_batch
 from evaluate.metrics import TopKAccumulator
 from modules.model import DecoderRetrievalModel
 from modules.tokenizer.semids import SemanticIdTokenizer
+from modules.utils import parse_config
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import BatchSampler
@@ -106,8 +108,8 @@ def train(
     # import pdb; pdb.set_trace()
 
     model = DecoderRetrievalModel(
-        embedding_dim=vae_embed_dim,
-        d_out=vae_embed_dim,
+        embedding_dim=attn_embed_dim,
+        d_out=attn_embed_dim,
         dropout=False,
         num_heads=attn_heads,
         n_layers=attn_layers,
@@ -201,5 +203,5 @@ def train(
 
 
 if __name__ == "__main__":
-    gin.parse_config_file("configs/decoder_amazon.gin")
+    parse_config()
     train()

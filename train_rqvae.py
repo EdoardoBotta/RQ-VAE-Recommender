@@ -14,6 +14,7 @@ from distributions.gumbel import TemperatureScheduler
 from modules.rqvae import RqVae
 from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
+from modules.utils import parse_config
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import BatchSampler
@@ -225,5 +226,5 @@ def train(
 
 
 if __name__ == "__main__":
-    gin.parse_config_file("configs/rqvae_amazon.gin")
+    parse_config()
     train()

@@ -1,3 +1,5 @@
+import argparse
+import gin
 import torch
 from einops import rearrange
 from torch import Tensor
@@ -52,3 +54,10 @@ def padded_to_jagged_tensor(x: Tensor, lengths: Tensor) -> NestedTensor:
 
 def jagged_to_flattened_tensor(x: NestedTensor) -> Tensor:
     return x.values()
+
+
+def parse_config():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config_path", type=str, help="Path to gin config file.")
+    args = parser.parse_args()
+    gin.parse_config_file(args.config_path)
