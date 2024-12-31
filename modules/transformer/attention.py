@@ -172,7 +172,7 @@ class MultiHeadAttention(nn.Module):
 
         self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
 
-        self._kv_cache = KVCache((640, 800, 64))
+        self._kv_cache = KVCache((2560, 80, 384)) # (640, 800, 64)
     
     @property
     def kv_cache(self) -> KVCache:
