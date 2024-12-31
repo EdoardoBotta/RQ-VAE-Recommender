@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer
 from typing import List
 
 
-class MovieLensPreprocessingMixin:
+class PreprocessingMixin:
     @staticmethod
     def _process_genres(genres, one_hot=True):
         if one_hot:
@@ -116,7 +116,7 @@ class MovieLensPreprocessingMixin:
         )
         
         max_seq_len = grouped_by_user.select(pl.col("seq_len").max()).item()
-        split_grouped_by_user = MovieLensPreprocessingMixin._ordered_train_test_split(grouped_by_user, "max_timestamp", 0.8)
+        split_grouped_by_user = PreprocessingMixin._ordered_train_test_split(grouped_by_user, "max_timestamp", 0.8)
         padded_history = (split_grouped_by_user
             .with_columns(pad_len=max_seq_len-pl.col("seq_len"))
             .filter(pl.col("is_train").or_(pl.col("seq_len") > 1))
@@ -149,11 +149,11 @@ class MovieLensPreprocessingMixin:
         )
         
         out = {}
-        out["train"] = MovieLensPreprocessingMixin._df_to_tensor_dict(
+        out["train"] = PreprocessingMixin._df_to_tensor_dict(
             padded_history.filter(pl.col("is_train")),
             features
         )
-        out["eval"] = MovieLensPreprocessingMixin._df_to_tensor_dict(
+        out["eval"] = PreprocessingMixin._df_to_tensor_dict(
             padded_history.filter(pl.col("is_train").not_()),
             features
         )

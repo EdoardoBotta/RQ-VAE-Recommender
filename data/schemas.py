@@ -3,6 +3,7 @@ from torch import Tensor
 
 FUT_SUFFIX = "_fut"
 
+
 class SeqBatch(NamedTuple):
     user_ids: Tensor
     ids: Tensor

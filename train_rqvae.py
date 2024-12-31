@@ -5,8 +5,8 @@ import numpy as np
 import wandb
 
 from accelerate import Accelerator
-from data.movie_lens import MovieLensMovieData
-from data.movie_lens import MovieLensSize
+from data.processed import ItemData
+from data.processed import RecDataset
 from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
@@ -29,7 +29,7 @@ def train(
     learning_rate=0.0001,
     weight_decay=0.01,
     dataset_folder="dataset/ml-1m",
-    dataset_size=MovieLensSize._1M,
+    dataset=RecDataset.ML_1M,
     pretrained_rqvae_path=None,
     save_dir_root="out/",
     use_kmeans_init=True,
@@ -50,7 +50,8 @@ def train(
     vae_codebook_normalize=False,
     vae_codebook_mode=QuantizeForwardMode.GUMBEL_SOFTMAX,
     vae_sim_vq=False,
-    vae_n_layers=3
+    vae_n_layers=3,
+    dataset_split="beauty"
 ):
     if wandb_logging:
         params = locals()
@@ -62,7 +63,7 @@ def train(
 
     device = accelerator.device
 
-    dataset = MovieLensMovieData(root=dataset_folder, dataset_size=dataset_size, force_process=force_dataset_process)
+    dataset = ItemData(root=dataset_folder, dataset=dataset, force_process=force_dataset_process, split=dataset_split)
     sampler = BatchSampler(RandomSampler(dataset), batch_size, False)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=None, collate_fn=lambda batch: batch)
     dataloader = cycle(dataloader)
@@ -136,7 +137,7 @@ def train(
             total_loss = 0
             t = 0.2
             if iter == 0 and use_kmeans_init:
-                kmeans_init_data = batch_to(dataset[torch.arange(20000)], device)
+                kmeans_init_data = batch_to(dataset[torch.arange(min(20000, len(dataset)))], device)
                 model(kmeans_init_data, t)
 
             optimizer.zero_grad()
@@ -168,7 +169,7 @@ def train(
 
             optimizer.step()
             if (iter+1) % 750 == 0:
-                scheduler.step()
+               scheduler.step()
             
             accelerator.wait_for_everyone()
 
@@ -224,26 +225,5 @@ def train(
 
 
 if __name__ == "__main__":
-    train(
-        iterations=50000,
-        learning_rate=0.0001,
-        weight_decay=0.01,
-        batch_size=64,
-        vae_input_dim=768,
-        vae_n_cat_feats=0,
-        vae_hidden_dims=[512, 256, 128],
-        vae_embed_dim=64,
-        vae_codebook_size=256,
-        vae_codebook_normalize=False,
-        vae_sim_vq=False,
-        save_model_every=10000,
-        eval_every=10000,
-        dataset_folder="dataset/ml-32m",
-        dataset_size=MovieLensSize._32M,
-        save_dir_root="out/ml32m/",
-        wandb_logging=True,
-        commitment_weight=0.25,
-        vae_n_layers=3,
-        vae_codebook_mode=QuantizeForwardMode.ROTATION_TRICK,
-        force_dataset_process=True,
-    )
+    gin.parse_config_file("configs/rqvae_amazon.gin")
+    train()

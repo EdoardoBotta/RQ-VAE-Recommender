@@ -1,0 +1,24 @@
+import data.processed
+import modules.quantize
+
+train.iterations=50000
+train.learning_rate=0.0001
+train.weight_decay=0.01
+train.batch_size=64
+train.vae_input_dim=768
+train.vae_n_cat_feats=0
+train.vae_hidden_dims=[512, 256, 128]
+train.vae_embed_dim=64
+train.vae_codebook_size=256
+train.vae_codebook_normalize=False
+train.vae_sim_vq=False
+train.save_model_every=10000
+train.eval_every=10000
+train.dataset_folder="dataset/ml-32m"
+train.dataset=%data.processed.RecDataset.ML_32M
+train.save_dir_root="out/rqvae/ml32m/"
+train.wandb_logging=True
+train.commitment_weight=0.25
+train.vae_n_layers=3
+train.vae_codebook_mode=%modules.quantize.QuantizeForwardMode.ROTATION_TRICK
+train.force_dataset_process=True

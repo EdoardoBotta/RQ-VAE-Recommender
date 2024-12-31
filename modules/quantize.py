@@ -1,3 +1,4 @@
+import gin
 import torch
 
 from distributions.gumbel import gumbel_softmax_sample
@@ -11,6 +12,7 @@ from torch import Tensor
 from torch.nn import functional as F
 
 
+@gin.constants_from_enum
 class QuantizeForwardMode(Enum):
     GUMBEL_SOFTMAX = 1
     STE = 2
