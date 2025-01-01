@@ -1,6 +1,7 @@
 import data.processed
 
 train.iterations=100000
+train.learning_rate=0.001
 train.batch_size=256
 train.vae_input_dim=768
 train.vae_hidden_dims=[512, 256, 128]
@@ -15,6 +16,8 @@ train.dataset=%data.processed.RecDataset.AMAZON
 train.force_dataset_process=False
 train.eval_every=20000
 train.dataset_split="beauty"
+train.attn_dropout=False
 train.attn_heads=6
 train.attn_embed_dim=384
-train.attn_layers=4
+train.attn_layers=8
+train.decoder_embed_dim=128

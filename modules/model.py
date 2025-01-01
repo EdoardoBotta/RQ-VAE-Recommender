@@ -36,7 +36,7 @@ class DecoderRetrievalModel(nn.Module):
     def __init__(
         self,
         embedding_dim,
-        d_out,
+        attn_dim,
         dropout,
         num_heads,
         n_layers,
@@ -61,17 +61,19 @@ class DecoderRetrievalModel(nn.Module):
         self.user_id_embedder = UserIdEmbedder(2000, embedding_dim)
         
         self.wpe = nn.Embedding(num_embeddings=max_pos, embedding_dim=embedding_dim)
+        self.tte = nn.Embedding(num_embeddings=sem_id_dim, embedding_dim=embedding_dim)
 
         self.decoder = TransformerDecoder(
-            d_in=embedding_dim,
-            d_out=d_out,
+            d_in=attn_dim,
+            d_out=attn_dim,
             dropout=dropout,
             num_heads=num_heads,
             n_layers=n_layers,
             do_cross_attn=False
         )
 
-        self.out_proj = nn.Linear(d_out, num_embeddings, bias=False)
+        self.in_proj = nn.Linear(embedding_dim, attn_dim)
+        self.out_proj = nn.Linear(attn_dim, num_embeddings, bias=False)
     
     def _predict(self, batch: TokenizedSeqBatch) -> AttentionInput:
         user_emb = self.user_id_embedder(batch.user_ids)
@@ -81,13 +83,16 @@ class DecoderRetrievalModel(nn.Module):
         
         pos = torch.arange(N, device=sem_ids_emb.device)
         wpe = self.wpe(pos)
+        tte = self.tte(batch.token_type_ids)
 
-        input_embedding = user_emb + wpe.unsqueeze(0) + sem_ids_emb
+        input_embedding = user_emb + wpe.unsqueeze(0) + sem_ids_emb + tte
 
         if self.jagged_mode:
             seq_lengths = batch.seq_mask.sum(axis=1)
             input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
-        transformer_output = self.decoder(input_embedding, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
+        
+        transformer_input = self.in_proj(input_embedding)
+        transformer_output = self.decoder(transformer_input, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
 
         return transformer_output
 

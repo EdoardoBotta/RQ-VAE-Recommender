@@ -1,6 +1,8 @@
+from modules.encoder import MLP
+from modules.normalize import RMSNorm
 from modules.transformer.attention import AttentionInput
 from modules.transformer.attention import MultiHeadAttention
-from modules.normalize import RMSNorm
+from typing import List
 from typing import Optional
 from torch import nn
 from torch import Tensor
@@ -14,6 +16,7 @@ class TransformerBlock(nn.Module):
         dropout: float,
         num_heads: int,
         qkv_bias: bool,
+        mlp_hidden_dims: List[int] = [1024],
         do_cross_attn: bool = False
     ) -> None:
         super().__init__()
@@ -29,14 +32,19 @@ class TransformerBlock(nn.Module):
             d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=False, dropout=dropout, qkv_bias=qkv_bias
         )
 
-        self.ff = nn.Linear(d_out, d_out, bias=False)
+        self.ff = MLP(
+            input_dim=d_out,
+            hidden_dims=mlp_hidden_dims,
+            out_dim=d_out,
+            normalize=False
+        )
 
         self.attn_norm = RMSNorm(d_out)
         self.ffn_norm = RMSNorm(d_out)
 
         if self.do_cross_attn:
             self.cross_attention = MultiHeadAttention(
-                d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=True, dropout=dropout, qkv_bias=qkv_bias
+                d_in=d_out, d_out=d_out, num_heads=num_heads, cross_attn=True, dropout=dropout, qkv_bias=qkv_bias
             )
             self.cross_attn_norm = RMSNorm(d_out)
     

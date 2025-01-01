@@ -13,10 +13,10 @@ from data.utils import cycle
 from data.utils import next_batch
 from evaluate.metrics import TopKAccumulator
 from modules.model import DecoderRetrievalModel
+from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
 from modules.utils import parse_config
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import RandomSampler
@@ -50,6 +50,8 @@ def train(
     vae_sim_vq=False,
     vae_n_cat_feats=18,
     vae_n_layers=3,
+    decoder_embed_dim=64,
+    attn_dropout=False,
     attn_heads=8,
     attn_embed_dim=64,
     attn_layers=4,
@@ -108,9 +110,9 @@ def train(
     # import pdb; pdb.set_trace()
 
     model = DecoderRetrievalModel(
-        embedding_dim=attn_embed_dim,
-        d_out=attn_embed_dim,
-        dropout=False,
+        embedding_dim=decoder_embed_dim,
+        attn_dim=attn_embed_dim,
+        dropout=attn_dropout,
         num_heads=attn_heads,
         n_layers=attn_layers,
         num_embeddings=vae_codebook_size,
@@ -125,12 +127,18 @@ def train(
         weight_decay=weight_decay
     )
 
-    model, optimizer = accelerator.prepare(
-        model, optimizer
+    lr_scheduler = InverseSquareRootScheduler(
+        optimizer=optimizer,
+        warmup_steps=10000
+    )
+
+    model, optimizer, lr_scheduler = accelerator.prepare(
+        model, optimizer, lr_scheduler
     )
 
     metrics_accumulator = TopKAccumulator(ks=[1, 5, 10])
-    print(f"Device: {device}")
+    num_params = sum(p.numel() for p in model.parameters())
+    print(f"Device: {device}, Num Parameters: {num_params}")
     with tqdm(initial=0, total=iterations,
               disable=not accelerator.is_main_process) as pbar:
         for iter in range(iterations):
@@ -154,6 +162,7 @@ def train(
             accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
 
             optimizer.step()
+            lr_scheduler.step()
 
             accelerator.wait_for_everyone()
 
