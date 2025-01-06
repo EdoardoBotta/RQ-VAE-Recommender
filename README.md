@@ -32,8 +32,8 @@ To train both models on the **MovieLens 32M** dataset, run the following command
 * **RQ-VAE tokenizer model training:** Trains the RQ-VAE tokenizer on the item corpus. Executed via `python train_rqvae.py configs/rqvae_ml32m.gin`
 * **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py configs/decoder_ml32m.gin`
 
-### Usage on Huggingface
-RQ-VAE trained model checkpoints are available on Huggingface: 
+### 🤗 Usage on Huggingface 
+RQ-VAE trained model checkpoints are available on Huggingface 🤗: 
 * [**RQ-VAE Amazon Beauty**](https://huggingface.co/edobotta/rqvae-amazon-beauty) checkpoint.
 
 ### Next steps
