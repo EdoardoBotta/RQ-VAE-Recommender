@@ -80,12 +80,12 @@ class DecoderRetrievalModel(nn.Module):
         sem_ids_emb = self.sem_id_embedder(batch)
         
         B, N, D = sem_ids_emb.shape
-        
-        pos = torch.arange(N, device=sem_ids_emb.device)
+          
+        pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0) + self.decoder.seq_lengths
         wpe = self.wpe(pos)
         tte = self.tte(batch.token_type_ids)
 
-        input_embedding = user_emb + wpe.unsqueeze(0) + sem_ids_emb + tte
+        input_embedding = wpe + sem_ids_emb + tte
 
         if self.jagged_mode:
             seq_lengths = batch.seq_mask.sum(axis=1)

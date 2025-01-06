@@ -51,8 +51,10 @@ class KVCache(nn.Module):
         return self.v_cache[:B, :N, :D]
     
     @property
-    def seq_lenghts(self):
-        return self.next_seq_pos.squeeze()
+    def seq_lengths(self):
+        if self.is_empty:
+            return 0
+        return self.next_seq_pos
     
     @torch.no_grad
     def store(self, keys: Tensor, values: Tensor, mask: Tensor) -> None:
@@ -80,8 +82,8 @@ class KVCache(nn.Module):
     @torch.no_grad
     @torch.compiler.disable
     def as_jagged(self):
-        keys_jagged = padded_to_jagged_tensor(self.keys, self.seq_lenghts)
-        values_jagged = padded_to_jagged_tensor(self.values, self.seq_lenghts)
+        keys_jagged = padded_to_jagged_tensor(self.keys, self.seq_lengths.squeeze())
+        values_jagged = padded_to_jagged_tensor(self.values, self.seq_lengths.squeeze())
         return keys_jagged, values_jagged
 
     @torch.no_grad

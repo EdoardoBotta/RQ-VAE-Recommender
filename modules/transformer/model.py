@@ -115,6 +115,10 @@ class TransformerDecoder(nn.Module):
             x = layer(x=x, x_kv=context, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged)
         return x
     
+    @property
+    def seq_lengths(self) -> Tensor:
+        return self.layers[0].attention.kv_cache.seq_lengths
+    
     def reset_kv_cache(self) -> None:
         for layer in self.layers:
             layer.reset_kv_cache()
