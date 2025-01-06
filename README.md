@@ -11,7 +11,7 @@ The model has two stages:
 * Decoder-only retrieval model + Training code with semantic id user sequences from randomly initialized or pretrained RQ-VAE.
 
 ### Installing
-Run `pip install -r requirements.txt`. 
+Clone the repository and run `pip install -r requirements.txt`. 
 
 No manual dataset download is required.
 
