@@ -10,6 +10,9 @@ The model has two stages:
 * RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training script.
 * Decoder-only retrieval model + Training code with semantic id user sequences from randomly initialized or pretrained RQ-VAE.
 
+### Installing
+Run `pip install -r requirements.txt`. No manual dataset download is required.
+
 ### Executing
 RQ_VAE tokenizer model and the retrieval model are trained separately, using two separate training scripts. 
 #### Custom configs
