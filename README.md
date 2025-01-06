@@ -10,8 +10,8 @@ The model has two stages:
 * RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training script.
 * Decoder-only retrieval model + Training code with semantic id user sequences from randomly initialized or pretrained RQ-VAE.
 
-### 🤗 Usage on Huggingface 
-RQ-VAE trained model checkpoints are available on Huggingface 🤗: 
+### 🤗 Usage on Hugging Face 
+RQ-VAE trained model checkpoints are available on Hugging Face 🤗: 
 * [**RQ-VAE Amazon Beauty**](https://huggingface.co/edobotta/rqvae-amazon-beauty) checkpoint.
 
 ### Installing
