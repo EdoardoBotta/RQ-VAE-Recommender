@@ -10,6 +10,10 @@ The model has two stages:
 * RQ-VAE Pytorch model implementation + KMeans initialization + RQ-VAE Training script.
 * Decoder-only retrieval model + Training code with semantic id user sequences from randomly initialized or pretrained RQ-VAE.
 
+### 🤗 Usage on Huggingface 
+RQ-VAE trained model checkpoints are available on Huggingface 🤗: 
+* [**RQ-VAE Amazon Beauty**](https://huggingface.co/edobotta/rqvae-amazon-beauty) checkpoint.
+
 ### Installing
 Clone the repository and run `pip install -r requirements.txt`. 
 
@@ -31,10 +35,6 @@ To train both models on the **Amazon Reviews** dataset, run the following comman
 To train both models on the **MovieLens 32M** dataset, run the following commands:
 * **RQ-VAE tokenizer model training:** Trains the RQ-VAE tokenizer on the item corpus. Executed via `python train_rqvae.py configs/rqvae_ml32m.gin`
 * **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py configs/decoder_ml32m.gin`
-
-### 🤗 Usage on Huggingface 
-RQ-VAE trained model checkpoints are available on Huggingface 🤗: 
-* [**RQ-VAE Amazon Beauty**](https://huggingface.co/edobotta/rqvae-amazon-beauty) checkpoint.
 
 ### Next steps
 * Comparison encoder-decoder model vs. decoder-only model.
