@@ -1,0 +1,16 @@
+{
+  "codebook_kmeans_init": false,
+  "codebook_normalize": false,
+  "codebook_sim_vq": false,
+  "codebook_size": 256,
+  "commitment_weight": 0.25,
+  "embed_dim": 32,
+  "hidden_dims": [
+    512,
+    256,
+    128
+  ],
+  "input_dim": 768,
+  "n_cat_features": 0,
+  "n_layers": 3
+}

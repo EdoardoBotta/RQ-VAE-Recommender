@@ -9,6 +9,7 @@ from modules.loss import RqVaeLoss
 from modules.normalize import l2norm
 from modules.quantize import Quantize
 from modules.quantize import QuantizeForwardMode
+from huggingface_hub import PyTorchModelHubMixin
 from typing import List
 from typing import NamedTuple
 from torch import nn
@@ -31,7 +32,7 @@ class RqVaeComputedLosses(NamedTuple):
     p_unique_ids: Tensor
 
 
-class RqVae(nn.Module):
+class RqVae(nn.Module, PyTorchModelHubMixin):
     def __init__(
         self,
         input_dim: int,
