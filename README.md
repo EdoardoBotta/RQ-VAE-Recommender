@@ -3,7 +3,7 @@ This is a PyTorch implementation of a generative retrieval model using semantic 
 The model has two stages:
 1. Items in the corpus are mapped to a tuple of semantic IDs by training an RQ-VAE (figure below).
 2. Sequences of semantic IDs are tokenized by using a frozen RQ-VAE and a transformer-based is trained on sequences of semantic IDs to generate the next ids in the sequence.
-![image](https://github.com/EdoardoBotta/RQ-VAE/assets/64335373/199b38ac-a282-4ba1-bd89-3291617e6aa5).
+![image](https://github.com/EdoardoBotta/RQ-VAE/assets/64335373/199b38ac-a282-4ba1-bd89-3291617e6aa5)
 
 ### Currently supports
 * **Datasets:** Amazon Reviews (Beauty, Sports, Toys), MovieLens 1M, MovieLens 32M
