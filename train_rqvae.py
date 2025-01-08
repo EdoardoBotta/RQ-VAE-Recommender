@@ -169,7 +169,7 @@ def train(
             accelerator.wait_for_everyone()
 
             optimizer.step()
-            if (iter+1) % 750 == 0:
+            if (iter+1) % 4000 == 0:
                scheduler.step()
             
             accelerator.wait_for_everyone()

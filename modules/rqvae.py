@@ -115,7 +115,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             residuals.append(res)
             quantized = layer(res, temperature=gumbel_t)
             emb, id = quantized.embeddings, quantized.ids
-            res = res - emb.detach()
+            res = res - emb
             sem_ids.append(id)
             embs.append(emb)
 
