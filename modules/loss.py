@@ -1,5 +1,21 @@
+from einops import rearrange
 from torch import nn
 from torch import Tensor
+from torch.nn import functional as F
+
+
+def efficient_rotation_trick_transform(u, q, e):
+    """
+    4.2 in https://arxiv.org/abs/2410.06424
+    """
+    e = rearrange(e, 'b d -> b 1 d')
+    w = F.normalize(u + q, p=2, dim=1, eps=1e-6).detach()
+
+    return (
+        e -
+        2 * (e @ rearrange(w, 'b d -> b d 1') @ rearrange(w, 'b d -> b 1 d')) +
+        2 * (e @ rearrange(u, 'b d -> b d 1').detach() @ rearrange(q, 'b d -> b 1 d').detach())
+    ).squeeze()
 
 
 class ReconstructionLoss(nn.Module):
@@ -38,5 +54,6 @@ class RqVaeLoss(nn.Module):
 
     def forward(self, query, value) -> Tensor:
         emb_loss = ((query.detach() - value)**2).sum(axis=[-1, -2])
+        value = query + (value - query).detach()
         query_loss = ((query - value.detach())**2).sum(axis=[-1, -2])
         return emb_loss + self.commitment_weight * query_loss

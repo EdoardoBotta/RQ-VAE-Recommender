@@ -136,7 +136,7 @@ def train(
         for iter in range(start_iter, start_iter+1+iterations):
             model.train()
             total_loss = 0
-            t = 0.2
+            t = 1
             if iter == 0 and use_kmeans_init:
                 kmeans_init_data = batch_to(dataset[torch.arange(min(20000, len(dataset)))], device)
                 model(kmeans_init_data, t)
@@ -167,6 +167,10 @@ def train(
             pbar.set_description(f'loss: {print_loss:.4f}, rl: {print_rec_loss:.4f}, vl: {print_vae_loss:.4f}')
 
             accelerator.wait_for_everyone()
+
+            #for name, weight in model.named_parameters():
+            #    print(name, weight.grad)
+            #import pdb; pdb.set_trace()
 
             optimizer.step()
             if (iter+1) % 4000 == 0:

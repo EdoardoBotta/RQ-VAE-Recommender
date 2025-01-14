@@ -24,20 +24,6 @@ class QuantizeOutput(NamedTuple):
     ids: Tensor
 
 
-def efficient_rotation_trick_transform(u, q, e):
-    """
-    4.2 in https://arxiv.org/abs/2410.06424
-    """
-    e = rearrange(e, 'b d -> b 1 d')
-    w = F.normalize(u + q, p=2, dim=1, eps=1e-6).detach()
-
-    return (
-        e -
-        2 * (e @ rearrange(w, 'b d -> b d 1') @ rearrange(w, 'b d -> b 1 d')) +
-        2 * (e @ rearrange(u, 'b d -> b d 1').detach() @ rearrange(q, 'b d -> b 1 d').detach())
-    ).squeeze()
-
-
 class Quantize(nn.Module):
     def __init__(
         self,
@@ -96,7 +82,7 @@ class Quantize(nn.Module):
             (x**2).sum(axis=1, keepdim=True) +
             (codebook.T**2).sum(axis=0, keepdim=True) -
             2 * x @ codebook.T
-        ).detach()
+        )
 
         _, ids = (dist).min(axis=1)
 
@@ -108,17 +94,6 @@ class Quantize(nn.Module):
                 emb = weights @ codebook
             elif self.forward_mode == QuantizeForwardMode.STE:
                 emb = self.get_item_embeddings(ids)
-                emb = x + (emb - x).detach()
-            elif self.forward_mode == QuantizeForwardMode.ROTATION_TRICK:
-                weights = gumbel_softmax_sample(
-                    -dist, temperature=temperature, device=self.device
-                )
-                emb = weights @ codebook
-                emb = efficient_rotation_trick_transform(
-                    x / x.norm(dim=-1, keepdim=True),
-                    emb / emb.norm(dim=-1, keepdim=True),
-                    x
-                )
             else:
                 raise Exception("Unsupported Quantize forward mode.")
         else:

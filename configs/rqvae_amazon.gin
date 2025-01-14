@@ -20,6 +20,6 @@ train.save_dir_root="out/rqvae/amazon/"
 train.wandb_logging=True
 train.commitment_weight=0.25
 train.vae_n_layers=3
-train.vae_codebook_mode=%modules.quantize.QuantizeForwardMode.ROTATION_TRICK
+train.vae_codebook_mode=%modules.quantize.QuantizeForwardMode.GUMBEL_SOFTMAX
 train.force_dataset_process=False
 train.dataset_split="beauty"
