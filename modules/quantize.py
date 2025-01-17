@@ -20,8 +20,9 @@ class QuantizeForwardMode(Enum):
 
 
 class QuantizeOutput(NamedTuple):
-    embeddings: Tensor
+    approx_embeddings: Tensor
     ids: Tensor
+    origin_embeddings: Tensor
 
 
 def efficient_rotation_trick_transform(u, q, e):
@@ -105,26 +106,29 @@ class Quantize(nn.Module):
                 weights = gumbel_softmax_sample(
                     -dist, temperature=temperature, device=self.device
                 )
-                emb = weights @ codebook
+                app_emb = weights @ codebook
             elif self.forward_mode == QuantizeForwardMode.STE:
-                emb = self.get_item_embeddings(ids)
-                emb = x + (emb - x).detach()
+                app_emb = self.get_item_embeddings(ids)
+                app_emb = x + (app_emb - x).detach()
             elif self.forward_mode == QuantizeForwardMode.ROTATION_TRICK:
                 weights = gumbel_softmax_sample(
                     -dist, temperature=temperature, device=self.device
                 )
-                emb = weights @ codebook
-                emb = efficient_rotation_trick_transform(
+                app_emb = weights @ codebook
+                app_emb = efficient_rotation_trick_transform(
                     x / x.norm(dim=-1, keepdim=True),
-                    emb / emb.norm(dim=-1, keepdim=True),
+                    app_emb / app_emb.norm(dim=-1, keepdim=True),
                     x
                 )
             else:
                 raise Exception("Unsupported Quantize forward mode.")
         else:
-            emb = self.get_item_embeddings(ids)
+            app_emb = self.get_item_embeddings(ids)
+
+        org_emb = self.get_item_embeddings(ids)
 
         return QuantizeOutput(
-            embeddings=emb,
+            approx_embeddings=app_emb,
+            origin_embeddings=org_emb,
             ids=ids
         )

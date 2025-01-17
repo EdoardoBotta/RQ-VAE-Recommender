@@ -19,7 +19,8 @@ torch.set_float32_matmul_precision('high')
 
 
 class RqVaeOutput(NamedTuple):
-    embeddings: Tensor
+    approx_embeddings: Tensor
+    origin_embeddings: Tensor
     residuals: Tensor
     sem_ids: Tensor
 
@@ -87,11 +88,11 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             else ReconstructionLoss()
         )
         self.rqvae_loss = RqVaeLoss(self.commitment_weight)
-    
+
     @property
     def device(self) -> torch.device:
         return next(self.encoder.parameters()).device
-    
+
     def load_pretrained(self, path: str) -> None:
         state = torch.load(path, map_location=self.device)
         self.load_state_dict(state["model"])
@@ -109,18 +110,20 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         gumbel_t: float = 0.001
     ) -> RqVaeOutput:
         res = self.encode(x)
-        embs, residuals, sem_ids = [], [], []
+        app_embs, org_embs, residuals, sem_ids = [], [], [], []
 
         for layer in self.layers:
             residuals.append(res)
             quantized = layer(res, temperature=gumbel_t)
-            emb, id = quantized.embeddings, quantized.ids
-            res = res - emb
+            app_emb, org_emb, id = quantized.approx_embeddings, quantized.origin_embeddings, quantized.ids
+            res = res - app_emb
             sem_ids.append(id)
-            embs.append(emb)
+            app_embs.append(app_emb)
+            org_embs.append(org_emb)
 
         return RqVaeOutput(
-            embeddings=rearrange(embs, "b h d -> h d b"),
+            approx_embeddings=rearrange(app_embs, "b h d -> h d b"),
+            origin_embeddings=rearrange(org_embs, "b h d -> h d b"),
             residuals=rearrange(residuals, "b h d -> h d b"),
             sem_ids=rearrange(sem_ids, "b d -> d b")
         )
@@ -129,17 +132,18 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
     def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)
-        embs, residuals = quantized.embeddings, quantized.residuals
-        x_hat = self.decode(embs.sum(axis=-1))
+        app_embds, org_embs, residuals = quantized.approx_embeddings,quantized.origin_embeddings, quantized.residuals
+        x_hat = self.decode(app_embds.sum(axis=-1))
         x_hat = torch.cat([l2norm(x_hat[...,:-self.n_cat_feats]), x_hat[...,-self.n_cat_feats:]], axis=-1)
 
         reconstuction_loss = self.reconstruction_loss(x_hat, x)
-        rqvae_loss = self.rqvae_loss(residuals, embs)
+        rqvae_loss = self.rqvae_loss(residuals, org_embs)
+
         loss = (reconstuction_loss + rqvae_loss).mean()
 
         with torch.no_grad():
             # Compute debug ID statistics
-            embs_norm = embs.norm(dim=1)
+            embs_norm = org_embs.norm(dim=1)
             p_unique_ids = (~torch.triu(
                 (rearrange(quantized.sem_ids, "b d -> b 1 d") == rearrange(quantized.sem_ids, "b d -> 1 b d")).all(axis=-1), diagonal=1)
             ).all(axis=1).sum() / quantized.sem_ids.shape[0]
