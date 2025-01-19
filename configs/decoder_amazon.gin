@@ -1,7 +1,7 @@
 import data.processed
 
 train.iterations=100000
-train.learning_rate=0.001
+train.learning_rate=0.0005
 train.batch_size=256
 train.vae_input_dim=768
 train.vae_hidden_dims=[512, 256, 128]

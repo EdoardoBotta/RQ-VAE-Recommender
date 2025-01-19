@@ -5,6 +5,7 @@ from distributions.gumbel import gumbel_softmax_sample
 from einops import rearrange
 from enum import Enum
 from init.kmeans import kmeans_init_
+from modules.loss import QuantizeLoss
 from modules.normalize import L2NormalizationLayer
 from typing import NamedTuple
 from torch import nn
@@ -22,6 +23,7 @@ class QuantizeForwardMode(Enum):
 class QuantizeOutput(NamedTuple):
     embeddings: Tensor
     ids: Tensor
+    loss: Tensor
 
 
 def efficient_rotation_trick_transform(u, q, e):
@@ -46,6 +48,7 @@ class Quantize(nn.Module):
         do_kmeans_init: bool = True,
         codebook_normalize: bool = False,
         sim_vq: bool = False,  # https://arxiv.org/pdf/2411.02038
+        commitment_weight: float = 0.25,
         forward_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX
     ) -> None:
         super().__init__()
@@ -62,6 +65,7 @@ class Quantize(nn.Module):
             L2NormalizationLayer(dim=-1) if codebook_normalize else nn.Identity()
         )
 
+        self.quantize_loss = QuantizeLoss(commitment_weight)
         self._init_weights()
 
     @property
@@ -106,25 +110,28 @@ class Quantize(nn.Module):
                     -dist, temperature=temperature, device=self.device
                 )
                 emb = weights @ codebook
+                emb_out = emb
             elif self.forward_mode == QuantizeForwardMode.STE:
                 emb = self.get_item_embeddings(ids)
-                emb = x + (emb - x).detach()
+                emb_out = x + (emb - x).detach()
             elif self.forward_mode == QuantizeForwardMode.ROTATION_TRICK:
-                weights = gumbel_softmax_sample(
-                    -dist, temperature=temperature, device=self.device
-                )
-                emb = weights @ codebook
-                emb = efficient_rotation_trick_transform(
+                emb = self.get_item_embeddings(ids)
+                emb_out = efficient_rotation_trick_transform(
                     x / x.norm(dim=-1, keepdim=True),
                     emb / emb.norm(dim=-1, keepdim=True),
                     x
                 )
             else:
                 raise Exception("Unsupported Quantize forward mode.")
+            
+            loss = self.quantize_loss(query=x, value=emb)
+        
         else:
-            emb = self.get_item_embeddings(ids)
+            emb_out = self.get_item_embeddings(ids)
+            loss = self.quantize_loss(query=x, value=emb_out)
 
         return QuantizeOutput(
-            embeddings=emb,
-            ids=ids
+            embeddings=emb_out,
+            ids=ids,
+            loss=loss
         )

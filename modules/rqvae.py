@@ -5,7 +5,7 @@ from einops import rearrange
 from modules.encoder import MLP
 from modules.loss import CategoricalReconstuctionLoss
 from modules.loss import ReconstructionLoss
-from modules.loss import RqVaeLoss
+from modules.loss import QuantizeLoss
 from modules.normalize import l2norm
 from modules.quantize import Quantize
 from modules.quantize import QuantizeForwardMode
@@ -22,6 +22,7 @@ class RqVaeOutput(NamedTuple):
     embeddings: Tensor
     residuals: Tensor
     sem_ids: Tensor
+    quantize_loss: Tensor
 
 
 class RqVaeComputedLosses(NamedTuple):
@@ -86,7 +87,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             CategoricalReconstuctionLoss(n_cat_features) if n_cat_features != 0
             else ReconstructionLoss()
         )
-        self.rqvae_loss = RqVaeLoss(self.commitment_weight)
+        self.rqvae_loss = QuantizeLoss(self.commitment_weight)
     
     @property
     def device(self) -> torch.device:
@@ -109,11 +110,14 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         gumbel_t: float = 0.001
     ) -> RqVaeOutput:
         res = self.encode(x)
+        
+        quantize_loss = 0
         embs, residuals, sem_ids = [], [], []
 
         for layer in self.layers:
             residuals.append(res)
             quantized = layer(res, temperature=gumbel_t)
+            quantize_loss += quantized.loss
             emb, id = quantized.embeddings, quantized.ids
             res = res - emb
             sem_ids.append(id)
@@ -122,7 +126,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         return RqVaeOutput(
             embeddings=rearrange(embs, "b h d -> h d b"),
             residuals=rearrange(residuals, "b h d -> h d b"),
-            sem_ids=rearrange(sem_ids, "b d -> d b")
+            sem_ids=rearrange(sem_ids, "b d -> d b"),
+            quantize_loss=quantize_loss
         )
 
     @torch.compile
@@ -134,7 +139,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         x_hat = torch.cat([l2norm(x_hat[...,:-self.n_cat_feats]), x_hat[...,-self.n_cat_feats:]], axis=-1)
 
         reconstuction_loss = self.reconstruction_loss(x_hat, x)
-        rqvae_loss = self.rqvae_loss(residuals, embs)
+        rqvae_loss = quantized.quantize_loss
         loss = (reconstuction_loss + rqvae_loss).mean()
 
         with torch.no_grad():
