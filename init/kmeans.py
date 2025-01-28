@@ -49,8 +49,12 @@ class Kmeans:
         for cluster in range(self.k):
             is_assigned_to_c = assigned[cluster]
             if not is_assigned_to_c.any():
-                continue
-            self.centroids[cluster, :] = x[is_assigned_to_c, :].mean(axis=0)
+                if x.size(0) > 0:
+                    self.centroids[cluster, :] = x[torch.randint(0, x.size(0), (1,))].squeeze(0)
+                else:
+                    raise ValueError("Can not choose random element from x, x is empty")
+            else:
+                self.centroids[cluster, :] = x[is_assigned_to_c, :].mean(axis=0)
         self.assignment = centroid_idx
 
     def run(self, x):
