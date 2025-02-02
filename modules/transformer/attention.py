@@ -123,7 +123,7 @@ class Attend(nn.Module):
         context_vec = context_vec.transpose(1, 2).flatten(-2)
         return context_vec
 
-    def forward(self, qkv: Tensor, attn_mask: Tensor) -> Tensor:
+    def forward(self, qkv: Tensor, is_causal: bool = False) -> Tensor:
         batch_size, num_tokens, embed_dim = qkv.shape
         # (b, num_tokens, 3 * embed_dim) --> (b, num_tokens, 3, num_heads, head_dim)
         qkv = qkv.view(batch_size, num_tokens, 3, self.num_heads, self.head_dim)
@@ -137,7 +137,7 @@ class Attend(nn.Module):
         use_dropout = 0. if not self.training else self.dropout
 
         context_vec = F.scaled_dot_product_attention(
-            queries, keys, values, attn_mask=attn_mask, dropout_p=use_dropout, is_causal=attn_mask is None)
+            queries, keys, values, attn_mask=None, dropout_p=use_dropout, is_causal=is_causal)
 
         # Combine heads, where self.d_out = self.num_heads * self.head_dim
         context_vec = context_vec.transpose(1, 2).contiguous().view(batch_size, num_tokens, self.d_out)
@@ -197,7 +197,7 @@ class MultiHeadAttention(nn.Module):
         x: AttentionInput,
         x_kv: Optional[AttentionInput] = None,
         padding_mask: Optional[Tensor] = None,
-        attn_mask: Optional[Tensor] = None,
+        is_causal: Optional[bool] = True,
         jagged: bool = False,
         use_cache: bool = False,
     ) -> AttentionInput:
@@ -220,7 +220,7 @@ class MultiHeadAttention(nn.Module):
                 values=jagged_to_flattened_tensor(values), 
                 mask=padding_mask
             )
-            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=True)
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=is_causal)
 
         elif not self.training and use_cache and not self.kv_cache.is_empty:
             assert padding_mask is not None
@@ -236,10 +236,10 @@ class MultiHeadAttention(nn.Module):
         
         elif jagged:
             queries, keys, values = torch.chunk(qkv, 3, dim=-1)
-            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=True)
+            context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=is_causal)
 
         if not jagged:
-            context_vec = self.attend(qkv, attn_mask)
+            context_vec = self.attend(qkv, is_causal=is_causal)
     
         context_vec = self.proj(context_vec)
         return context_vec

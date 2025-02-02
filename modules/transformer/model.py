@@ -8,6 +8,16 @@ from torch import nn
 from torch import Tensor
 
 
+class KVCacheOpsMixin:
+    def reset_kv_cache(self) -> None:
+        for layer in self.layers:
+            layer.reset_kv_cache()
+    
+    def apply_to_kv_cache(self, fn) -> None:
+        for layer in self.layers:
+            layer.apply_to_kv_cache(fn)
+
+
 class TransformerBlock(nn.Module):
     def __init__(
         self,
@@ -53,15 +63,15 @@ class TransformerBlock(nn.Module):
         x: AttentionInput,
         x_kv: Optional[Tensor] = None,
         padding_mask: Optional[Tensor] = None,
-        attn_mask: Optional[Tensor] = None,
+        is_causal: Optional[bool] = True,
         jagged: Optional[bool] = False
     ) -> AttentionInput:
-        attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged, use_cache=not self.training))
+        attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training))
         if self.do_cross_attn:
             attn_out = self.cross_attn_norm(
                 attn_out +
                 self.cross_attention(
-                    x_q=attn_out, x_kv=x_kv, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged, use_cache=not self.training
+                    x_q=attn_out, x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training
                 )
             )
         proj_out = self.ffn_norm(attn_out + self.ff(attn_out))
@@ -78,7 +88,7 @@ class TransformerBlock(nn.Module):
             self.cross_attention.kv_cache.apply(fn)
 
 
-class TransformerDecoder(nn.Module):
+class TransformerDecoder(nn.Module, KVCacheOpsMixin):
     def __init__(
         self,
         d_in: int,
@@ -107,22 +117,59 @@ class TransformerDecoder(nn.Module):
         self,
         x: AttentionInput,
         padding_mask: Optional[Tensor] = None,
-        attn_mask: Optional[Tensor] = None,
+        is_causal: Optional[bool] = True,
         context: Optional[Tensor] = None,
         jagged: Optional[bool] = None
     ) -> AttentionInput:
         for layer in self.layers:
-            x = layer(x=x, x_kv=context, padding_mask=padding_mask, attn_mask=attn_mask, jagged=jagged)
+            x = layer(x=x, x_kv=context, padding_mask=padding_mask, is_causal=is_causal, jagged=jagged)
         return x
     
     @property
     def seq_lengths(self) -> Tensor:
         return self.layers[0].attention.kv_cache.seq_lengths
+
+
+class TransformerEncoderDecoder(nn.Module, KVCacheOpsMixin):
+    def __init__(
+        self,
+        d_in: int,
+        d_out: int,
+        dropout: float,
+        num_heads: int,
+        encoder_layers: int,
+        decoder_layers: int,
+    ) -> None:
+        super().__init__()
+
+        self.encoder = TransformerDecoder(
+            d_in=d_in,
+            d_out=d_out,
+            dropout=dropout,
+            num_heads=num_heads,
+            n_layers=encoder_layers,
+            do_cross_attn=False
+        )
+
+        self.decoder = TransformerDecoder(
+            d_in=d_in,
+            d_out=d_out,
+            dropout=dropout,
+            num_heads=num_heads,
+            n_layers=decoder_layers,
+            do_cross_attn=True
+        )
+
+        self.layers = [self.encoder, self.decoder]
     
-    def reset_kv_cache(self) -> None:
-        for layer in self.layers:
-            layer.reset_kv_cache()
-    
-    def apply_to_kv_cache(self, fn) -> None:
-        for layer in self.layers:
-            layer.apply_to_kv_cache(fn)
+    def forward(
+        self,
+        x: AttentionInput,
+        padding_mask: Optional[Tensor] = None,
+        context: Optional[Tensor] = None,
+        jagged: Optional[bool] = None
+    ) -> AttentionInput:
+        context = self.encoder(context, padding_mask=padding_mask, is_causal=False, context=None, jagged=jagged)
+        out = self.decoder(x, padding_mask=None, is_causal=True, context=context, jagged=jagged)
+        return out
+        
