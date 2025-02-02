@@ -16,6 +16,7 @@ from modules.model import DecoderRetrievalModel
 from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
 from modules.utils import parse_config
+from huggingface_hub import login
 from torch.optim import AdamW
 from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
@@ -51,11 +52,13 @@ def train(
     vae_n_cat_feats=18,
     vae_n_layers=3,
     decoder_embed_dim=64,
-    attn_dropout=False,
+    dropout_p=0.1,
     attn_heads=8,
     attn_embed_dim=64,
     attn_layers=4,
-    dataset_split="beauty"
+    dataset_split="beauty",
+    push_vae_to_hf=False,
+    vae_hf_model_name="edobotta/rqvae-amazon-beauty"
 ):
     if wandb_logging:
         params = locals()
@@ -106,13 +109,15 @@ def train(
     )
     tokenizer = accelerator.prepare(tokenizer)
     tokenizer.precompute_corpus_ids(movie_dataset)
-
-    # import pdb; pdb.set_trace()
+    
+    if push_vae_to_hf:
+        login()
+        tokenizer.rq_vae.push_to_hub(vae_hf_model_name)
 
     model = DecoderRetrievalModel(
         embedding_dim=decoder_embed_dim,
         attn_dim=attn_embed_dim,
-        dropout=attn_dropout,
+        dropout=dropout_p,
         num_heads=attn_heads,
         n_layers=attn_layers,
         num_embeddings=vae_codebook_size,
@@ -173,7 +178,7 @@ def train(
                         data = batch_to(batch, device)
                         tokenized_data = tokenizer(data)
 
-                        generated = model.generate_next_sem_id(tokenized_data, top_k=True)
+                        generated = model.generate_next_sem_id(tokenized_data, top_k=True, temperature=2)
                         actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
 
                         metrics_accumulator.accumulate(actual=actual, top_k=top_k)

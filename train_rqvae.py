@@ -16,7 +16,6 @@ from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
 from modules.utils import parse_config
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import RandomSampler
@@ -103,11 +102,9 @@ def train(
         state = torch.load(pretrained_rqvae_path, map_location=device)
         optimizer.load_state_dict(state["optimizer"])
         start_iter = state["iter"]+1
-    
-    scheduler = ExponentialLR(optimizer, gamma=0.95)
 
-    model, optimizer, scheduler = accelerator.prepare(
-        model, optimizer, scheduler
+    model, optimizer = accelerator.prepare(
+        model, optimizer
     )
 
     tokenizer = SemanticIdTokenizer(
@@ -169,8 +166,6 @@ def train(
             accelerator.wait_for_everyone()
 
             optimizer.step()
-            if (iter+1) % 4000 == 0:
-               scheduler.step()
             
             accelerator.wait_for_everyone()
 
@@ -179,6 +174,7 @@ def train(
                     state = {
                         "iter": iter,
                         "model": model.state_dict(),
+                        "model_config": model.config,
                         "optimizer": optimizer.state_dict()
                     }
 
@@ -198,6 +194,10 @@ def train(
                     _, counts = torch.unique(corpus_ids[:,:-1], dim=0, return_counts=True)
                     p = counts / corpus_ids.shape[0]
                     rqvae_entropy = -(p*torch.log(p)).sum()
+
+                    for cid in range(vae_n_layers):
+                        _, counts = torch.unique(corpus_ids[:,cid], return_counts=True)
+                        id_diversity_log[f"codebook_usage_{cid}"] = len(counts) / vae_codebook_size
 
                     id_diversity_log["rqvae_entropy"] = rqvae_entropy.cpu().item()
                     id_diversity_log["max_id_duplicates"] = max_duplicates.cpu().item()

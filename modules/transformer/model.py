@@ -23,7 +23,6 @@ class TransformerBlock(nn.Module):
         
         self.d_in = d_in
         self.d_out = d_out
-        self.dropout = dropout
         self.num_heads = num_heads
         self.qkv_bias = qkv_bias
         self.do_cross_attn = do_cross_attn
@@ -36,6 +35,7 @@ class TransformerBlock(nn.Module):
             input_dim=d_out,
             hidden_dims=mlp_hidden_dims,
             out_dim=d_out,
+            dropout=dropout,
             normalize=False
         )
 

@@ -52,14 +52,14 @@ class ItemData(Dataset):
         if not os.path.exists(processed_data_path) or force_process:
             raw_data.process(max_seq_len=max_seq_len)
         
-        self.item_data = raw_data.data["item"]["x"]
+        self.item_data = raw_data.data["item"]
 
     def __len__(self):
-        return self.item_data.shape[0]
+        return self.item_data["x"].shape[0]
 
     def __getitem__(self, idx):
         item_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
-        x = self.item_data[idx, :768]
+        x = self.item_data["x"][idx, :768]
         return SeqBatch(
             user_ids=-1 * torch.ones_like(item_ids.squeeze(0)),
             ids=item_ids,
@@ -90,7 +90,7 @@ class SeqData(Dataset):
         if not os.path.exists(processed_data_path) or force_process:
             raw_data.process(max_seq_len=max_seq_len)
 
-        split = "train" if is_train else "eval"
+        split = "train" if is_train else "test"
         self.sequence_data = raw_data.data[("user", "rated", "item")]["history"][split]
         self.item_data = raw_data.data["item"]["x"]
         self.split = split

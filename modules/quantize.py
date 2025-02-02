@@ -117,8 +117,8 @@ class Quantize(nn.Module):
             elif self.forward_mode == QuantizeForwardMode.ROTATION_TRICK:
                 emb = self.get_item_embeddings(ids)
                 emb_out = efficient_rotation_trick_transform(
-                    x / x.norm(dim=-1, keepdim=True),
-                    emb / emb.norm(dim=-1, keepdim=True),
+                    x / (x.norm(dim=-1, keepdim=True) + 1e-8),
+                    emb / (emb.norm(dim=-1, keepdim=True) + 1e-8),
                     x
                 )
             else:

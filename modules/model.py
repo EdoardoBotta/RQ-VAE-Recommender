@@ -62,6 +62,7 @@ class DecoderRetrievalModel(nn.Module):
         
         self.wpe = nn.Embedding(num_embeddings=max_pos, embedding_dim=embedding_dim)
         self.tte = nn.Embedding(num_embeddings=sem_id_dim, embedding_dim=embedding_dim)
+        self.do = nn.Dropout(dropout)
 
         self.decoder = TransformerDecoder(
             d_in=attn_dim,
@@ -91,7 +92,7 @@ class DecoderRetrievalModel(nn.Module):
             seq_lengths = batch.seq_mask.sum(axis=1)
             input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
         
-        transformer_input = self.in_proj(input_embedding)
+        transformer_input = self.do(self.in_proj(input_embedding))
         transformer_output = self.decoder(transformer_input, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
 
         return transformer_output
@@ -108,7 +109,7 @@ class DecoderRetrievalModel(nn.Module):
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
         k = 10 if top_k else 1
-        n_top_k_candidates = 2*k if top_k else 1
+        n_top_k_candidates = 5*k if top_k else 1
 
         next_token_pos = batch.seq_mask.sum(axis=1)
         # Ensure at least self.sem_id_dim empty slots are available in every sequence
@@ -213,7 +214,7 @@ class DecoderRetrievalModel(nn.Module):
             trnsf_out = trnsf_out.contiguous()
             last_token_pos = trnsf_out.offsets()[1:]-1
             trnsf_out_flattened = jagged_to_flattened_tensor(trnsf_out)
-            logits = self.out_proj(trnsf_out_flattened[last_token_pos, :])
+            logits = self.do(self.out_proj(trnsf_out_flattened[last_token_pos, :]))
             loss = None
         else:
             last_token_pos = seq_mask.sum(axis=-1) - 1

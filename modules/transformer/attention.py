@@ -164,15 +164,27 @@ class MultiHeadAttention(nn.Module):
         self.d_out = d_out
 
         if self.cross_attn:
-            self.q = nn.Linear(d_in, d_out, bias=qkv_bias)
-            self.kv = nn.Linear(d_in, 2 * d_out, bias=qkv_bias)
+            self.q = nn.Sequential(
+                nn.Linear(d_in, d_out, bias=qkv_bias),
+                nn.Dropout(dropout)
+            )
+            self.kv = nn.Sequential(
+                nn.Linear(d_in, 2 * d_out, bias=qkv_bias),
+                nn.Dropout(dropout)
+            )
         else:
-            self.qkv = nn.Linear(d_in, 3 * d_out, bias=qkv_bias)
+            self.qkv = nn.Sequential(
+                nn.Linear(d_in, 3 * d_out, bias=qkv_bias),
+                nn.Dropout(dropout)
+            )
     
-        self.proj = nn.Linear(d_out, d_out)
+        self.proj = nn.Sequential(
+            nn.Linear(d_out, d_out),
+            nn.Dropout(dropout)
+        )
         self.dropout = dropout
 
-        self.attend = Attend(self.d_out, self.num_heads, self.head_dim, self.dropout)
+        self.attend = Attend(self.d_out, self.num_heads, self.head_dim, dropout=False)
 
         self._kv_cache = KVCache((2560, 80, 384)) # (640, 800, 64)
     

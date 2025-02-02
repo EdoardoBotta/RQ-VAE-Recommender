@@ -2,6 +2,7 @@ import torch
 
 from data.schemas import SeqBatch
 from einops import rearrange
+from functools import cached_property
 from modules.encoder import MLP
 from modules.loss import CategoricalReconstuctionLoss
 from modules.loss import ReconstructionLoss
@@ -48,6 +49,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         commitment_weight: float = 0.25,
         n_cat_features: int = 18,
     ) -> None:
+        self._config = locals()
+        
         super().__init__()
 
         self.input_dim = input_dim
@@ -88,6 +91,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             else ReconstructionLoss()
         )
         self.rqvae_loss = QuantizeLoss(self.commitment_weight)
+    
+    @cached_property
+    def config(self) -> dict:
+        return self._config
     
     @property
     def device(self) -> torch.device:

@@ -1,8 +1,8 @@
 import data.processed
 import modules.quantize
 
-train.iterations=200000
-train.learning_rate=0.001
+train.iterations=400000
+train.learning_rate=0.0005
 train.weight_decay=0.01
 train.batch_size=64
 train.vae_input_dim=768

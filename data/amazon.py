@@ -109,19 +109,20 @@ class AmazonReviews(InMemoryDataset, PreprocessingMixin):
             lambda row:
                 "Title: " +
                 str(row["title"]) + "; " +
-                "Description: " +
-                str(row["description"]) + "; " +
                 "Price: " +
                 str(row["price"]) + "; " +
                 "Categories: " +
                 str(row["categories"][0]) + "; " +
                 "Brand: " +
-                str(row["brand"]) + "; ",
+                str(row["brand"]) + "; " + 
+                "Description: " +
+                str(row["description"]) + "; ",
             axis=1
         )
         
         item_emb = self._encode_text_feature(sentences)
         data['item'].x = item_emb
+        data['item'].text = sentences
         
         sequences = self.read_sequences_as_polars(max_seq_len=max_seq_len)
         data["user", "rated", "item"].history = {
