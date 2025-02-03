@@ -27,7 +27,8 @@ class TransformerBlock(nn.Module):
         num_heads: int,
         qkv_bias: bool,
         mlp_hidden_dims: List[int] = [1024],
-        do_cross_attn: bool = False
+        do_cross_attn: bool = False,
+        enable_kv_cache: bool = True
     ) -> None:
         super().__init__()
         
@@ -36,6 +37,7 @@ class TransformerBlock(nn.Module):
         self.num_heads = num_heads
         self.qkv_bias = qkv_bias
         self.do_cross_attn = do_cross_attn
+        self.enable_kv_cache = enable_kv_cache
 
         self.attention = MultiHeadAttention(
             d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=False, dropout=dropout, qkv_bias=qkv_bias
@@ -66,12 +68,12 @@ class TransformerBlock(nn.Module):
         is_causal: Optional[bool] = True,
         jagged: Optional[bool] = False
     ) -> AttentionInput:
-        attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training))
+        attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache))
         if self.do_cross_attn:
             attn_out = self.cross_attn_norm(
                 attn_out +
                 self.cross_attention(
-                    x_q=attn_out, x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training
+                    x=attn_out, x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
                 )
             )
         proj_out = self.ffn_norm(attn_out + self.ff(attn_out))
@@ -96,7 +98,8 @@ class TransformerDecoder(nn.Module, KVCacheOpsMixin):
         dropout: float,
         num_heads: int,
         n_layers: int,
-        do_cross_attn: bool = False
+        do_cross_attn: bool = False,
+        enable_kv_cache: bool = True
     ) -> None:
         super().__init__()
 
@@ -109,7 +112,8 @@ class TransformerDecoder(nn.Module, KVCacheOpsMixin):
                 dropout=dropout,
                 num_heads=num_heads,
                 qkv_bias=False,
-                do_cross_attn=self.do_cross_attn
+                do_cross_attn=self.do_cross_attn,
+                enable_kv_cache=enable_kv_cache
             ) for _ in range(n_layers)
         ])
 
@@ -148,7 +152,8 @@ class TransformerEncoderDecoder(nn.Module, KVCacheOpsMixin):
             dropout=dropout,
             num_heads=num_heads,
             n_layers=encoder_layers,
-            do_cross_attn=False
+            do_cross_attn=False,
+            enable_kv_cache=False
         )
 
         self.decoder = TransformerDecoder(
@@ -157,7 +162,8 @@ class TransformerEncoderDecoder(nn.Module, KVCacheOpsMixin):
             dropout=dropout,
             num_heads=num_heads,
             n_layers=decoder_layers,
-            do_cross_attn=True
+            do_cross_attn=True,
+            enable_kv_cache=False
         )
 
         self.layers = [self.encoder, self.decoder]

@@ -3,6 +3,12 @@ import torch
 from modules.tokenizer.semids import TokenizedSeqBatch
 from torch import nn
 from torch import Tensor
+from typing import NamedTuple
+
+
+class SemIdEmbeddingBatch(NamedTuple):
+    seq: Tensor
+    fut: Tensor
 
 
 class SemIdEmbedder(nn.Module):
@@ -22,7 +28,16 @@ class SemIdEmbedder(nn.Module):
     def forward(self, batch: TokenizedSeqBatch) -> Tensor:
         sem_ids = batch.token_type_ids*self.num_embeddings + batch.sem_ids
         sem_ids[~batch.seq_mask] = self.padding_idx
-        return self.emb(sem_ids)
+
+        if batch.sem_ids_fut is not None:
+            sem_ids_fut = batch.token_type_ids_fut*self.num_embeddings + batch.sem_ids_fut
+            sem_ids_fut = self.emb(sem_ids_fut)
+        else:
+            sem_ids_fut = None
+        return SemIdEmbeddingBatch(
+            seq=self.emb(sem_ids),
+            fut=sem_ids_fut
+        ) 
     
 
 class UserIdEmbedder(nn.Module):

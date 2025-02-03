@@ -24,6 +24,7 @@ class TokenizedSeqBatch(NamedTuple):
     sem_ids_fut: Tensor
     seq_mask: Tensor
     token_type_ids: Tensor
+    token_type_ids_fut: Tensor
     
 
 class SemanticIdTokenizer(nn.Module):
@@ -140,12 +141,14 @@ class SemanticIdTokenizer(nn.Module):
             sem_ids_fut = self._tokenize_seq_batch_from_cached(batch.ids_fut)
         
         token_type_ids = torch.arange(D, device=sem_ids.device).repeat(B, N)
+        token_type_ids_fut = torch.arange(D, device=sem_ids.device).repeat(B, 1)
         return TokenizedSeqBatch(
             user_ids=batch.user_ids,
             sem_ids=sem_ids,
             sem_ids_fut=sem_ids_fut,
             seq_mask=seq_mask,
-            token_type_ids=token_type_ids
+            token_type_ids=token_type_ids,
+            token_type_ids_fut=token_type_ids_fut
         )
 
 if __name__ == "__main__":

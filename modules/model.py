@@ -1,10 +1,12 @@
 import torch
 
+from einops import rearrange
 from modules.embedding.id_embedder import SemIdEmbedder
 from modules.embedding.id_embedder import UserIdEmbedder
 from modules.transformer.attention import AttentionInput
 from modules.tokenizer.semids import TokenizedSeqBatch
 from modules.transformer.model import TransformerDecoder
+from modules.transformer.model import TransformerEncoderDecoder
 from modules.utils import eval_mode
 from modules.utils import jagged_to_flattened_tensor
 from modules.utils import maybe_repeat_interleave
@@ -219,6 +221,203 @@ class DecoderRetrievalModel(nn.Module):
         else:
             last_token_pos = seq_mask.sum(axis=-1) - 1
             logits = self.out_proj(trnsf_out[torch.arange(B, device=trnsf_out.device), last_token_pos])
+            loss = None
+
+        return ModelOutput(loss=loss, logits=logits)
+
+class EncoderDecoderRetrievalModel(nn.Module):
+    def __init__(
+        self,
+        embedding_dim,
+        attn_dim,
+        dropout,
+        num_heads,
+        n_layers,
+        num_embeddings,
+        sem_id_dim,
+        inference_verifier_fn,
+        max_pos=2048,
+        jagged_mode: bool = True,
+    ) -> None:
+        super().__init__()
+
+        self.jagged_mode = jagged_mode
+        self.num_embeddings = num_embeddings
+        self.sem_id_dim = sem_id_dim
+        self.inference_verifier_fn = inference_verifier_fn
+
+        self.start_emb = nn.Parameter(torch.rand(embedding_dim))
+        
+        self.sem_id_embedder = SemIdEmbedder(
+            num_embeddings=num_embeddings,
+            sem_ids_dim=sem_id_dim,
+            embeddings_dim=embedding_dim
+        )
+        self.user_id_embedder = UserIdEmbedder(2000, embedding_dim)
+        
+        self.wpe = nn.Embedding(num_embeddings=max_pos, embedding_dim=embedding_dim)
+        self.tte = nn.Embedding(num_embeddings=sem_id_dim, embedding_dim=embedding_dim)
+        self.do = nn.Dropout(dropout)
+
+        self.transformer = TransformerEncoderDecoder(
+            d_in=attn_dim,
+            d_out=attn_dim,
+            dropout=dropout,
+            num_heads=num_heads,
+            encoder_layers=n_layers // 2,
+            decoder_layers=n_layers // 2
+        )
+
+        self.in_proj = nn.Linear(embedding_dim, attn_dim)
+        self.out_proj = nn.Linear(attn_dim, num_embeddings, bias=False)
+    
+    def _predict(self, batch: TokenizedSeqBatch) -> AttentionInput:
+        user_emb = self.user_id_embedder(batch.user_ids)
+        sem_ids_emb = self.sem_id_embedder(batch)
+        sem_ids_emb, sem_ids_emb_fut = sem_ids_emb.seq, sem_ids_emb.fut
+        seq_lengths = batch.seq_mask.sum(axis=1)
+        
+        B, N, D = sem_ids_emb.shape
+          
+        pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0) + self.transformer.encoder.seq_lengths
+        wpe = self.wpe(pos)
+        tte = self.tte(batch.token_type_ids)
+
+        input_embedding = wpe + sem_ids_emb + tte
+
+        input_embedding_fut = self.start_emb.repeat(B, 1, 1)
+        if sem_ids_emb_fut is not None:
+            tte_fut = self.tte(batch.token_type_ids_fut)
+            input_embedding_fut = torch.cat([
+                input_embedding_fut, 
+                sem_ids_emb_fut + tte_fut
+                ], axis=1
+            )
+
+        if self.jagged_mode:
+            seq_lengths = batch.seq_mask.sum(axis=1)
+            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
+
+            seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B, 1)
+            input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut)
+        
+        transformer_context = self.do(self.in_proj(input_embedding))
+        transformer_input = self.do(self.in_proj(input_embedding_fut))
+
+        transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
+        
+        return transformer_output
+
+    @eval_mode
+    @torch.no_grad
+    def generate_next_sem_id(
+        self,
+        batch: TokenizedSeqBatch,
+        temperature: int = 1,
+        top_k: bool = True
+    ) -> GenerationOutput:
+        B, N = batch.sem_ids.shape
+        generated, log_probas = None, 0
+        k = 10 if top_k else 1
+        n_top_k_candidates = 5*k if top_k else 1
+
+        batch = TokenizedSeqBatch(
+            user_ids=batch.user_ids,
+            sem_ids=batch.sem_ids,
+            sem_ids_fut=None,
+            seq_mask=batch.seq_mask,
+            token_type_ids=batch.token_type_ids,
+            token_type_ids_fut=None
+        )
+
+        for _ in range(self.sem_id_dim):
+            logits = self.forward(batch).logits
+            probas = F.softmax(logits / temperature, dim=-1)
+            samples = torch.multinomial(probas, num_samples=n_top_k_candidates)
+
+            if generated is None:
+                is_valid_prefix = self.inference_verifier_fn(samples.unsqueeze(-1))
+            else:
+                prefix = torch.cat([generated.flatten(0,1).unsqueeze(1).repeat_interleave(n_top_k_candidates, axis=1), samples.unsqueeze(-1)], axis=-1)
+                is_valid_prefix = self.inference_verifier_fn(prefix).reshape(B, -1)
+            
+            samples = samples.reshape(B, -1)
+            probas = probas.reshape(B, -1)
+            sampled_log_probas = torch.log(select_columns_per_row(probas, samples))
+
+            # Get top-K:
+            sorted_log_probas, sorted_indices = (
+                -10000*(~is_valid_prefix) +
+                sampled_log_probas +
+                maybe_repeat_interleave(log_probas, n_top_k_candidates, dim=1)
+            ).sort(-1, descending=True)
+
+            top_k_log_probas, top_k_indices = sorted_log_probas[:, :k], sorted_indices[:, :k]
+            top_k_samples = select_columns_per_row(samples, top_k_indices)
+            
+            if generated is not None:
+                parent_id = select_columns_per_row(generated, top_k_indices // n_top_k_candidates)
+                top_k_samples = torch.cat([parent_id, top_k_samples.unsqueeze(-1)], axis=-1)
+
+                next_sem_ids = top_k_samples.flatten(end_dim=1)
+
+                batch = TokenizedSeqBatch(
+                    user_ids=batch.user_ids,
+                    sem_ids=batch.sem_ids,
+                    sem_ids_fut=next_sem_ids,
+                    token_type_ids_fut=torch.arange(next_sem_ids.shape[1], device=next_sem_ids.device).repeat(next_sem_ids.shape[0], 1),
+                    seq_mask=batch.seq_mask,
+                    token_type_ids=batch.token_type_ids
+                )
+
+                generated = torch.clone(top_k_samples.detach())
+                log_probas = torch.clone(top_k_log_probas.detach())
+            else:
+                next_sem_ids = top_k_samples.reshape(-1, 1)
+
+                batch = TokenizedSeqBatch(
+                    user_ids=batch.user_ids.repeat_interleave(k, dim=0),
+                    sem_ids=batch.sem_ids.repeat_interleave(k, dim=0),
+                    sem_ids_fut=next_sem_ids,
+                    token_type_ids_fut=torch.zeros_like(next_sem_ids),
+                    seq_mask=batch.seq_mask.repeat_interleave(k, dim=0),
+                    token_type_ids=batch.token_type_ids.repeat_interleave(k, dim=0)
+                )
+
+                generated = top_k_samples.unsqueeze(-1)
+                log_probas = torch.clone(top_k_log_probas.detach())
+        
+        return GenerationOutput(
+            sem_ids=generated.squeeze(),
+            log_probas=log_probas.squeeze()
+        )
+            
+    @torch.compile
+    def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
+        seq_mask = batch.seq_mask
+        B, N = seq_mask.shape
+
+        trnsf_out = self._predict(batch)
+        
+        if self.training:
+            predict_out = self.out_proj(trnsf_out)
+            if self.jagged_mode:
+                logits = rearrange(jagged_to_flattened_tensor(predict_out), "(b n) d -> b n d", b=B)[:,:-1,:].flatten(end_dim=1)
+                target = batch.sem_ids_fut.flatten(end_dim=1)
+                loss = F.cross_entropy(logits, target, ignore_index=-1)
+            else:
+                logits = predict_out
+                out = logits[:, :-1, :].flatten(end_dim=1)
+                target = batch.sem_ids_fut[:, 1:].flatten(end_dim=1)
+                loss = F.cross_entropy(out, target)
+        elif self.jagged_mode:
+            trnsf_out = trnsf_out.contiguous()
+            trnsf_out_flattened = rearrange(jagged_to_flattened_tensor(trnsf_out), "(b n) d -> b n d", b=B)[:,-1,:]
+            logits = self.do(self.out_proj(trnsf_out_flattened))
+            loss = None
+        else:
+            trnsf_out_flattened = trnsf_out[:,-1,:]
+            logits = self.do(self.out_proj(trnsf_out_flattened))
             loss = None
 
         return ModelOutput(loss=loss, logits=logits)

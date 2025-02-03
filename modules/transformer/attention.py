@@ -205,15 +205,14 @@ class MultiHeadAttention(nn.Module):
         assert not self.cross_attn or x_kv is not None, "Found null x_kv in cross attn. layer"
         
         if self.cross_attn:
-            q, kv = self.q(x), self.kv(x_kv)
-            qkv = torch.cat([q, kv], axis=2)
+            queries = self.q(x)
+            keys, values = self.kv(x_kv).chunk(2, dim=-1)
         else:
-            qkv = self.qkv(x)
+            queries, keys, values = self.qkv(x).chunk(3, dim=-1)
         
         if not self.training and use_cache and self.kv_cache.is_empty:
             assert padding_mask is not None
             B, N = padding_mask.shape
-            queries, keys, values = qkv.chunk(3, dim=-1)
             
             self.kv_cache.store(
                 keys=jagged_to_flattened_tensor(keys), 
@@ -225,7 +224,6 @@ class MultiHeadAttention(nn.Module):
         elif not self.training and use_cache and not self.kv_cache.is_empty:
             assert padding_mask is not None
             B, N = padding_mask.shape
-            queries, keys, values = qkv.chunk(3, dim=-1)
 
             keys, values = jagged_to_flattened_tensor(keys), jagged_to_flattened_tensor(values)
             
@@ -235,11 +233,11 @@ class MultiHeadAttention(nn.Module):
             context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=False)
         
         elif jagged:
-            queries, keys, values = torch.chunk(qkv, 3, dim=-1)
             context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=is_causal)
 
         if not jagged:
-            context_vec = self.attend(qkv, is_causal=is_causal)
+            raise Exception("Unjagged attention currently not supported.")
+            # context_vec = self.attend(qkv, is_causal=is_causal)
     
         context_vec = self.proj(context_vec)
         return context_vec

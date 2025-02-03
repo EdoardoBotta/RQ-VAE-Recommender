@@ -69,19 +69,16 @@ class AmazonReviews(InMemoryDataset, PreprocessingMixin):
                 parsed_line = list(map(int, line.strip().split()))
                 user_ids.append(parsed_line[0])
                 items = [self._remap_ids(id) for id in parsed_line[1:]]
-                if len(items) > max_seq_len + 2:
-                    items = items[-(max_seq_len + 2):]
-                train_items = items[:-2]
+
+                train_items = items[-(max_seq_len+2):-2]
                 sequences["train"]["itemId"].append(train_items + [-1] * (max_seq_len - len(train_items)))
-                sequences["train"]["itemId_fut"].append(-1)
-                eval_items = items[:-2] + [-1]
-                if len(eval_items) > max_seq_len:
-                    eval_items = eval_items[-(max_seq_len):]
+                sequences["train"]["itemId_fut"].append(items[-2])
+                
+                eval_items = items[-(max_seq_len+2):-2]
                 sequences["eval"]["itemId"].append(eval_items + [-1] * (max_seq_len - len(eval_items)))
                 sequences["eval"]["itemId_fut"].append(items[-2])
-                test_items = items[:-1] + [-1]
-                if len(test_items) > max_seq_len:
-                    test_items = test_items[-(max_seq_len):]
+                
+                test_items = items[-(max_seq_len+1):-1]
                 sequences["test"]["itemId"].append(test_items + [-1] * (max_seq_len - len(test_items)))
                 sequences["test"]["itemId_fut"].append(items[-1])
         for sp in splits:
