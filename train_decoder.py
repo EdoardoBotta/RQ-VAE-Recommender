@@ -14,6 +14,7 @@ from data.utils import next_batch
 from evaluate.metrics import TopKAccumulator
 from modules.model import DecoderRetrievalModel
 from modules.model import EncoderDecoderRetrievalModel
+from modules.model import ModelType
 from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
 from modules.utils import parse_config
@@ -25,6 +26,12 @@ from torch.utils.data import RandomSampler
 from tqdm import tqdm
 
 
+SUPPORTED_MODELS = [
+    ModelType.DECODER, 
+    ModelType.ENCODER_DECODER
+]
+
+
 @gin.configurable
 def train(
     iterations=500000,
@@ -32,6 +39,7 @@ def train(
     learning_rate=0.001,
     weight_decay=0.01,
     max_grad_norm=1,
+    model_type=ModelType.DECODER,
     dataset_folder="dataset/ml-1m",
     save_dir_root="out/",
     dataset=RecDataset.ML_1M,
@@ -60,7 +68,13 @@ def train(
     dataset_split="beauty",
     push_vae_to_hf=False,
     vae_hf_model_name="edobotta/rqvae-amazon-beauty"
-):
+):  
+    if model_type not in SUPPORTED_MODELS:
+        raise Exception(f"Unsupported model choice. Must be one of {SUPPORTED_MODELS}")
+
+    if model_type == ModelType.ENCODER_DECODER and dataset != RecDataset.AMAZON:
+        raise Exception(f"Model type {model_type} does not currently support dataset {dataset}")
+
     if wandb_logging:
         params = locals()
 
@@ -77,19 +91,34 @@ def train(
             project="gen-retrieval-decoder-training",
             config=params
         )
-
-    movie_dataset = ItemData(
+    
+    item_dataset = ItemData(
         root=dataset_folder,
         dataset=dataset,
         force_process=force_dataset_process,
         split=dataset_split
     )
-    train_dataset = SeqData(root=dataset_folder, dataset=dataset, is_train=True, split=dataset_split)
-    eval_dataset = SeqData(root=dataset_folder, dataset=dataset, is_train=False, split=dataset_split)
-
-    train_sampler = BatchSampler(RandomSampler(train_dataset), batch_size, drop_last=True)
+    train_dataset = SeqData(
+        root=dataset_folder, 
+        dataset=dataset, 
+        is_train=True, 
+        subsample=model_type == ModelType.ENCODER_DECODER, 
+        split=dataset_split
+    )
+    eval_dataset = SeqData(
+        root=dataset_folder, 
+        dataset=dataset, 
+        is_train=False, 
+        subsample=False, 
+        split=dataset_split
+    )
     
-    train_dataloader = DataLoader(train_dataset, batch_size=None, sampler=train_sampler, collate_fn=lambda batch: batch)
+    if model_type == ModelType.DECODER:
+        train_sampler = BatchSampler(RandomSampler(train_dataset), batch_size, drop_last=True)
+        train_dataloader = DataLoader(train_dataset, batch_size=None, sampler=train_sampler, collate_fn=lambda batch: batch)
+    else:
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    
     train_dataloader = cycle(train_dataloader)
     eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=True)
     
@@ -109,13 +138,18 @@ def train(
         rqvae_sim_vq=vae_sim_vq
     )
     tokenizer = accelerator.prepare(tokenizer)
-    tokenizer.precompute_corpus_ids(movie_dataset)
+    tokenizer.precompute_corpus_ids(item_dataset)
     
     if push_vae_to_hf:
         login()
         tokenizer.rq_vae.push_to_hub(vae_hf_model_name)
+    
+    if model_type == ModelType.DECODER:
+        retrieval_model_class = DecoderRetrievalModel
+    else:
+        retrieval_model_class = EncoderDecoderRetrievalModel
 
-    model = DecoderRetrievalModel(
+    model = retrieval_model_class(
         embedding_dim=decoder_embed_dim,
         attn_dim=attn_embed_dim,
         dropout=dropout_p,

@@ -1,5 +1,6 @@
 import gin
 import os
+import random
 import torch
 
 from data.amazon import AmazonReviews
@@ -76,10 +77,13 @@ class SeqData(Dataset):
         root: str,
         *args,
         is_train: bool = True,
+        subsample: bool = False,
         force_process: bool = False,
         dataset: RecDataset = RecDataset.ML_1M,
         **kwargs
     ) -> None:
+        
+        assert (not subsample) or is_train, "Can only subsample on training split."
 
         raw_dataset_class = DATASET_NAME_TO_RAW_DATASET[dataset]
         max_seq_len = DATASET_NAME_TO_MAX_SEQ_LEN[dataset]
@@ -91,21 +95,41 @@ class SeqData(Dataset):
             raw_data.process(max_seq_len=max_seq_len)
 
         split = "train" if is_train else "test"
+        self.subsample = subsample
         self.sequence_data = raw_data.data[("user", "rated", "item")]["history"][split]
+
+        if not self.subsample:
+            self.sequence_data["itemId"] = torch.nn.utils.rnn.pad_sequence(
+                [torch.tensor(l[-max_seq_len:]) for l in self.sequence_data["itemId"]],
+                batch_first=True,
+                padding_value=-1
+            )
+
+        self._max_seq_len = max_seq_len
         self.item_data = raw_data.data["item"]["x"]
         self.split = split
     
+    
     @property
     def max_seq_len(self):
-        return self.sequence_data["itemId"].shape[-1]
+        return self._max_seq_len
 
     def __len__(self):
         return self.sequence_data["userId"].shape[0]
   
     def __getitem__(self, idx):
         user_ids = self.sequence_data["userId"][idx]
-        item_ids = self.sequence_data["itemId"][idx]
-        item_ids_fut = self.sequence_data["itemId_fut"][idx]
+        
+        if self.subsample:
+            seq = self.sequence_data["itemId"][idx]
+            start_idx = random.randint(0, len(seq)-3)
+            end_idx = random.randint(start_idx+1, min(len(seq)-2, start_idx+self.max_seq_len-1))
+            
+            item_ids = torch.tensor(seq[start_idx:end_idx+1] + [-1] * (self.max_seq_len - (1+end_idx-start_idx)))
+            item_ids_fut = torch.tensor([seq[end_idx+1]])
+        else:
+            item_ids = self.sequence_data["itemId"][idx]
+            item_ids_fut = self.sequence_data["itemId_fut"][idx]
         
         assert (item_ids >= -1).all(), "Invalid movie id found"
         x = self.item_data[item_ids, :768]

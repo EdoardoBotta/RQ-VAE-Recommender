@@ -77,7 +77,9 @@ class PreprocessingMixin:
                 rearrange(
                     df.select(feat).to_numpy().squeeze().tolist(), "b d -> b d"
                 )
-            ) for feat in features
+            ) if df.select(pl.col(feat).list.len().max() == pl.col(feat).list.len().min()).item()
+            else df.get_column("itemId").to_list()
+            for feat in features
         }
         fut_out = {
             feat + FUT_SUFFIX: torch.from_numpy(

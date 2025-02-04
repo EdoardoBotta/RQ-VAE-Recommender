@@ -179,7 +179,7 @@ class MultiHeadAttention(nn.Module):
             )
     
         self.proj = nn.Sequential(
-            nn.Linear(d_out, d_out),
+            nn.Linear(d_out, d_out, bias=False),
             nn.Dropout(dropout)
         )
         self.dropout = dropout

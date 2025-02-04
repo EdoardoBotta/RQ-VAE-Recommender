@@ -1,6 +1,8 @@
+import gin
 import torch
 
 from einops import rearrange
+from enum import Enum
 from modules.embedding.id_embedder import SemIdEmbedder
 from modules.embedding.id_embedder import UserIdEmbedder
 from modules.transformer.attention import AttentionInput
@@ -22,6 +24,12 @@ from torch.nn import functional as F
 torch._dynamo.config.suppress_errors = True
 
 torch.set_float32_matmul_precision('high')
+
+
+@gin.constants_from_enum
+class ModelType(Enum):
+    DECODER = 1
+    ENCODER_DECODER = 2
 
 
 class ModelOutput(NamedTuple):
@@ -64,7 +72,6 @@ class DecoderRetrievalModel(nn.Module):
         
         self.wpe = nn.Embedding(num_embeddings=max_pos, embedding_dim=embedding_dim)
         self.tte = nn.Embedding(num_embeddings=sem_id_dim, embedding_dim=embedding_dim)
-        self.do = nn.Dropout(dropout)
 
         self.decoder = TransformerDecoder(
             d_in=attn_dim,
@@ -75,7 +82,7 @@ class DecoderRetrievalModel(nn.Module):
             do_cross_attn=False
         )
 
-        self.in_proj = nn.Linear(embedding_dim, attn_dim)
+        self.in_proj = nn.Linear(embedding_dim, attn_dim, bias=False)
         self.out_proj = nn.Linear(attn_dim, num_embeddings, bias=False)
     
     def _predict(self, batch: TokenizedSeqBatch) -> AttentionInput:
@@ -94,7 +101,7 @@ class DecoderRetrievalModel(nn.Module):
             seq_lengths = batch.seq_mask.sum(axis=1)
             input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
         
-        transformer_input = self.do(self.in_proj(input_embedding))
+        transformer_input = self.in_proj(input_embedding)
         transformer_output = self.decoder(transformer_input, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
 
         return transformer_output
@@ -216,7 +223,7 @@ class DecoderRetrievalModel(nn.Module):
             trnsf_out = trnsf_out.contiguous()
             last_token_pos = trnsf_out.offsets()[1:]-1
             trnsf_out_flattened = jagged_to_flattened_tensor(trnsf_out)
-            logits = self.do(self.out_proj(trnsf_out_flattened[last_token_pos, :]))
+            logits = self.out_proj(trnsf_out_flattened[last_token_pos, :])
             loss = None
         else:
             last_token_pos = seq_mask.sum(axis=-1) - 1
@@ -245,8 +252,6 @@ class EncoderDecoderRetrievalModel(nn.Module):
         self.num_embeddings = num_embeddings
         self.sem_id_dim = sem_id_dim
         self.inference_verifier_fn = inference_verifier_fn
-
-        self.start_emb = nn.Parameter(torch.rand(embedding_dim))
         
         self.sem_id_embedder = SemIdEmbedder(
             num_embeddings=num_embeddings,
@@ -257,7 +262,6 @@ class EncoderDecoderRetrievalModel(nn.Module):
         
         self.wpe = nn.Embedding(num_embeddings=max_pos, embedding_dim=embedding_dim)
         self.tte = nn.Embedding(num_embeddings=sem_id_dim, embedding_dim=embedding_dim)
-        self.do = nn.Dropout(dropout)
 
         self.transformer = TransformerEncoderDecoder(
             d_in=attn_dim,
@@ -268,7 +272,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
             decoder_layers=n_layers // 2
         )
 
-        self.in_proj = nn.Linear(embedding_dim, attn_dim)
+        self.in_proj = nn.Linear(embedding_dim, attn_dim, bias=False)
         self.out_proj = nn.Linear(attn_dim, num_embeddings, bias=False)
     
     def _predict(self, batch: TokenizedSeqBatch) -> AttentionInput:
@@ -281,11 +285,11 @@ class EncoderDecoderRetrievalModel(nn.Module):
           
         pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0) + self.transformer.encoder.seq_lengths
         wpe = self.wpe(pos)
-        tte = self.tte(batch.token_type_ids)
 
-        input_embedding = wpe + sem_ids_emb + tte
+        
 
-        input_embedding_fut = self.start_emb.repeat(B, 1, 1)
+        input_embedding = wpe + sem_ids_emb
+        input_embedding_fut = user_emb
         if sem_ids_emb_fut is not None:
             tte_fut = self.tte(batch.token_type_ids_fut)
             input_embedding_fut = torch.cat([
@@ -301,8 +305,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
             seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B, 1)
             input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut)
         
-        transformer_context = self.do(self.in_proj(input_embedding))
-        transformer_input = self.do(self.in_proj(input_embedding_fut))
+        transformer_context = self.in_proj(input_embedding)
+        transformer_input = self.in_proj(input_embedding_fut)
 
         transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
         
@@ -413,11 +417,11 @@ class EncoderDecoderRetrievalModel(nn.Module):
         elif self.jagged_mode:
             trnsf_out = trnsf_out.contiguous()
             trnsf_out_flattened = rearrange(jagged_to_flattened_tensor(trnsf_out), "(b n) d -> b n d", b=B)[:,-1,:]
-            logits = self.do(self.out_proj(trnsf_out_flattened))
+            logits = self.out_proj(trnsf_out_flattened)
             loss = None
         else:
             trnsf_out_flattened = trnsf_out[:,-1,:]
-            logits = self.do(self.out_proj(trnsf_out_flattened))
+            logits = self.out_proj(trnsf_out_flattened)
             loss = None
 
         return ModelOutput(loss=loss, logits=logits)
