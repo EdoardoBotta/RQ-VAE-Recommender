@@ -264,6 +264,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         
         self.wpe = nn.Embedding(num_embeddings=max_pos, embedding_dim=embedding_dim)
         self.tte = nn.Embedding(num_embeddings=sem_id_dim, embedding_dim=embedding_dim)
+        self.tte_fut = nn.Embedding(num_embeddings=sem_id_dim, embedding_dim=embedding_dim)
 
         self.transformer = TransformerEncoderDecoder(
             d_in=attn_dim,
@@ -294,7 +295,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         input_embedding = wpe + sem_ids_emb
         input_embedding_fut = self.bos_emb.repeat(B, 1, 1)
         if sem_ids_emb_fut is not None:
-            tte_fut = self.tte(batch.token_type_ids_fut)
+            tte_fut = self.tte_fut(batch.token_type_ids_fut)
             input_embedding_fut = torch.cat([
                 input_embedding_fut, 
                 sem_ids_emb_fut + tte_fut
