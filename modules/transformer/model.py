@@ -43,16 +43,21 @@ class TransformerBlock(nn.Module):
             d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=False, dropout=dropout, qkv_bias=qkv_bias
         )
 
-        self.ff = MLP(
-            input_dim=d_out,
-            hidden_dims=mlp_hidden_dims,
-            out_dim=d_out,
-            dropout=dropout,
-            normalize=False
+        self.ff = nn.Sequential(
+            RMSNorm(d_out),
+            MLP(
+                input_dim=d_out,
+                hidden_dims=mlp_hidden_dims,
+                out_dim=d_out,
+                dropout=dropout,
+                normalize=False
+            ),
+            nn.Dropout(dropout)
         )
 
         self.attn_norm = RMSNorm(d_out)
         self.ffn_norm = RMSNorm(d_out)
+        self.do = nn.Dropout(dropout)
 
         if self.do_cross_attn:
             self.cross_attention = MultiHeadAttention(
@@ -68,15 +73,12 @@ class TransformerBlock(nn.Module):
         is_causal: Optional[bool] = True,
         jagged: Optional[bool] = False
     ) -> AttentionInput:
-        attn_out = self.attn_norm(x + self.attention(x, padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache))
+        attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
         if self.do_cross_attn:
-            attn_out = self.cross_attn_norm(
-                attn_out +
-                self.cross_attention(
-                    x=attn_out, x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
-                )
+            attn_out = attn_out + self.cross_attention(
+                x=self.do(self.cross_attn_norm(x)), x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
             )
-        proj_out = self.ffn_norm(attn_out + self.ff(attn_out))
+        proj_out = attn_out + self.ff(attn_out)
         return proj_out
     
     def reset_kv_cache(self):

@@ -158,7 +158,7 @@ def train(
         num_embeddings=vae_codebook_size,
         inference_verifier_fn=lambda x: tokenizer.exists_prefix(x),
         sem_id_dim=tokenizer.sem_ids_dim,
-        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim
+        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim if model_type == ModelType.DECODER else train_dataset.max_seq_len
     )
 
     optimizer = AdamW(
@@ -213,7 +213,7 @@ def train(
                         data = batch_to(batch, device)
                         tokenized_data = tokenizer(data)
 
-                        generated = model.generate_next_sem_id(tokenized_data, top_k=True, temperature=2)
+                        generated = model.generate_next_sem_id(tokenized_data, top_k=True, temperature=1)
                         actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
 
                         metrics_accumulator.accumulate(actual=actual, top_k=top_k)

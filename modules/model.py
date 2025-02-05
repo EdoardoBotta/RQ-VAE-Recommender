@@ -253,6 +253,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
         self.sem_id_dim = sem_id_dim
         self.inference_verifier_fn = inference_verifier_fn
         
+        self.bos_emb = nn.Parameter(torch.rand(embedding_dim))
+
         self.sem_id_embedder = SemIdEmbedder(
             num_embeddings=num_embeddings,
             sem_ids_dim=sem_id_dim,
@@ -282,14 +284,15 @@ class EncoderDecoderRetrievalModel(nn.Module):
         seq_lengths = batch.seq_mask.sum(axis=1)
         
         B, N, D = sem_ids_emb.shape
+
+        pos_max = N // self.sem_id_dim
+        pos = torch.arange(pos_max, device=batch.sem_ids.device).repeat_interleave(self.sem_id_dim)
           
-        pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0) + self.transformer.encoder.seq_lengths
+        # pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0) + self.transformer.encoder.seq_lengths
         wpe = self.wpe(pos)
 
-        
-
         input_embedding = wpe + sem_ids_emb
-        input_embedding_fut = user_emb
+        input_embedding_fut = self.bos_emb.repeat(B, 1, 1)
         if sem_ids_emb_fut is not None:
             tte_fut = self.tte(batch.token_type_ids_fut)
             input_embedding_fut = torch.cat([
@@ -309,7 +312,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         transformer_input = self.in_proj(input_embedding_fut)
 
         transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
-        
+
         return transformer_output
 
     @eval_mode
@@ -323,7 +326,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
         k = 10 if top_k else 1
-        n_top_k_candidates = 5*k if top_k else 1
+        n_top_k_candidates = 6*k if top_k else 1
 
         batch = TokenizedSeqBatch(
             user_ids=batch.user_ids,

@@ -25,10 +25,10 @@ class MLP(nn.Module):
         self.mlp = nn.Sequential()
         for i, (in_d, out_d) in enumerate(zip(dims[:-1], dims[1:])):
             self.mlp.append(nn.Linear(in_d, out_d, bias=False))
-            if dropout != 0:
-                self.mlp.append(nn.Dropout(dropout))
             if i != len(dims)-2:
                 self.mlp.append(nn.SiLU())
+                if dropout != 0:
+                    self.mlp.append(nn.Dropout(dropout))
         self.mlp.append(L2NormalizationLayer() if normalize else nn.Identity())
 
     def forward(self, x: Tensor) -> Tensor:
