@@ -276,6 +276,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         )
 
         self.in_proj = nn.Linear(embedding_dim, attn_dim, bias=False)
+        self.in_proj_context = nn.Linear(embedding_dim, attn_dim, bias=False)
         self.out_proj = nn.Linear(attn_dim, num_embeddings, bias=False)
     
     def _predict(self, batch: TokenizedSeqBatch) -> AttentionInput:
@@ -292,7 +293,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         # pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0) + self.transformer.encoder.seq_lengths
         wpe = self.wpe(pos)
 
-        input_embedding = wpe + sem_ids_emb
+        input_embedding = torch.cat([user_emb, wpe + sem_ids_emb], axis=1)
         input_embedding_fut = self.bos_emb.repeat(B, 1, 1)
         if sem_ids_emb_fut is not None:
             tte_fut = self.tte_fut(batch.token_type_ids_fut)
@@ -303,13 +304,12 @@ class EncoderDecoderRetrievalModel(nn.Module):
             )
 
         if self.jagged_mode:
-            seq_lengths = batch.seq_mask.sum(axis=1)
-            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
+            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths+1)
 
             seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B, 1)
             input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut)
         
-        transformer_context = self.in_proj(input_embedding)
+        transformer_context = self.in_proj_context(input_embedding)
         transformer_input = self.in_proj(input_embedding_fut)
 
         transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
