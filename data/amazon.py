@@ -1,9 +1,11 @@
 import gzip
 import json
+import numpy as np
 import os
 import os.path as osp
 import pandas as pd
 import polars as pl
+import torch
 
 from collections import defaultdict
 from data.preprocessing import PreprocessingMixin
@@ -92,7 +94,7 @@ class AmazonReviews(InMemoryDataset, PreprocessingMixin):
         data = HeteroData()
 
         with open(os.path.join(self.raw_dir, self.split, "datamaps.json"), 'r') as f:
-            data_maps = json.load(f)
+            data_maps = json.load(f)    
 
         # Construct user sequences
         sequences = self.train_test_split(max_seq_len=max_seq_len)
@@ -130,7 +132,11 @@ class AmazonReviews(InMemoryDataset, PreprocessingMixin):
         
         item_emb = self._encode_text_feature(sentences)
         data['item'].x = item_emb
-        data['item'].text = sentences
+        data['item'].text = np.array(sentences)
+
+        gen = torch.Generator()
+        gen.manual_seed(42)
+        data['item'].is_train = torch.rand(item_emb.shape[0], generator=gen) > 0.05
 
         self.save([data], self.processed_paths[0])
         

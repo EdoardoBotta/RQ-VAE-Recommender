@@ -10,7 +10,6 @@ from data.processed import RecDataset
 from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
-from distributions.gumbel import TemperatureScheduler
 from modules.rqvae import RqVae
 from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
@@ -36,6 +35,7 @@ def train(
     split_batches=True,
     amp=False,
     wandb_logging=False,
+    do_eval=True,
     force_dataset_process=False,
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
@@ -63,11 +63,20 @@ def train(
 
     device = accelerator.device
 
-    dataset = ItemData(root=dataset_folder, dataset=dataset, force_process=force_dataset_process, split=dataset_split)
-    sampler = BatchSampler(RandomSampler(dataset), batch_size, False)
-    dataloader = DataLoader(dataset, sampler=sampler, batch_size=None, collate_fn=lambda batch: batch)
-    dataloader = cycle(dataloader)
-    dataloader = accelerator.prepare(dataloader)
+    train_dataset = ItemData(root=dataset_folder, dataset=dataset, force_process=force_dataset_process, train_test_split="train" if do_eval else "all", split=dataset_split)
+    train_sampler = BatchSampler(RandomSampler(train_dataset), batch_size, False)
+    train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=None, collate_fn=lambda batch: batch)
+    train_dataloader = cycle(train_dataloader)
+
+    if do_eval:
+        eval_dataset = ItemData(root=dataset_folder, dataset=dataset, force_process=False, train_test_split="eval", split=dataset_split)
+        eval_sampler = BatchSampler(RandomSampler(eval_dataset), batch_size, False)
+        eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=None, collate_fn=lambda batch: batch)
+
+    index_dataset = ItemData(root=dataset_folder, dataset=dataset, force_process=False, train_test_split="all", split=dataset_split) if do_eval else train_dataset
+    
+    train_dataloader = accelerator.prepare(train_dataloader)
+    # TODO: Investigate bug with prepare eval_dataloader
 
     model = RqVae(
         input_dim=vae_input_dim,
@@ -120,13 +129,6 @@ def train(
     )
     tokenizer.rq_vae = model
 
-    temp_scheduler = TemperatureScheduler(
-        t0=0.2,
-        min_t=0.0005,
-        anneal_rate=0.00003,
-        step_size=2000
-    )
-
     with tqdm(initial=start_iter, total=start_iter+iterations,
               disable=not accelerator.is_main_process) as pbar:
         losses = [[], [], []]
@@ -135,12 +137,12 @@ def train(
             total_loss = 0
             t = 0.2
             if iter == 0 and use_kmeans_init:
-                kmeans_init_data = batch_to(dataset[torch.arange(min(20000, len(dataset)))], device)
+                kmeans_init_data = batch_to(train_dataset[torch.arange(min(20000, len(train_dataset)))], device)
                 model(kmeans_init_data, t)
 
             optimizer.zero_grad()
             for _ in range(gradient_accumulate_every):
-                data = next_batch(dataloader, device)
+                data = next_batch(train_dataloader, device)
 
                 with accelerator.autocast():
                     model_output = model(data, gumbel_t=t)
@@ -169,6 +171,24 @@ def train(
             
             accelerator.wait_for_everyone()
 
+            id_diversity_log = {}
+            if do_eval and ((iter+1) % eval_every == 0 or iter+1 == iterations):
+                model.eval()
+                with tqdm(eval_dataloader, desc=f'Eval {iter+1}', disable=True) as pbar_eval:
+                    eval_losses = [[], [], []]
+                    for batch in pbar_eval:
+                        data = batch_to(batch, device)
+                        eval_model_output = model(data, gumbel_t=t)
+
+                        eval_losses[0].append(eval_model_output.loss.cpu().item())
+                        eval_losses[1].append(eval_model_output.reconstruction_loss.cpu().item())
+                        eval_losses[2].append(eval_model_output.rqvae_loss.cpu().item())
+                    
+                    eval_losses = np.array(eval_losses).mean(axis=-1)
+                    id_diversity_log["eval_total_loss"] = eval_losses[0]
+                    id_diversity_log["eval_reconstruction_loss"] = eval_losses[1]
+                    id_diversity_log["eval_rqvae_loss"] = eval_losses[2]
+                    
             if accelerator.is_main_process:
                 if (iter+1) % save_model_every == 0 or iter+1 == iterations:
                     state = {
@@ -183,12 +203,11 @@ def train(
 
                     torch.save(state, save_dir_root + f"checkpoint_{iter}.pt")
                 
-                id_diversity_log = {}
                 if (iter+1) % eval_every == 0 or iter+1 == iterations:
                     tokenizer.reset()
                     model.eval()
 
-                    corpus_ids = tokenizer.precompute_corpus_ids(dataset)
+                    corpus_ids = tokenizer.precompute_corpus_ids(index_dataset)
                     max_duplicates = corpus_ids[:,-1].max() / corpus_ids.shape[0]
                     
                     _, counts = torch.unique(corpus_ids[:,:-1], dim=0, return_counts=True)

@@ -8,7 +8,9 @@ from data.ml1m import RawMovieLens1M
 from data.ml32m import RawMovieLens32M
 from data.schemas import SeqBatch
 from enum import Enum
+from torch import Tensor
 from torch.utils.data import Dataset
+from typing import Optional
 
 PROCESSED_MOVIE_LENS_SUFFIX = "/processed/data.pt"
 
@@ -41,6 +43,7 @@ class ItemData(Dataset):
         *args,
         force_process: bool = False,
         dataset: RecDataset = RecDataset.ML_1M,
+        train_test_split: str = "all",
         **kwargs
     ) -> None:
         
@@ -53,14 +56,21 @@ class ItemData(Dataset):
         if not os.path.exists(processed_data_path) or force_process:
             raw_data.process(max_seq_len=max_seq_len)
         
-        self.item_data = raw_data.data["item"]
+        if train_test_split == "train":
+            filt = raw_data.data["item"]["is_train"]
+        elif train_test_split == "eval":
+            filt = ~raw_data.data["item"]["is_train"]
+        elif train_test_split == "all":
+            filt = torch.ones_like(raw_data.data["item"]["x"][:,0], dtype=bool)
+
+        self.item_data, self.item_text = raw_data.data["item"]["x"][filt], raw_data.data["item"]["text"][filt]
 
     def __len__(self):
-        return self.item_data["x"].shape[0]
+        return self.item_data.shape[0]
 
     def __getitem__(self, idx):
         item_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
-        x = self.item_data["x"][idx, :768]
+        x = self.item_data[idx, :768]
         return SeqBatch(
             user_ids=-1 * torch.ones_like(item_ids.squeeze(0)),
             ids=item_ids,
@@ -69,6 +79,15 @@ class ItemData(Dataset):
             x_fut=-1 * torch.ones_like(item_ids.squeeze(0)),
             seq_mask=torch.ones_like(item_ids, dtype=bool)
         )
+
+
+class ItemIndex(ItemData):
+    def __init__(self, item_tensor: torch.Tensor):
+        self.item_data = item_tensor
+    
+    @property
+    def tensor_data(self):
+        return self.item_data
 
 
 class SeqData(Dataset):
