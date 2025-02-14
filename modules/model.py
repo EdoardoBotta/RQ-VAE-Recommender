@@ -244,7 +244,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         sem_id_dim,
         inference_verifier_fn,
         max_pos=2048,
-        jagged_mode: bool = True,
+        jagged_mode: bool = False,
     ) -> None:
         super().__init__()
 
@@ -273,6 +273,15 @@ class EncoderDecoderRetrievalModel(nn.Module):
             num_heads=num_heads,
             encoder_layers=n_layers // 2,
             decoder_layers=n_layers // 2
+        )
+        self.transformer = nn.Transformer(
+            d_model=attn_dim,
+            nhead=num_heads,
+            num_encoder_layers=n_layers // 2,
+            num_decoder_layers=n_layers // 2,
+            dim_feedforward=1024,
+            dropout=dropout,
+            batch_first=True
         )
 
         self.in_proj = nn.Linear(embedding_dim, attn_dim, bias=False)
@@ -311,8 +320,17 @@ class EncoderDecoderRetrievalModel(nn.Module):
         
         transformer_context = self.in_proj_context(input_embedding)
         transformer_input = self.in_proj(input_embedding_fut)
+        
+        mem_mask = torch.cat([
+            torch.ones(B, 1, dtype=torch.bool, device=batch.seq_mask.device),
+            batch.seq_mask
+        ], axis=1)
+        f_mask = torch.zeros_like(mem_mask, dtype=torch.float32)
+        f_mask[~mem_mask] = float("-inf")
 
-        transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
+        causal_mask = nn.Transformer.generate_square_subsequent_mask(transformer_input.shape[1])
+        transformer_output = self.transformer(src=transformer_context, tgt=transformer_input, tgt_is_causal=True, tgt_mask=causal_mask, src_key_padding_mask=f_mask, memory_key_padding_mask=f_mask)
+        #transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
 
         return transformer_output
 
@@ -416,7 +434,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
             else:
                 logits = predict_out
                 out = logits[:, :-1, :].flatten(end_dim=1)
-                target = batch.sem_ids_fut[:, 1:].flatten(end_dim=1)
+                target = batch.sem_ids_fut.flatten(end_dim=1)
                 loss = F.cross_entropy(out, target)
         elif self.jagged_mode:
             trnsf_out = trnsf_out.contiguous()
