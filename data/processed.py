@@ -81,15 +81,6 @@ class ItemData(Dataset):
         )
 
 
-class ItemIndex(ItemData):
-    def __init__(self, item_tensor: torch.Tensor):
-        self.item_data = item_tensor
-    
-    @property
-    def tensor_data(self):
-        return self.item_data
-
-
 class SeqData(Dataset):
     def __init__(
         self,
@@ -140,12 +131,13 @@ class SeqData(Dataset):
         user_ids = self.sequence_data["userId"][idx]
         
         if self.subsample:
-            seq = self.sequence_data["itemId"][idx]
-            start_idx = random.randint(0, len(seq)-3)
-            end_idx = random.randint(start_idx+1, min(len(seq)-2, start_idx+self.max_seq_len-1))
+            seq = self.sequence_data["itemId"][idx] + self.sequence_data["itemId_fut"][idx].tolist()
+            start_idx = random.randint(0, max(0, len(seq)-5))
+            end_idx = random.randint(start_idx+5, start_idx+self.max_seq_len-1)
+            sample = seq[start_idx:end_idx]
             
-            item_ids = torch.tensor(seq[start_idx:end_idx+1] + [-1] * (self.max_seq_len - (1+end_idx-start_idx)))
-            item_ids_fut = torch.tensor([seq[end_idx+1]])
+            item_ids = torch.tensor(sample[:-1] + [-1] * (self.max_seq_len - len(sample[:-1])))
+            item_ids_fut = torch.tensor([sample[-1]])
         else:
             item_ids = self.sequence_data["itemId"][idx]
             item_ids_fut = self.sequence_data["itemId_fut"][idx]

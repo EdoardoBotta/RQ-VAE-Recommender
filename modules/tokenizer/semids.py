@@ -1,14 +1,15 @@
+import math
 import torch
 
 from data.processed import ItemData
 from data.processed import SeqData
 from data.schemas import SeqBatch
+from data.schemas import TokenizedSeqBatch
 from data.utils import batch_to
 from einops import rearrange
 from einops import pack
 from modules.utils import eval_mode
 from modules.rqvae import RqVae
-from typing import NamedTuple
 from typing import List
 from typing import Optional
 from torch import nn
@@ -17,15 +18,7 @@ from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import SequentialSampler
 
-
-class TokenizedSeqBatch(NamedTuple):
-    user_ids: Tensor
-    sem_ids: Tensor
-    sem_ids_fut: Tensor
-    seq_mask: Tensor
-    token_type_ids: Tensor
-    token_type_ids_fut: Tensor
-    
+BATCH_SIZE = 16
 
 class SemanticIdTokenizer(nn.Module):
     """
@@ -115,7 +108,16 @@ class SemanticIdTokenizer(nn.Module):
 
         prefix_length = sem_id_prefix.shape[-1]
         prefix_cache = self.cached_ids[:, :prefix_length]
-        return (sem_id_prefix.unsqueeze(-2) == prefix_cache.unsqueeze(-3)).all(axis=-1).any(axis=-1)
+        out = torch.zeros(*sem_id_prefix.shape[:-1], dtype=bool, device=sem_id_prefix.device)
+        
+        # Batch prefixes matching to avoid OOM. 
+        batches = math.ceil(sem_id_prefix.shape[0] // BATCH_SIZE)
+        for i in range(batches):
+            prefixes = sem_id_prefix[i*BATCH_SIZE:(i+1)*BATCH_SIZE,...]
+            matches = (prefixes.unsqueeze(-2) == prefix_cache.unsqueeze(-3)).all(axis=-1).any(axis=-1)
+            out[i*BATCH_SIZE:(i+1)*BATCH_SIZE,...] = matches
+        
+        return out
     
     def _tokenize_seq_batch_from_cached(self, ids: Tensor) -> Tensor:
         return rearrange(self.cached_ids[ids.flatten(), :], "(b n) d -> b (n d)", n=ids.shape[1])

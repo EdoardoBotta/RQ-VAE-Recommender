@@ -112,21 +112,19 @@ class AmazonReviews(InMemoryDataset, PreprocessingMixin):
             ])
             .merge(asin2id, on="asin")
             .sort_values(by="id")
-            .fillna({"brand": ""})
+            .fillna({"brand": "Unknown"})
         )
 
         sentences = item_data.apply(
             lambda row:
                 "Title: " +
                 str(row["title"]) + "; " +
-                "Price: " +
-                str(row["price"]) + "; " +
-                "Categories: " +
-                str(row["categories"][0]) + "; " +
                 "Brand: " +
-                str(row["brand"]) + "; " + 
-                "Description: " +
-                str(row["description"]) + "; ",
+                str(row["brand"]) + "; " +
+                "Categories: " +
+                str(row["categories"][0]) + "; " + 
+                "Price: " +
+                str(row["price"]) + "; ",
             axis=1
         )
         

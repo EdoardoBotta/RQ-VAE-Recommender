@@ -1,6 +1,6 @@
 import torch
 
-from modules.tokenizer.semids import TokenizedSeqBatch
+from data.schemas import TokenizedSeqBatch
 from torch import nn
 from torch import Tensor
 from typing import NamedTuple

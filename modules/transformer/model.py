@@ -40,7 +40,7 @@ class TransformerBlock(nn.Module):
         self.enable_kv_cache = enable_kv_cache
 
         self.attention = MultiHeadAttention(
-            d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=False, dropout=dropout, qkv_bias=qkv_bias
+            d_in=d_in, d_out=d_out, num_heads=num_heads, cross_attn=False, dropout=dropout, qkv_bias=qkv_bias, enable_kv_cache=enable_kv_cache
         )
 
         self.ff = nn.Sequential(

@@ -3,10 +3,10 @@ import torch
 
 from einops import rearrange
 from enum import Enum
+from data.schemas import TokenizedSeqBatch
 from modules.embedding.id_embedder import SemIdEmbedder
 from modules.embedding.id_embedder import UserIdEmbedder
 from modules.transformer.attention import AttentionInput
-from modules.tokenizer.semids import TokenizedSeqBatch
 from modules.transformer.model import TransformerDecoder
 from modules.transformer.model import TransformerEncoderDecoder
 from modules.utils import eval_mode
@@ -327,7 +327,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
         k = 10 if top_k else 1
-        n_top_k_candidates = 6*k if top_k else 1
+        n_top_k_candidates = 20*k if top_k else 1
 
         batch = TokenizedSeqBatch(
             user_ids=batch.user_ids,

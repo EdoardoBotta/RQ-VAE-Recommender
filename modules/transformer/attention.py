@@ -152,7 +152,8 @@ class MultiHeadAttention(nn.Module):
         num_heads,
         cross_attn=False,
         dropout=0.0,
-        qkv_bias=False
+        qkv_bias=False,
+        enable_kv_cache=True
     ) -> None:
         super().__init__()
 
@@ -162,6 +163,7 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = num_heads
         self.head_dim = d_out // num_heads
         self.d_out = d_out
+        self.enable_kv_cache = enable_kv_cache
 
         if self.cross_attn:
             self.q = nn.Linear(d_in, d_out, bias=qkv_bias)
@@ -173,7 +175,7 @@ class MultiHeadAttention(nn.Module):
 
         self.attend = Attend(self.d_out, self.num_heads, self.head_dim, dropout=False)
 
-        self._kv_cache = KVCache((2560, 80, 384)) # (640, 800, 64)
+        self._kv_cache = KVCache((2560, 80, 384)) if enable_kv_cache else None # (640, 800, 64)
     
     @property
     def kv_cache(self) -> KVCache:
@@ -197,7 +199,7 @@ class MultiHeadAttention(nn.Module):
         else:
             queries, keys, values = self.qkv(x).chunk(3, dim=-1)
         
-        if not self.training and use_cache and self.kv_cache.is_empty:
+        if not self.training and use_cache and self.enable_kv_cache and self.kv_cache.is_empty:
             assert padding_mask is not None
             B, N = padding_mask.shape
             
@@ -208,7 +210,7 @@ class MultiHeadAttention(nn.Module):
             )
             context_vec = self.attend.jagged_forward(queries, keys, values, is_causal=is_causal)
 
-        elif not self.training and use_cache and not self.kv_cache.is_empty:
+        elif not self.training and use_cache and self.enable_kv_cache and not self.kv_cache.is_empty:
             assert padding_mask is not None
             B, N = padding_mask.shape
 

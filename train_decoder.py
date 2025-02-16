@@ -17,6 +17,7 @@ from modules.model import EncoderDecoderRetrievalModel
 from modules.model import ModelType
 from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
+from modules.utils import compute_debug_metrics
 from modules.utils import parse_config
 from huggingface_hub import login
 from torch.optim import AdamW
@@ -67,6 +68,7 @@ def train(
     attn_layers=4,
     dataset_split="beauty",
     push_vae_to_hf=False,
+    train_data_subsample=True,
     vae_hf_model_name="edobotta/rqvae-amazon-beauty"
 ):  
     if model_type not in SUPPORTED_MODELS:
@@ -102,7 +104,7 @@ def train(
         root=dataset_folder, 
         dataset=dataset, 
         is_train=True, 
-        subsample=model_type == ModelType.ENCODER_DECODER, 
+        subsample=train_data_subsample, 
         split=dataset_split
     )
     eval_dataset = SeqData(
@@ -189,9 +191,12 @@ def train(
                 data = next_batch(train_dataloader, device)
                 tokenized_data = tokenizer(data)
 
+                if wandb_logging and accelerator.is_main_process:
+                    train_debug_metrics = compute_debug_metrics(tokenized_data)
+
                 with accelerator.autocast():
-                    loss = model(tokenized_data).loss
-                    loss = loss / gradient_accumulate_every
+                    model_output = model(tokenized_data)
+                    loss = model_output.loss / gradient_accumulate_every
                     total_loss += loss
 
                 accelerator.backward(total_loss)
@@ -213,10 +218,16 @@ def train(
                         data = batch_to(batch, device)
                         tokenized_data = tokenizer(data)
 
+                        if wandb_logging and accelerator.is_main_process:
+                            eval_debug_metrics = compute_debug_metrics(tokenized_data)
+
                         generated = model.generate_next_sem_id(tokenized_data, top_k=True, temperature=1)
                         actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
 
                         metrics_accumulator.accumulate(actual=actual, top_k=top_k)
+
+                        if accelerator.is_main_process and wandb_logging:
+                            wandb.log(eval_debug_metrics)
                 
                 eval_metrics = metrics_accumulator.reduce()
                 
@@ -243,6 +254,7 @@ def train(
                     wandb.log({
                         "learning_rate": optimizer.param_groups[0]["lr"],
                         "total_loss": total_loss.cpu().item(),
+                        **train_debug_metrics
                     })
 
             pbar.update(1)
