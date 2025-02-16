@@ -13,7 +13,7 @@ train.vae_codebook_size=256
 train.wandb_logging=True
 train.model_type=%modules.model.ModelType.ENCODER_DECODER
 # https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/9s7a4a9m
-train.pretrained_rqvae_path="out/rqvae/amazon/checkpoint_unique.pt"
+train.pretrained_rqvae_path="trained_models/rqvae_amazon_beauty/checkpoint_high_entropy.pt"
 train.save_dir_root="out/decoder/amazon/"
 train.dataset_folder="dataset/amazon"
 train.dataset=%data.processed.RecDataset.AMAZON
