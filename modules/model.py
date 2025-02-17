@@ -251,6 +251,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         self.jagged_mode = jagged_mode
         self.num_embeddings = num_embeddings
         self.sem_id_dim = sem_id_dim
+        self.attn_dim = attn_dim
         self.inference_verifier_fn = inference_verifier_fn
         
         self.bos_emb = nn.Parameter(torch.rand(embedding_dim))
@@ -288,15 +289,15 @@ class EncoderDecoderRetrievalModel(nn.Module):
         B, N, D = sem_ids_emb.shape
 
         pos_max = N // self.sem_id_dim
-        pos = torch.arange(pos_max, device=batch.sem_ids.device).repeat_interleave(self.sem_id_dim)
+        # pos = torch.arange(pos_max, device=batch.sem_ids.device).repeat_interleave(self.sem_id_dim)
           
-        # pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0) + self.transformer.encoder.seq_lengths
+        pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0)
         wpe = self.wpe(pos)
 
         input_embedding = torch.cat([user_emb, wpe + sem_ids_emb], axis=1)
         input_embedding_fut = self.bos_emb.repeat(B, 1, 1)
         if sem_ids_emb_fut is not None:
-            tte_fut = self.tte_fut(batch.token_type_ids_fut)
+            tte_fut = self.tte(batch.token_type_ids_fut)
             input_embedding_fut = torch.cat([
                 input_embedding_fut, 
                 sem_ids_emb_fut + tte_fut
@@ -326,8 +327,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
     ) -> GenerationOutput:
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
-        k = 10 if top_k else 1
-        n_top_k_candidates = 20*k if top_k else 1
+        k = 25 if top_k else 1
+        n_top_k_candidates = 200 if top_k else 1
 
         batch = TokenizedSeqBatch(
             user_ids=batch.user_ids,
@@ -337,6 +338,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
             token_type_ids=batch.token_type_ids,
             token_type_ids_fut=None
         )
+
+        self.transformer.cached_enc_output = None
 
         for _ in range(self.sem_id_dim):
             logits = self.forward(batch).logits
@@ -383,6 +386,13 @@ class EncoderDecoderRetrievalModel(nn.Module):
             else:
                 next_sem_ids = top_k_samples.reshape(-1, 1)
 
+                cache = torch.zeros(batch.sem_ids.shape[0], batch.sem_ids.shape[1]+1, self.attn_dim, device=batch.sem_ids.device)
+                cache_mask = torch.cat([torch.ones(batch.sem_ids.shape[0], 1, dtype=bool, device=batch.seq_mask.device), batch.seq_mask], axis=1)
+                cache[cache_mask] = self.transformer.cached_enc_output.values()
+                lengths = self.transformer.cached_enc_output.offsets().diff().repeat_interleave(k)
+                cache = cache.repeat_interleave(k, dim=0)
+                self.transformer.cached_enc_output = padded_to_jagged_tensor(cache, lengths)
+
                 batch = TokenizedSeqBatch(
                     user_ids=batch.user_ids.repeat_interleave(k, dim=0),
                     sem_ids=batch.sem_ids.repeat_interleave(k, dim=0),
@@ -395,6 +405,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
                 generated = top_k_samples.unsqueeze(-1)
                 log_probas = torch.clone(top_k_log_probas.detach())
         
+        self.transformer.cached_enc_output = None
         return GenerationOutput(
             sem_ids=generated.squeeze(),
             log_probas=log_probas.squeeze()

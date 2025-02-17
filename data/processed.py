@@ -133,11 +133,12 @@ class SeqData(Dataset):
         if self.subsample:
             seq = self.sequence_data["itemId"][idx] + self.sequence_data["itemId_fut"][idx].tolist()
             start_idx = random.randint(0, max(0, len(seq)-5))
-            end_idx = random.randint(start_idx+5, start_idx+self.max_seq_len-1)
+            end_idx = random.randint(start_idx+5, start_idx+self.max_seq_len+1)
             sample = seq[start_idx:end_idx]
             
             item_ids = torch.tensor(sample[:-1] + [-1] * (self.max_seq_len - len(sample[:-1])))
             item_ids_fut = torch.tensor([sample[-1]])
+
         else:
             item_ids = self.sequence_data["itemId"][idx]
             item_ids_fut = self.sequence_data["itemId_fut"][idx]

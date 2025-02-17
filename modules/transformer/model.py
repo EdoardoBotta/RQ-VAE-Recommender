@@ -169,6 +169,7 @@ class TransformerEncoderDecoder(nn.Module, KVCacheOpsMixin):
         )
 
         self.layers = [self.encoder, self.decoder]
+        self.cached_enc_output = None
     
     def forward(
         self,
@@ -177,7 +178,12 @@ class TransformerEncoderDecoder(nn.Module, KVCacheOpsMixin):
         context: Optional[Tensor] = None,
         jagged: Optional[bool] = None
     ) -> AttentionInput:
-        context = self.encoder(context, padding_mask=padding_mask, is_causal=False, context=None, jagged=jagged)
+        if self.cached_enc_output is None:
+            context = self.encoder(context, padding_mask=padding_mask, is_causal=False, context=None, jagged=jagged)
+            if not self.training:
+                self.cached_enc_output = context
+        else:
+            context = self.cached_enc_output
         out = self.decoder(x, padding_mask=None, is_causal=True, context=context, jagged=jagged)
         return out
         

@@ -160,7 +160,7 @@ def train(
         num_embeddings=vae_codebook_size,
         inference_verifier_fn=lambda x: tokenizer.exists_prefix(x),
         sem_id_dim=tokenizer.sem_ids_dim,
-        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim if model_type == ModelType.DECODER else train_dataset.max_seq_len
+        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim
     )
 
     optimizer = AdamW(
