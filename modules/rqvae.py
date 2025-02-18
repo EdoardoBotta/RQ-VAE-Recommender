@@ -137,7 +137,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             quantize_loss=quantize_loss
         )
 
-    @torch.compile
+    @torch.compile(mode="reduce-overhead")
     def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)

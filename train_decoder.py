@@ -39,12 +39,12 @@ def train(
     batch_size=64,
     learning_rate=0.001,
     weight_decay=0.01,
-    max_grad_norm=1,
     model_type=ModelType.DECODER,
     dataset_folder="dataset/ml-1m",
     save_dir_root="out/",
     dataset=RecDataset.ML_1M,
     pretrained_rqvae_path=None,
+    pretrained_decoder_path=None,
     split_batches=True,
     amp=False,
     wandb_logging=False,
@@ -52,7 +52,8 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     save_model_every=1000000,
-    eval_every=10000,
+    partial_eval_every=1000,
+    full_eval_every=10000,
     vae_input_dim=18,
     vae_embed_dim=16,
     vae_hidden_dims=[18, 18],
@@ -173,6 +174,15 @@ def train(
         optimizer=optimizer,
         warmup_steps=10000
     )
+    
+    start_iter = 0
+    if pretrained_decoder_path is not None:
+        checkpoint = torch.load(pretrained_decoder_path, map_location=device)
+        model.load_state_dict(checkpoint["model"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        if "scheduler" in checkpoint:
+            lr_scheduler.load_state_dict(checkpoint["scheduler"])
+        start_iter = checkpoint["iter"] + 1
 
     model, optimizer, lr_scheduler = accelerator.prepare(
         model, optimizer, lr_scheduler
@@ -181,7 +191,7 @@ def train(
     metrics_accumulator = TopKAccumulator(ks=[1, 5, 10])
     num_params = sum(p.numel() for p in model.parameters())
     print(f"Device: {device}, Num Parameters: {num_params}")
-    with tqdm(initial=0, total=iterations,
+    with tqdm(initial=start_iter, total=start_iter + iterations,
               disable=not accelerator.is_main_process) as pbar:
         for iter in range(iterations):
             model.train()
@@ -204,15 +214,33 @@ def train(
             pbar.set_description(f'loss: {total_loss.item():.4f}')
 
             accelerator.wait_for_everyone()
-            accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
 
             optimizer.step()
             lr_scheduler.step()
 
             accelerator.wait_for_everyone()
 
-            if (iter+1) % eval_every == 0:
+            if (iter+1) % partial_eval_every == 0:
                 model.eval()
+                model.enable_generation = False
+                with tqdm(eval_dataloader, desc=f'Eval {iter+1}', disable=True) as pbar_eval:
+                    for batch in pbar_eval:
+                        data = batch_to(batch, device)
+                        tokenized_data = tokenizer(data)
+
+                        with torch.no_grad():
+                            model_output_eval = model(tokenized_data)
+
+                        if wandb_logging and accelerator.is_main_process:
+                            eval_debug_metrics = {}
+                            eval_debug_metrics["eval_loss"] = model_output_eval.loss.detach().cpu().item()
+
+                        if accelerator.is_main_process and wandb_logging:
+                            wandb.log(eval_debug_metrics)
+
+            if (iter+1) % full_eval_every == 0:
+                model.eval()
+                model.enable_generation = True
                 with tqdm(eval_dataloader, desc=f'Eval {iter+1}', disable=not accelerator.is_main_process) as pbar_eval:
                     for batch in pbar_eval:
                         data = batch_to(batch, device)
@@ -242,7 +270,8 @@ def train(
                     state = {
                         "iter": iter,
                         "model": model.state_dict(),
-                        "optimizer": optimizer.state_dict()
+                        "optimizer": optimizer.state_dict(),
+                        "scheduler": lr_scheduler.state_dict()
                     }
 
                     if not os.path.exists(save_dir_root):

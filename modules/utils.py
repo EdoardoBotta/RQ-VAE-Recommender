@@ -17,6 +17,16 @@ def reset_kv_cache(fn):
     return inner
 
 
+def reset_encoder_cache(fn):
+    def inner(self, *args, **kwargs):
+        self.transformer.cached_enc_output = None
+        out = fn(self, *args, **kwargs)
+        self.transformer.cached_enc_output = None
+        return out
+    
+    return inner
+
+
 def eval_mode(fn):
     def inner(self, *args, **kwargs):
         was_training = self.training

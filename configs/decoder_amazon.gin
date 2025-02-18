@@ -1,7 +1,7 @@
 import data.processed
 import modules.model
 
-train.iterations=100000
+train.iterations=200000
 train.learning_rate=0.0003
 train.weight_decay=0.035
 train.batch_size=256
@@ -14,14 +14,17 @@ train.wandb_logging=True
 train.model_type=%modules.model.ModelType.ENCODER_DECODER
 # https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/ilggivkz, https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/ufe656js
 train.pretrained_rqvae_path="trained_models/rqvae_amazon_beauty/checkpoint_high_entropy.pt"
+# https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/6m2fkl1y
+# train.pretrained_decoder_path="trained_models/transformer_amazon_beauty/checkpoint_199999.pt"
 train.save_dir_root="out/decoder/amazon/"
 train.dataset_folder="dataset/amazon"
 train.dataset=%data.processed.RecDataset.AMAZON
 train.force_dataset_process=False
-train.eval_every=5000
+train.full_eval_every=10000
+train.partial_eval_every=1000
 train.dataset_split="beauty"
 train.dropout_p=0.2
 train.attn_heads=6
 train.attn_embed_dim=384
-train.attn_layers=12
+train.attn_layers=8
 train.decoder_embed_dim=128
