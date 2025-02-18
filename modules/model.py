@@ -259,7 +259,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
 
         self.bos_emb = nn.Parameter(torch.rand(embedding_dim))
         self.norm = RMSNorm(embedding_dim)
-        self.do = nn.Dropout(p=dropout)
+        self.do = nn.Dropout(p=0.5)
 
         self.sem_id_embedder = SemIdEmbedder(
             num_embeddings=num_embeddings,

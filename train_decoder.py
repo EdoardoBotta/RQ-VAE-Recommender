@@ -223,20 +223,19 @@ def train(
             if (iter+1) % partial_eval_every == 0:
                 model.eval()
                 model.enable_generation = False
-                with tqdm(eval_dataloader, desc=f'Eval {iter+1}', disable=True) as pbar_eval:
-                    for batch in pbar_eval:
-                        data = batch_to(batch, device)
-                        tokenized_data = tokenizer(data)
+                for batch in eval_dataloader:
+                    data = batch_to(batch, device)
+                    tokenized_data = tokenizer(data)
 
-                        with torch.no_grad():
-                            model_output_eval = model(tokenized_data)
+                    with torch.no_grad():
+                        model_output_eval = model(tokenized_data)
 
-                        if wandb_logging and accelerator.is_main_process:
-                            eval_debug_metrics = {}
-                            eval_debug_metrics["eval_loss"] = model_output_eval.loss.detach().cpu().item()
+                    if wandb_logging and accelerator.is_main_process:
+                        eval_debug_metrics = {}
+                        eval_debug_metrics["eval_loss"] = model_output_eval.loss.detach().cpu().item()
 
-                        if accelerator.is_main_process and wandb_logging:
-                            wandb.log(eval_debug_metrics)
+                    if accelerator.is_main_process and wandb_logging:
+                        wandb.log(eval_debug_metrics)
 
             if (iter+1) % full_eval_every == 0:
                 model.eval()
