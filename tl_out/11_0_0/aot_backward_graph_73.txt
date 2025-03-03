@@ -1,0 +1,21 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, sym_size_int: "Sym(s1)", primals_1: "f32[s1, 384][384, 1]cuda:0", primals_6: "f32[1024, 384][384, 1]cuda:0", primals_7: "f32[384, 1024][1024, 1]cuda:0", mm: "f32[s1, 1024][1024, 1]cuda:0", gt: "b8[s1, 1024][1024, 1]cuda:0", mul_2: "f32[s1, 1024][1024, 1]cuda:0", tangents_1: "f32[s1, 384][384, 1]cuda:0", tangents_2: "i64[257][1]cuda:0", tangents_3: "f32[s3, 0][1, 1]cuda:0", tangents_4: "f32[s4, 0][1, 1]cuda:0"):
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        mm_2: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mm.default(tangents_1, primals_7);  primals_7 = None
+        permute_2: "f32[384, s1][1, 384]cuda:0" = torch.ops.aten.permute.default(tangents_1, [1, 0]);  tangents_1 = None
+        mm_3: "f32[384, 1024][1024, 1]cuda:0" = torch.ops.aten.mm.default(permute_2, mul_2);  permute_2 = mul_2 = None
+        convert_element_type: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.prims.convert_element_type.default(gt, torch.float32);  gt = None
+        mul_3: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(convert_element_type, 1.4285714285714286);  convert_element_type = None
+        mul_4: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mm_2, mul_3);  mm_2 = mul_3 = None
+        sigmoid_1: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.sigmoid.default(mm)
+        full: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.full.default([sym_size_int, 1024], 1, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False);  sym_size_int = None
+        sub: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.sub.Tensor(full, sigmoid_1);  full = None
+        mul_5: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mm, sub);  mm = sub = None
+        add: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.add.Scalar(mul_5, 1);  mul_5 = None
+        mul_6: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(sigmoid_1, add);  sigmoid_1 = add = None
+        mul_7: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_4, mul_6);  mul_4 = mul_6 = None
+        mm_4: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(mul_7, primals_6);  primals_6 = None
+        permute_4: "f32[1024, s1][1, 1024]cuda:0" = torch.ops.aten.permute.default(mul_7, [1, 0]);  mul_7 = None
+        mm_5: "f32[1024, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(permute_4, primals_1);  permute_4 = primals_1 = None
+        return (mm_4, tangents_2, tangents_3, tangents_4, None, mm_5, mm_3)
+        

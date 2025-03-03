@@ -1,0 +1,96 @@
+class joint_fn(torch.nn.Module):
+    def forward(self, primals, tangents):
+        primals_1: "f32[s1, 384][1152, 1]cuda:0"; primals_2: "i64[257][1]cuda:0"; primals_3: "f32[s3, 0][1, 1]cuda:0"; primals_4: "f32[s4, 0][1, 1]cuda:0"; primals_5: "Sym(s11)"; primals_6: "f32[s1, 384][1152, 1]cuda:0"; primals_7: "i64[257][1]cuda:0"; primals_8: "f32[s3, 0][1, 1]cuda:0"; primals_9: "f32[s4, 0][1, 1]cuda:0"; primals_10: "Sym(s11)"; primals_11: "f32[s1, 384][1152, 1]cuda:0"; primals_12: "i64[257][1]cuda:0"; primals_13: "f32[s3, 0][1, 1]cuda:0"; primals_14: "f32[s4, 0][1, 1]cuda:0"; primals_15: "Sym(s11)"; tangents_1: "f32[s1, 384][384, 1]cuda:0"; tangents_2: "i64[257][1]cuda:0"; tangents_3: "f32[s3, 0][1, 1]cpu"; tangents_4: "f32[s4, 0][1, 1]cpu"; 
+    
+        primals_1, primals_2, primals_3, primals_4, primals_5, primals_6, primals_7, primals_8, primals_9, primals_10, primals_11, primals_12, primals_13, primals_14, primals_15, tangents_1, tangents_2, tangents_3, tangents_4, = fx_pytree.tree_flatten_spec([primals, tangents], self._in_spec)
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        sym_size_int: "Sym(s1)" = torch.ops.aten.sym_size.int(primals_1, 0)
+        view: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.view.default(primals_1, [sym_size_int, 6, 64]);  primals_1 = None
+        alias: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.alias.default(view);  view = None
+        permute: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(alias, [1, 0, 2]);  alias = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_1: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.view.default(primals_6, [sym_size_int, 6, 64]);  primals_6 = None
+        alias_1: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.alias.default(view_1);  view_1 = None
+        permute_1: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(alias_1, [1, 0, 2]);  alias_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_2: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.view.default(primals_11, [sym_size_int, 6, 64]);  primals_11 = None
+        alias_2: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.alias.default(view_2);  view_2 = None
+        permute_2: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(alias_2, [1, 0, 2]);  alias_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        alias_3: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.alias.default(permute);  permute = None
+        permute_3: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_3, [1, 0, 2]);  alias_3 = None
+        alias_4: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.alias.default(permute_1);  permute_1 = None
+        permute_4: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_4, [1, 0, 2]);  alias_4 = None
+        alias_5: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.alias.default(permute_2);  permute_2 = None
+        permute_5: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_5, [1, 0, 2]);  alias_5 = None
+        convert_element_type: "i32[257][1]cuda:0" = torch.ops.prims.convert_element_type.default(primals_12, torch.int32)
+        convert_element_type_1: "i32[257][1]cuda:0" = torch.ops.prims.convert_element_type.default(primals_12, torch.int32)
+        alias_8: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.alias.default(permute_3);  permute_3 = None
+        alias_9: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.alias.default(permute_4);  permute_4 = None
+        alias_10: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.alias.default(permute_5);  permute_5 = None
+        unsqueeze: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(alias_8, 0);  alias_8 = None
+        unsqueeze_1: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(alias_9, 0);  alias_9 = None
+        unsqueeze_2: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(alias_10, 0);  alias_10 = None
+        sym_size_int_1: "Sym(s4)" = torch.ops.aten.sym_size.int(primals_4, 0);  primals_4 = None
+        _efficient_attention_forward = torch.ops.aten._efficient_attention_forward.default(unsqueeze, unsqueeze_1, unsqueeze_2, None, convert_element_type, convert_element_type_1, sym_size_int_1, sym_size_int_1, 0.0, 0, True)
+        getitem: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_forward[0]
+        getitem_1: "f32[256, 6, 32*CeilToInt(IntTrueDiv(s4, 32))][192*CeilToInt(IntTrueDiv(s4, 32)), 32*CeilToInt(IntTrueDiv(s4, 32)), 1]cuda:0" = _efficient_attention_forward[1]
+        getitem_2: "i64[][]cuda:0" = _efficient_attention_forward[2]
+        getitem_3: "i64[][]cuda:0" = _efficient_attention_forward[3];  _efficient_attention_forward = None
+        alias_11: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = torch.ops.aten.alias.default(getitem)
+        alias_12: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = torch.ops.aten.alias.default(alias_11);  alias_11 = None
+        squeeze: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem, 0);  getitem = None
+        sym_size_int_2: "Sym(s3)" = torch.ops.aten.sym_size.int(primals_3, 0);  primals_3 = None
+        full: "f32[s3, 0][1, 1]cpu" = torch.ops.aten.full.default([sym_size_int_2, 0], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cpu'), pin_memory = False);  sym_size_int_2 = None
+        full_1: "f32[s4, 0][1, 1]cpu" = torch.ops.aten.full.default([sym_size_int_1, 0], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cpu'), pin_memory = False)
+        alias_13: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.alias.default(squeeze);  squeeze = None
+        permute_6: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(alias_13, [1, 0, 2]);  alias_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        alias_14: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.alias.default(permute_6);  permute_6 = None
+        permute_7: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_14, [1, 0, 2]);  alias_14 = None
+        view_3: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.view.default(permute_7, [sym_size_int, 384]);  permute_7 = None
+        view_4: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.view.default(tangents_1, [sym_size_int, 6, 64]);  tangents_1 = None
+        alias_15: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.alias.default(view_4);  view_4 = None
+        permute_8: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(alias_15, [1, 0, 2]);  alias_15 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        alias_16: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.alias.default(permute_8);  permute_8 = None
+        permute_9: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_16, [1, 0, 2]);  alias_16 = None
+        alias_17: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.alias.default(permute_9);  permute_9 = None
+        unsqueeze_3: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(alias_17, 0);  alias_17 = None
+        alias_18: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = torch.ops.aten.alias.default(alias_12);  alias_12 = None
+        alias_19: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = torch.ops.aten.alias.default(alias_18);  alias_18 = None
+        _efficient_attention_backward = torch.ops.aten._efficient_attention_backward.default(unsqueeze_3, unsqueeze, unsqueeze_1, unsqueeze_2, None, alias_19, convert_element_type, convert_element_type_1, sym_size_int_1, sym_size_int_1, getitem_1, 0.0, getitem_2, getitem_3, 0, False);  unsqueeze_3 = unsqueeze = unsqueeze_1 = unsqueeze_2 = alias_19 = convert_element_type = convert_element_type_1 = sym_size_int_1 = getitem_1 = getitem_2 = getitem_3 = None
+        getitem_6: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_backward[0]
+        getitem_7: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_backward[1]
+        getitem_8: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_backward[2];  _efficient_attention_backward = None
+        squeeze_1: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem_8, 0);  getitem_8 = None
+        squeeze_2: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem_7, 0);  getitem_7 = None
+        squeeze_3: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem_6, 0);  getitem_6 = None
+        alias_20: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.alias.default(squeeze_1);  squeeze_1 = None
+        permute_10: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(alias_20, [1, 0, 2]);  alias_20 = None
+        alias_21: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.alias.default(squeeze_2);  squeeze_2 = None
+        permute_11: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(alias_21, [1, 0, 2]);  alias_21 = None
+        alias_22: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.alias.default(squeeze_3);  squeeze_3 = None
+        permute_12: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(alias_22, [1, 0, 2]);  alias_22 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        alias_23: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.alias.default(permute_10);  permute_10 = None
+        permute_13: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_23, [1, 0, 2]);  alias_23 = None
+        view_5: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.view.default(permute_13, [sym_size_int, 384]);  permute_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        alias_24: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.alias.default(permute_11);  permute_11 = None
+        permute_14: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_24, [1, 0, 2]);  alias_24 = None
+        view_6: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.view.default(permute_14, [sym_size_int, 384]);  permute_14 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        alias_25: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.alias.default(permute_12);  permute_12 = None
+        permute_15: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(alias_25, [1, 0, 2]);  alias_25 = None
+        view_7: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.view.default(permute_15, [sym_size_int, 384]);  permute_15 = sym_size_int = None
+        return pytree.tree_unflatten([view_3, primals_12, full, full_1, view_7, primals_12, primals_13, primals_14, None, view_6, primals_12, primals_13, primals_14, None, view_5, primals_12, primals_13, primals_14, None], self._out_spec)
+        

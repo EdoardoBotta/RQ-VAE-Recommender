@@ -1,0 +1,291 @@
+
+<html>
+<head>
+    <style>
+    
+table td { vertical-align: top; }
+
+.stack-trie { white-space: nowrap; font-family: monospace; }
+.stack-trie ul { padding-left: 1ch;  }
+.stack-trie li { margin-left: 1ch; list-style-type: none;  }
+.stack-trie .marker {
+  cursor: pointer;
+}
+.stack-trie .marker.collapsed::before {
+  content: &quot;+ &quot;;
+}
+.stack-trie .marker:not(.collapsed)::before {
+  content: &quot;- &quot;;
+}
+.stack-trie a { text-decoration: none; }
+.stack-trie a:hover { text-decoration: underline; }
+.status-missing { background-color: purple; color: white; }
+.status-error { background-color: red; color: white; }
+.status-empty { background-color: white; color: black; }
+.status-ok { background-color: green; color: white; }
+.status-break { background-color: lime; color: black; }
+
+    </style>
+    <title>Compilation Metrics</title>
+    <base href="..">
+</head>
+<body>
+    <h1>Compilation Info for [10/0] </h1>
+    <p><div class='stack-trie'><ul><li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:113 in jagged_forward</li>
+</ul></div></p>
+    <h2>Output files:</h2>
+    <ul>
+        
+            <li><a href="10_0_0/dynamo_output_graph_63.txt">dynamo_output_graph_63.txt</a> (63)</li>
+        
+            <li><a href="10_0_0/aot_joint_graph_64.txt">aot_joint_graph_64.txt</a> (64)</li>
+        
+            <li><a href="10_0_0/aot_forward_graph_65.txt">aot_forward_graph_65.txt</a> (65)</li>
+        
+            <li><a href="10_0_0/aot_backward_graph_66.txt">aot_backward_graph_66.txt</a> (66)</li>
+        
+            <li><a href="10_0_0/fx_graph_runnable_67.txt">fx_graph_runnable_67.txt</a> (67)</li>
+        
+            <li><a href="10_0_0/inductor_post_grad_graph_68.txt">inductor_post_grad_graph_68.txt</a> (68)</li>
+        
+    </ul>
+    <h2>Stack</h2>
+    <div class='stack-trie'><ul><li>/home/ec2-user/code/RQ-VAE-Recommender/train_decoder.py:296 in &lt;module&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/gin/config.py:1582 in gin_wrapper</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/train_decoder.py:208 in train</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/eval_frame.py:465 in _fn</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:426 in forward</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:321 in _predict</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:182 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:131 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:113 in jagged_forward</li>
+</ul></div>
+    <h2>Compile Time(seconds)</h2>
+    <p>Entire Frame <abbr title="Total time spent in convert_frame function">[?]</abbr>: </div>
+    <p>Backend <abbr title="Time spent running the backend compiler">[?]</abbr>: </div>
+    
+    
+    <div>Dynamo Time Before Restart <abbr title="Total time spent restarting dynamo analysis">[?]</abbr>: 0.7494363784790039</div>
+    <h2>Restarts and Failures</h2>
+    
+    <p>Failure Exception: <pre>BackendCompilerFailed</pre></p>
+    <p>Failure Reason: <pre>backend=&#39;inductor&#39; raised:
+CalledProcessError: Command &#39;[&#39;/usr/bin/gcc&#39;, &#39;/tmp/tmphfibk_np/main.c&#39;, &#39;-O3&#39;, &#39;-shared&#39;, &#39;-fPIC&#39;, &#39;-o&#39;, &#39;/tmp/tmphfibk_np/cuda_utils.cpython-39-x86_64-linux-gnu.so&#39;, &#39;-lcuda&#39;, &#39;-L/home/ec2-user/.local/lib/python3.9/site-packages/triton/backends/nvidia/lib&#39;, &#39;-L/lib64&#39;, &#39;-L/lib&#39;, &#39;-I/home/ec2-user/.local/lib/python3.9/site-packages/triton/backends/nvidia/include&#39;, &#39;-I/tmp/tmphfibk_np&#39;, &#39;-I/usr/include/python3.9&#39;]&#39; returned non-zero exit status 1.</pre></p>
+    
+    
+    
+    <p> No restarts! </p>
+    
+    <h2>Cache Metrics</h2>
+    <p>Cache Size: 0</p>
+    <p>Accumulated Cache Size: 0</p>
+    <h2>Graph Metrics</h2>
+    <p>Guard Count: </p>
+    <p>Shape Env Guards: </p>
+    <p>Graph Ops: </p>
+    <p>Graph Nodes: </p>
+    <p>Graph Inputs: </p>
+    <h2> Custom Ops </h2>
+    
+    
+    <h2>Symbolic shape specializations</h2>
+    <table>
+    <tr>
+        <th>Sym</th> <th>Source(s)</th> <th>Value</th> <th>User stack</th> <th>Framework stack</th>
+    </tr>
+    
+    <tr>
+        <td>s9</td>
+        <td>L[&#39;ke&#39;].storage_offset()<br>L[&#39;ke&#39;]._values.storage_offset()<br></td>
+        <td>384</td>
+        <td><div class='stack-trie'><ul><li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward</li>
+</ul></div></td>
+        <td><div class='stack-trie'><ul><li>/home/ec2-user/code/RQ-VAE-Recommender/train_decoder.py:296 in &lt;module&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/gin/config.py:1582 in gin_wrapper</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/train_decoder.py:208 in train</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/eval_frame.py:465 in _fn</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:426 in forward</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:321 in _predict</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:182 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:131 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:225 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:1269 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:1064 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:526 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:924 in _compile</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:666 in compile_inner</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_utils_internal.py:87 in wrapper_function</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:699 in _compile_inner</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/bytecode_transformation.py:1322 in transform_code_object</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:219 in _fn</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:634 in transform</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:2796 in run</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:983 in run</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:895 in step</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:1744 in LOAD_ATTR</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:1734 in _load_attr</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builtin.py:967 in call_function</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builtin.py:712 in &lt;lambda&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builtin.py:712 in &lt;listcomp&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/lazy.py:63 in realize</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/lazy.py:29 in realize</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:377 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:559 in _wrap</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:1593 in wrap_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2037 in wrap_fx_proxy</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2149 in wrap_fx_proxy_cls</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2709 in wrap_to_fake_tensor_and_record</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/utils.py:1574 in wrap_fake_exception</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2710 in &lt;lambda&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/fake_tensor.py:2238 in from_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/fake_tensor.py:375 in from_real_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/meta_utils.py:1660 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/meta_utils.py:1401 in meta_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/meta_utils.py:1078 in view_from_base</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/__init__.py:1564 in _check</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/__init__.py:1527 in _check_with</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:1010 in expect_true</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/sym_node.py:465 in expect_true</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/sym_node.py:449 in guard_bool</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/recording.py:262 in wrapper</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:5122 in evaluate_expr</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:5282 in _evaluate_expr</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:4927 in _maybe_guard_rel</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:5469 in _refine_ranges</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:4842 in _set_replacement</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_logging/_internal.py:1122 in trace_structured</li>
+</ul></div></td>
+    </tr>
+    
+    <tr>
+        <td>s12</td>
+        <td>L[&#39;va&#39;].storage_offset()<br>L[&#39;va&#39;]._values.storage_offset()<br></td>
+        <td>768</td>
+        <td><div class='stack-trie'><ul><li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward</li>
+</ul></div></td>
+        <td><div class='stack-trie'><ul><li>/home/ec2-user/code/RQ-VAE-Recommender/train_decoder.py:296 in &lt;module&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/gin/config.py:1582 in gin_wrapper</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/train_decoder.py:208 in train</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/eval_frame.py:465 in _fn</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:426 in forward</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:321 in _predict</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:182 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:131 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1736 in _wrapped_call_impl</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/nn/modules/module.py:1747 in _call_impl</li>
+<li>/home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:225 in forward</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:1269 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:1064 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:526 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:924 in _compile</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:666 in compile_inner</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_utils_internal.py:87 in wrapper_function</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:699 in _compile_inner</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/bytecode_transformation.py:1322 in transform_code_object</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:219 in _fn</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/convert_frame.py:634 in transform</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:2796 in run</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:983 in run</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:895 in step</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:1744 in LOAD_ATTR</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/symbolic_convert.py:1734 in _load_attr</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builtin.py:967 in call_function</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builtin.py:712 in &lt;lambda&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builtin.py:712 in &lt;listcomp&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/lazy.py:63 in realize</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/lazy.py:29 in realize</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:377 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:559 in _wrap</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:1593 in wrap_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2037 in wrap_fx_proxy</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2149 in wrap_fx_proxy_cls</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2709 in wrap_to_fake_tensor_and_record</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/utils.py:1574 in wrap_fake_exception</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_dynamo/variables/builder.py:2710 in &lt;lambda&gt;</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/fake_tensor.py:2238 in from_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/fake_tensor.py:375 in from_real_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/meta_utils.py:1660 in __call__</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/meta_utils.py:1401 in meta_tensor</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_subclasses/meta_utils.py:1078 in view_from_base</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/__init__.py:1564 in _check</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/__init__.py:1527 in _check_with</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:1010 in expect_true</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/sym_node.py:465 in expect_true</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/sym_node.py:449 in guard_bool</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/recording.py:262 in wrapper</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:5122 in evaluate_expr</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:5282 in _evaluate_expr</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:4927 in _maybe_guard_rel</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:5469 in _refine_ranges</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/fx/experimental/symbolic_shapes.py:4842 in _set_replacement</li>
+<li>/home/ec2-user/.local/lib/python3.9/site-packages/torch/_logging/_internal.py:1122 in trace_structured</li>
+</ul></div></td>
+    </tr>
+    
+    </table>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Append the current URL's query parameters to all relative links on the page
+        const queryParams = new URLSearchParams(window.location.search);
+        if (queryParams.size === 0) return url; // No query params, return original URL
+
+        function appendQueryParams(url) {
+            const newURL = new URL((new Request(url)).url);  // new URL(<relative URL>) but it actually works
+            const newSearchParams = new URLSearchParams(newURL.searchParams);
+            console.log(newURL.searchParams);
+            console.log(newSearchParams);
+
+            // Append query parameters
+            for (const [key, value] of queryParams) {
+                newSearchParams.set(key, value);
+            }
+
+            newURL.search = newSearchParams;
+            return newURL;
+        }
+
+        // Select all relative links on the page
+        const relativeLinks = document.querySelectorAll('a[href]:not([href^="http://"]):not([href^="https://"]):not([href^="\#"])');
+
+        // Append query parameters to each relative link
+        relativeLinks.forEach((link) => {
+            link.setAttribute("href", appendQueryParams(link.getAttribute("href")))
+        });
+    });
+    </script>
+
+</body>
+</html>

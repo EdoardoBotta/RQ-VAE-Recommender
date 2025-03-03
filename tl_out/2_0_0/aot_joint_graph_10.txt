@@ -1,0 +1,18 @@
+class joint_helper(torch.nn.Module):
+    def forward(self, primals, tangents):
+        primals_1: "i64[256, 1][1, 1]cuda:0"; primals_2: "f32[2000, 128][128, 1]cuda:0"; tangents_1: "f32[256, 1, 128][128, 128, 1]cuda:0"; 
+    
+        primals_1, primals_2, tangents_1, = fx_pytree.tree_flatten_spec([primals, tangents], self._in_spec)
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:51 in forward, code: hashed_indices = x % self.num_buckets
+        remainder: "i64[256, 1][1, 1]cuda:0" = torch.ops.aten.remainder.Scalar(primals_1, 2000);  primals_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:53 in forward, code: return self.emb(hashed_indices)
+        embedding: "f32[256, 1, 128][128, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_2, remainder);  primals_2 = None
+        eq: "b8[256, 1][1, 1]cuda:0" = torch.ops.aten.eq.Scalar(remainder, -1)
+        unsqueeze: "b8[256, 1, 1][1, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq, -1);  eq = None
+        scalar_tensor: "f32[][]cuda:0" = torch.ops.aten.scalar_tensor.default(0.0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0))
+        where: "f32[256, 1, 128][128, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze, scalar_tensor, tangents_1);  unsqueeze = scalar_tensor = tangents_1 = None
+        full: "f32[2000, 128][128, 1]cuda:0" = torch.ops.aten.full.default([2000, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put: "f32[2000, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full, [remainder], where, True);  full = remainder = where = None
+        return pytree.tree_unflatten([embedding, None, index_put], self._out_spec)
+        

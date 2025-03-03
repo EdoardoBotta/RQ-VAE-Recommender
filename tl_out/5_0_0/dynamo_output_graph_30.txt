@@ -1,0 +1,12 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, L_x_: "f32[256, s1, 128][128*s1, 128, 1]cuda:0", s1: "Sym(s1)"):
+        l_x_ = L_x_
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_1: "f32[256, s1, 128][128*s1, 128, 1]cuda:0" = l_x_.pow(2)
+        mean: "f32[256, s1, 1][s1, 1, 1]cuda:0" = pow_1.mean(-1, keepdim = True);  pow_1 = None
+        add: "f32[256, s1, 1][s1, 1, 1]cuda:0" = mean + 1e-06;  mean = None
+        rsqrt: "f32[256, s1, 1][s1, 1, 1]cuda:0" = torch.rsqrt(add);  add = None
+        mul: "f32[256, s1, 128][128*s1, 128, 1]cuda:0" = l_x_ * rsqrt;  l_x_ = rsqrt = None
+        return (mul,)
+        

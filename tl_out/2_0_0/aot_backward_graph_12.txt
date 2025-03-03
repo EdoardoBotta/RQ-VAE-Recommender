@@ -1,0 +1,11 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, remainder: "i64[256, 1][1, 1]cuda:0", tangents_1: "f32[256, 1, 128][128, 128, 1]cuda:0"):
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:53 in forward, code: return self.emb(hashed_indices)
+        eq: "b8[256, 1][1, 1]cuda:0" = torch.ops.aten.eq.Scalar(remainder, -1)
+        unsqueeze: "b8[256, 1, 1][1, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq, -1);  eq = None
+        full_default: "f32[][]cuda:0" = torch.ops.aten.full.default([], 0.0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        where: "f32[256, 1, 128][128, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze, full_default, tangents_1);  unsqueeze = full_default = tangents_1 = None
+        full_default_1: "f32[2000, 128][128, 1]cuda:0" = torch.ops.aten.full.default([2000, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put: "f32[2000, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full_default_1, [remainder], where, True);  full_default_1 = remainder = where = None
+        return (None, index_put)
+        

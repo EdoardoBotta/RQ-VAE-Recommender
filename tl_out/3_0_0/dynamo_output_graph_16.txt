@@ -1,0 +1,28 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, L_batch_4_: "i64[256, 80][80, 1]cuda:0", L_batch_1_: "i64[256, 80][80, 1]cuda:0", L_batch_3_: "b8[256, 80][80, 1]cuda:0", L_batch_2_: "i64[256, 4][4, 1]cuda:0", L_batch_5_: "i64[256, 4][4, 1]cuda:0", L_self_modules_emb_parameters_weight_: "f32[1025, 128][128, 1]cuda:0"):
+        l_batch_4_ = L_batch_4_
+        l_batch_1_ = L_batch_1_
+        l_batch_3_ = L_batch_3_
+        l_batch_2_ = L_batch_2_
+        l_batch_5_ = L_batch_5_
+        l_self_modules_emb_parameters_weight_ = L_self_modules_emb_parameters_weight_
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:29 in forward, code: sem_ids = batch.token_type_ids*self.num_embeddings + batch.sem_ids
+        mul: "i64[256, 80][80, 1]cuda:0" = l_batch_4_ * 256;  l_batch_4_ = None
+        sem_ids: "i64[256, 80][80, 1]cuda:0" = mul + l_batch_1_;  mul = l_batch_1_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:30 in forward, code: sem_ids[~batch.seq_mask] = self.padding_idx
+        invert: "b8[256, 80][80, 1]cuda:0" = ~l_batch_3_;  l_batch_3_ = None
+        sem_ids[invert] = 1024;  setitem = sem_ids;  invert = setitem = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:33 in forward, code: sem_ids_fut = batch.token_type_ids_fut*self.num_embeddings + batch.sem_ids_fut
+        mul_1: "i64[256, 4][4, 1]cuda:0" = l_batch_5_ * 256;  l_batch_5_ = None
+        sem_ids_fut: "i64[256, 4][4, 1]cuda:0" = mul_1 + l_batch_2_;  mul_1 = l_batch_2_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:34 in forward, code: sem_ids_fut = self.emb(sem_ids_fut)
+        sem_ids_fut_1: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.nn.functional.embedding(sem_ids_fut, l_self_modules_emb_parameters_weight_, 1024, None, 2.0, False, False);  sem_ids_fut = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:38 in forward, code: seq=self.emb(sem_ids),
+        embedding_1: "f32[256, 80, 128][10240, 128, 1]cuda:0" = torch.nn.functional.embedding(sem_ids, l_self_modules_emb_parameters_weight_, 1024, None, 2.0, False, False);  sem_ids = l_self_modules_emb_parameters_weight_ = None
+        return (embedding_1, sem_ids_fut_1)
+        

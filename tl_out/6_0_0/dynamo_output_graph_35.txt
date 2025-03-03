@@ -1,0 +1,898 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, L_context_: "f32[256, s0, 384][384*s0, 384, 1]cuda:0", s0: "Sym(s0)", L_self_modules_encoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0", L_x_: "f32[256, s5, 384][384*s5, 384, 1]cuda:0", s5: "Sym(s5)", L_self_modules_decoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_cross_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_q_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_kv_parameters_weight_: "f32[768, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_cross_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_q_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_kv_parameters_weight_: "f32[768, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_cross_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_q_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_kv_parameters_weight_: "f32[768, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_: "f32[1152, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_cross_attn_norm_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_q_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_kv_parameters_weight_: "f32[768, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_proj_parameters_weight_: "f32[384, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_: "f32[384][1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0"):
+        l_context_ = L_context_
+        l_self_modules_encoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        l_x_ = L_x_
+        l_self_modules_decoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_cross_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_cross_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_q_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_q_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_kv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_kv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_cross_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_cross_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_q_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_q_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_kv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_kv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_cross_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_cross_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_q_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_q_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_kv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_kv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_cross_attn_norm_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_cross_attn_norm_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_q_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_q_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_kv_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_kv_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_proj_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_proj_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = L_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = l_context_.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_1.pow(2)
+        mean: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_1.mean(-1, keepdim = True);  pow_1 = None
+        add: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean + 1e-06;  mean = None
+        rsqrt: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add);  add = None
+        mul: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_1 * rsqrt;  float_1 = rsqrt = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul.type_as(l_context_);  mul = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output * l_self_modules_encoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_;  output = l_self_modules_encoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_1, 0.3, True, False);  mul_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear: "f32[256, s0, 1152][1152*s0, 1152, 1]cuda:0" = torch._C._nn.linear(dropout, l_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_, None);  dropout = l_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk = linear.chunk(3, dim = -1);  linear = None
+        queries: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk[0]
+        keys: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk[1]
+        values: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk[2];  chunk = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = queries.unflatten(-1, [6, 64]);  queries = None
+        queries_1: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten.transpose(1, 2);  unflatten = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_1: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = keys.unflatten(-1, [6, 64]);  keys = None
+        keys_1: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_1.transpose(1, 2);  unflatten_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_2: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = values.unflatten(-1, [6, 64]);  values = None
+        values_1: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_2.transpose(1, 2);  unflatten_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec: "f32[256, 6, s0, 64][384*s0, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_1, keys_1, values_1, dropout_p = False, is_causal = False);  queries_1 = keys_1 = values_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_3: "f32[256, s0, 6, 64][384*s0, 384, 64, 1]cuda:0" = context_vec.transpose(1, 2);  context_vec = None
+        context_vec_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = transpose_3.flatten(-2);  transpose_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_2: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_1, l_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_, None);  context_vec_1 = l_self_modules_encoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = l_context_ + context_vec_2;  l_context_ = context_vec_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_2: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_2: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_2.pow(2)
+        mean_1: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_2.mean(-1, keepdim = True);  pow_2 = None
+        add_2: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean_1 + 1e-06;  mean_1 = None
+        rsqrt_1: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add_2);  add_2 = None
+        mul_2: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_2 * rsqrt_1;  float_2 = rsqrt_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul_2.type_as(attn_out);  mul_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output_1 * l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_;  output_1 = l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_2: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch._C._nn.linear(input_1, l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_1 = l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_3: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.silu(input_2, inplace = False);  input_2 = None
+        input_4: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_3, 0.3, True, False);  input_3 = None
+        input_5: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(input_4, l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_4 = l_self_modules_encoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_6: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(input_5, 0.3, True, False);  input_5 = None
+        proj_out: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out + input_6;  attn_out = input_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_3: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = proj_out.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_3: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_3.pow(2)
+        mean_2: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_3.mean(-1, keepdim = True);  pow_3 = None
+        add_4: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean_2 + 1e-06;  mean_2 = None
+        rsqrt_2: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add_4);  add_4 = None
+        mul_4: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_3 * rsqrt_2;  float_3 = rsqrt_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_2: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul_4.type_as(proj_out);  mul_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_5: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output_2 * l_self_modules_encoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_;  output_2 = l_self_modules_encoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout_3: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_5, 0.3, True, False);  mul_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear_4: "f32[256, s0, 1152][1152*s0, 1152, 1]cuda:0" = torch._C._nn.linear(dropout_3, l_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_, None);  dropout_3 = l_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk_1 = linear_4.chunk(3, dim = -1);  linear_4 = None
+        queries_2: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_1[0]
+        keys_2: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_1[1]
+        values_2: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_1[2];  chunk_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_3: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = queries_2.unflatten(-1, [6, 64]);  queries_2 = None
+        queries_3: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_3.transpose(1, 2);  unflatten_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_4: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = keys_2.unflatten(-1, [6, 64]);  keys_2 = None
+        keys_3: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_4.transpose(1, 2);  unflatten_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_5: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = values_2.unflatten(-1, [6, 64]);  values_2 = None
+        values_3: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_5.transpose(1, 2);  unflatten_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_3: "f32[256, 6, s0, 64][384*s0, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_3, keys_3, values_3, dropout_p = False, is_causal = False);  queries_3 = keys_3 = values_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_7: "f32[256, s0, 6, 64][384*s0, 384, 64, 1]cuda:0" = context_vec_3.transpose(1, 2);  context_vec_3 = None
+        context_vec_4: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = transpose_7.flatten(-2);  transpose_7 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_5: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_4, l_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_, None);  context_vec_4 = l_self_modules_encoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = proj_out + context_vec_5;  proj_out = context_vec_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_4: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out_1.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_4: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_4.pow(2)
+        mean_3: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_4.mean(-1, keepdim = True);  pow_4 = None
+        add_6: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean_3 + 1e-06;  mean_3 = None
+        rsqrt_3: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add_6);  add_6 = None
+        mul_6: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_4 * rsqrt_3;  float_4 = rsqrt_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_3: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul_6.type_as(attn_out_1);  mul_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_7: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output_3 * l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_;  output_3 = l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_8: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch._C._nn.linear(input_7, l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_7 = l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_9: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.silu(input_8, inplace = False);  input_8 = None
+        input_10: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_9, 0.3, True, False);  input_9 = None
+        input_11: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(input_10, l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_10 = l_self_modules_encoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_12: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(input_11, 0.3, True, False);  input_11 = None
+        proj_out_1: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out_1 + input_12;  attn_out_1 = input_12 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_5: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = proj_out_1.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_5: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_5.pow(2)
+        mean_4: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_5.mean(-1, keepdim = True);  pow_5 = None
+        add_8: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean_4 + 1e-06;  mean_4 = None
+        rsqrt_4: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add_8);  add_8 = None
+        mul_8: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_5 * rsqrt_4;  float_5 = rsqrt_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_4: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul_8.type_as(proj_out_1);  mul_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_9: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output_4 * l_self_modules_encoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_;  output_4 = l_self_modules_encoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout_6: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_9, 0.3, True, False);  mul_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear_8: "f32[256, s0, 1152][1152*s0, 1152, 1]cuda:0" = torch._C._nn.linear(dropout_6, l_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_, None);  dropout_6 = l_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk_2 = linear_8.chunk(3, dim = -1);  linear_8 = None
+        queries_4: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_2[0]
+        keys_4: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_2[1]
+        values_4: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_2[2];  chunk_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_6: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = queries_4.unflatten(-1, [6, 64]);  queries_4 = None
+        queries_5: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_6.transpose(1, 2);  unflatten_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_7: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = keys_4.unflatten(-1, [6, 64]);  keys_4 = None
+        keys_5: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_7.transpose(1, 2);  unflatten_7 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_8: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = values_4.unflatten(-1, [6, 64]);  values_4 = None
+        values_5: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_8.transpose(1, 2);  unflatten_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_6: "f32[256, 6, s0, 64][384*s0, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_5, keys_5, values_5, dropout_p = False, is_causal = False);  queries_5 = keys_5 = values_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_11: "f32[256, s0, 6, 64][384*s0, 384, 64, 1]cuda:0" = context_vec_6.transpose(1, 2);  context_vec_6 = None
+        context_vec_7: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = transpose_11.flatten(-2);  transpose_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_8: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_7, l_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_, None);  context_vec_7 = l_self_modules_encoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out_2: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = proj_out_1 + context_vec_8;  proj_out_1 = context_vec_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_6: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out_2.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_6: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_6.pow(2)
+        mean_5: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_6.mean(-1, keepdim = True);  pow_6 = None
+        add_10: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean_5 + 1e-06;  mean_5 = None
+        rsqrt_5: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add_10);  add_10 = None
+        mul_10: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_6 * rsqrt_5;  float_6 = rsqrt_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_5: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul_10.type_as(attn_out_2);  mul_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_13: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output_5 * l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_;  output_5 = l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_14: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch._C._nn.linear(input_13, l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_13 = l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_15: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.silu(input_14, inplace = False);  input_14 = None
+        input_16: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_15, 0.3, True, False);  input_15 = None
+        input_17: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(input_16, l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_16 = l_self_modules_encoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_18: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(input_17, 0.3, True, False);  input_17 = None
+        proj_out_2: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out_2 + input_18;  attn_out_2 = input_18 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_7: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = proj_out_2.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_7: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_7.pow(2)
+        mean_6: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_7.mean(-1, keepdim = True);  pow_7 = None
+        add_12: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean_6 + 1e-06;  mean_6 = None
+        rsqrt_6: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add_12);  add_12 = None
+        mul_12: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_7 * rsqrt_6;  float_7 = rsqrt_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_6: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul_12.type_as(proj_out_2);  mul_12 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_13: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output_6 * l_self_modules_encoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_;  output_6 = l_self_modules_encoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout_9: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_13, 0.3, True, False);  mul_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear_12: "f32[256, s0, 1152][1152*s0, 1152, 1]cuda:0" = torch._C._nn.linear(dropout_9, l_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_, None);  dropout_9 = l_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk_3 = linear_12.chunk(3, dim = -1);  linear_12 = None
+        queries_6: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_3[0]
+        keys_6: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_3[1]
+        values_6: "f32[256, s0, 384][1152*s0, 1152, 1]cuda:0" = chunk_3[2];  chunk_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_9: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = queries_6.unflatten(-1, [6, 64]);  queries_6 = None
+        queries_7: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_9.transpose(1, 2);  unflatten_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_10: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = keys_6.unflatten(-1, [6, 64]);  keys_6 = None
+        keys_7: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_10.transpose(1, 2);  unflatten_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_11: "f32[256, s0, 6, 64][1152*s0, 1152, 64, 1]cuda:0" = values_6.unflatten(-1, [6, 64]);  values_6 = None
+        values_7: "f32[256, 6, s0, 64][1152*s0, 64, 1152, 1]cuda:0" = unflatten_11.transpose(1, 2);  unflatten_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_9: "f32[256, 6, s0, 64][384*s0, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_7, keys_7, values_7, dropout_p = False, is_causal = False);  queries_7 = keys_7 = values_7 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_15: "f32[256, s0, 6, 64][384*s0, 384, 64, 1]cuda:0" = context_vec_9.transpose(1, 2);  context_vec_9 = None
+        context_vec_10: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = transpose_15.flatten(-2);  transpose_15 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_11: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_10, l_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_, None);  context_vec_10 = l_self_modules_encoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out_3: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = proj_out_2 + context_vec_11;  proj_out_2 = context_vec_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_8: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out_3.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_8: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_8.pow(2)
+        mean_7: "f32[256, s0, 1][s0, 1, 1]cuda:0" = pow_8.mean(-1, keepdim = True);  pow_8 = None
+        add_14: "f32[256, s0, 1][s0, 1, 1]cuda:0" = mean_7 + 1e-06;  mean_7 = None
+        rsqrt_7: "f32[256, s0, 1][s0, 1, 1]cuda:0" = torch.rsqrt(add_14);  add_14 = None
+        mul_14: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = float_8 * rsqrt_7;  float_8 = rsqrt_7 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_7: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = mul_14.type_as(attn_out_3);  mul_14 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_19: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = output_7 * l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_;  output_7 = l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_20: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch._C._nn.linear(input_19, l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_19 = l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_21: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.silu(input_20, inplace = False);  input_20 = None
+        input_22: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_21, 0.3, True, False);  input_21 = None
+        input_23: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(input_22, l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_22 = l_self_modules_encoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_24: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch.nn.functional.dropout(input_23, 0.3, True, False);  input_23 = None
+        proj_out_3: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = attn_out_3 + input_24;  attn_out_3 = input_24 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_9: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = l_x_.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_9: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_9.pow(2)
+        mean_8: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_9.mean(-1, keepdim = True);  pow_9 = None
+        add_16: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_8 + 1e-06;  mean_8 = None
+        rsqrt_8: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_16);  add_16 = None
+        mul_16: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_9 * rsqrt_8;  float_9 = rsqrt_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_8: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_16.type_as(l_x_);  mul_16 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_17: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_8 * l_self_modules_decoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_;  output_8 = l_self_modules_decoder_modules_layers_modules_0_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout_12: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_17, 0.3, True, False);  mul_17 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear_16: "f32[256, s5, 1152][1152*s5, 1152, 1]cuda:0" = torch._C._nn.linear(dropout_12, l_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_, None);  dropout_12 = l_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk_4 = linear_16.chunk(3, dim = -1);  linear_16 = None
+        queries_8: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_4[0]
+        keys_8: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_4[1]
+        values_8: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_4[2];  chunk_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_12: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = queries_8.unflatten(-1, [6, 64]);  queries_8 = None
+        queries_9: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_12.transpose(1, 2);  unflatten_12 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_13: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = keys_8.unflatten(-1, [6, 64]);  keys_8 = None
+        keys_9: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_13.transpose(1, 2);  unflatten_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_14: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = values_8.unflatten(-1, [6, 64]);  values_8 = None
+        values_9: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_14.transpose(1, 2);  unflatten_14 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_12: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_9, keys_9, values_9, dropout_p = False, is_causal = True);  queries_9 = keys_9 = values_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_19: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_12.transpose(1, 2);  context_vec_12 = None
+        context_vec_13: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_19.flatten(-2);  transpose_19 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_14: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_13, l_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_, None);  context_vec_13 = l_self_modules_decoder_modules_layers_modules_0_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out_4: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = l_x_ + context_vec_14;  context_vec_14 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_10: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = l_x_.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_10: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_10.pow(2)
+        mean_9: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_10.mean(-1, keepdim = True);  pow_10 = None
+        add_18: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_9 + 1e-06;  mean_9 = None
+        rsqrt_9: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_18);  add_18 = None
+        mul_18: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_10 * rsqrt_9;  float_10 = rsqrt_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_9: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_18.type_as(l_x_);  mul_18 = l_x_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_19: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_9 * l_self_modules_decoder_modules_layers_modules_0_modules_cross_attn_norm_parameters_weight_;  output_9 = l_self_modules_decoder_modules_layers_modules_0_modules_cross_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:79 in forward, code: x=self.do(self.cross_attn_norm(x)), x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
+        dropout_13: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_19, 0.3, True, False);  mul_19 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:197 in forward, code: queries = self.q(x)
+        queries_10: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(dropout_13, l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_q_parameters_weight_, None);  dropout_13 = l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_q_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:198 in forward, code: keys, values = self.kv(x_kv).chunk(2, dim=-1)
+        linear_19: "f32[256, s0, 768][768*s0, 768, 1]cuda:0" = torch._C._nn.linear(proj_out_3, l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_kv_parameters_weight_, None);  l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_kv_parameters_weight_ = None
+        chunk_5 = linear_19.chunk(2, dim = -1);  linear_19 = None
+        keys_10: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_5[0]
+        values_10: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_5[1];  chunk_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_15: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = queries_10.unflatten(-1, [6, 64]);  queries_10 = None
+        queries_11: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = unflatten_15.transpose(1, 2);  unflatten_15 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_16: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = keys_10.unflatten(-1, [6, 64]);  keys_10 = None
+        keys_11: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_16.transpose(1, 2);  unflatten_16 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_17: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = values_10.unflatten(-1, [6, 64]);  values_10 = None
+        values_11: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_17.transpose(1, 2);  unflatten_17 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_15: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_11, keys_11, values_11, dropout_p = False, is_causal = False);  queries_11 = keys_11 = values_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_23: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_15.transpose(1, 2);  context_vec_15 = None
+        context_vec_16: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_23.flatten(-2);  transpose_23 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_17: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_16, l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_proj_parameters_weight_, None);  context_vec_16 = l_self_modules_decoder_modules_layers_modules_0_modules_cross_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:78 in forward, code: attn_out = attn_out + self.cross_attention(
+        attn_out_5: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_4 + context_vec_17;  attn_out_4 = context_vec_17 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_11: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_5.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_11: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_11.pow(2)
+        mean_10: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_11.mean(-1, keepdim = True);  pow_11 = None
+        add_20: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_10 + 1e-06;  mean_10 = None
+        rsqrt_10: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_20);  add_20 = None
+        mul_20: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_11 * rsqrt_10;  float_11 = rsqrt_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_10: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_20.type_as(attn_out_5);  mul_20 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_25: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_10 * l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_;  output_10 = l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_26: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch._C._nn.linear(input_25, l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_25 = l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_27: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.silu(input_26, inplace = False);  input_26 = None
+        input_28: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_27, 0.3, True, False);  input_27 = None
+        input_29: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(input_28, l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_28 = l_self_modules_decoder_modules_layers_modules_0_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_30: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(input_29, 0.3, True, False);  input_29 = None
+        proj_out_4: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_5 + input_30;  attn_out_5 = input_30 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_12: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_4.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_12: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_12.pow(2)
+        mean_11: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_12.mean(-1, keepdim = True);  pow_12 = None
+        add_22: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_11 + 1e-06;  mean_11 = None
+        rsqrt_11: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_22);  add_22 = None
+        mul_22: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_12 * rsqrt_11;  float_12 = rsqrt_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_11: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_22.type_as(proj_out_4);  mul_22 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_23: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_11 * l_self_modules_decoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_;  output_11 = l_self_modules_decoder_modules_layers_modules_1_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout_16: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_23, 0.3, True, False);  mul_23 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear_23: "f32[256, s5, 1152][1152*s5, 1152, 1]cuda:0" = torch._C._nn.linear(dropout_16, l_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_, None);  dropout_16 = l_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk_6 = linear_23.chunk(3, dim = -1);  linear_23 = None
+        queries_12: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_6[0]
+        keys_12: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_6[1]
+        values_12: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_6[2];  chunk_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_18: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = queries_12.unflatten(-1, [6, 64]);  queries_12 = None
+        queries_13: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_18.transpose(1, 2);  unflatten_18 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_19: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = keys_12.unflatten(-1, [6, 64]);  keys_12 = None
+        keys_13: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_19.transpose(1, 2);  unflatten_19 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_20: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = values_12.unflatten(-1, [6, 64]);  values_12 = None
+        values_13: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_20.transpose(1, 2);  unflatten_20 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_18: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_13, keys_13, values_13, dropout_p = False, is_causal = True);  queries_13 = keys_13 = values_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_27: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_18.transpose(1, 2);  context_vec_18 = None
+        context_vec_19: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_27.flatten(-2);  transpose_27 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_20: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_19, l_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_, None);  context_vec_19 = l_self_modules_decoder_modules_layers_modules_1_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out_6: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_4 + context_vec_20;  context_vec_20 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_13: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_4.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_13: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_13.pow(2)
+        mean_12: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_13.mean(-1, keepdim = True);  pow_13 = None
+        add_24: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_12 + 1e-06;  mean_12 = None
+        rsqrt_12: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_24);  add_24 = None
+        mul_24: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_13 * rsqrt_12;  float_13 = rsqrt_12 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_12: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_24.type_as(proj_out_4);  mul_24 = proj_out_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_25: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_12 * l_self_modules_decoder_modules_layers_modules_1_modules_cross_attn_norm_parameters_weight_;  output_12 = l_self_modules_decoder_modules_layers_modules_1_modules_cross_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:79 in forward, code: x=self.do(self.cross_attn_norm(x)), x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
+        dropout_17: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_25, 0.3, True, False);  mul_25 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:197 in forward, code: queries = self.q(x)
+        queries_14: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(dropout_17, l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_q_parameters_weight_, None);  dropout_17 = l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_q_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:198 in forward, code: keys, values = self.kv(x_kv).chunk(2, dim=-1)
+        linear_26: "f32[256, s0, 768][768*s0, 768, 1]cuda:0" = torch._C._nn.linear(proj_out_3, l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_kv_parameters_weight_, None);  l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_kv_parameters_weight_ = None
+        chunk_7 = linear_26.chunk(2, dim = -1);  linear_26 = None
+        keys_14: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_7[0]
+        values_14: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_7[1];  chunk_7 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_21: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = queries_14.unflatten(-1, [6, 64]);  queries_14 = None
+        queries_15: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = unflatten_21.transpose(1, 2);  unflatten_21 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_22: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = keys_14.unflatten(-1, [6, 64]);  keys_14 = None
+        keys_15: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_22.transpose(1, 2);  unflatten_22 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_23: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = values_14.unflatten(-1, [6, 64]);  values_14 = None
+        values_15: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_23.transpose(1, 2);  unflatten_23 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_21: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_15, keys_15, values_15, dropout_p = False, is_causal = False);  queries_15 = keys_15 = values_15 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_31: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_21.transpose(1, 2);  context_vec_21 = None
+        context_vec_22: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_31.flatten(-2);  transpose_31 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_23: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_22, l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_proj_parameters_weight_, None);  context_vec_22 = l_self_modules_decoder_modules_layers_modules_1_modules_cross_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:78 in forward, code: attn_out = attn_out + self.cross_attention(
+        attn_out_7: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_6 + context_vec_23;  attn_out_6 = context_vec_23 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_14: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_7.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_14: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_14.pow(2)
+        mean_13: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_14.mean(-1, keepdim = True);  pow_14 = None
+        add_26: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_13 + 1e-06;  mean_13 = None
+        rsqrt_13: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_26);  add_26 = None
+        mul_26: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_14 * rsqrt_13;  float_14 = rsqrt_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_13: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_26.type_as(attn_out_7);  mul_26 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_31: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_13 * l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_;  output_13 = l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_32: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch._C._nn.linear(input_31, l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_31 = l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_33: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.silu(input_32, inplace = False);  input_32 = None
+        input_34: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_33, 0.3, True, False);  input_33 = None
+        input_35: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(input_34, l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_34 = l_self_modules_decoder_modules_layers_modules_1_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_36: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(input_35, 0.3, True, False);  input_35 = None
+        proj_out_5: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_7 + input_36;  attn_out_7 = input_36 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_15: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_5.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_15: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_15.pow(2)
+        mean_14: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_15.mean(-1, keepdim = True);  pow_15 = None
+        add_28: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_14 + 1e-06;  mean_14 = None
+        rsqrt_14: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_28);  add_28 = None
+        mul_28: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_15 * rsqrt_14;  float_15 = rsqrt_14 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_14: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_28.type_as(proj_out_5);  mul_28 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_29: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_14 * l_self_modules_decoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_;  output_14 = l_self_modules_decoder_modules_layers_modules_2_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout_20: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_29, 0.3, True, False);  mul_29 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear_30: "f32[256, s5, 1152][1152*s5, 1152, 1]cuda:0" = torch._C._nn.linear(dropout_20, l_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_, None);  dropout_20 = l_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk_8 = linear_30.chunk(3, dim = -1);  linear_30 = None
+        queries_16: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_8[0]
+        keys_16: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_8[1]
+        values_16: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_8[2];  chunk_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_24: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = queries_16.unflatten(-1, [6, 64]);  queries_16 = None
+        queries_17: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_24.transpose(1, 2);  unflatten_24 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_25: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = keys_16.unflatten(-1, [6, 64]);  keys_16 = None
+        keys_17: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_25.transpose(1, 2);  unflatten_25 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_26: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = values_16.unflatten(-1, [6, 64]);  values_16 = None
+        values_17: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_26.transpose(1, 2);  unflatten_26 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_24: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_17, keys_17, values_17, dropout_p = False, is_causal = True);  queries_17 = keys_17 = values_17 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_35: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_24.transpose(1, 2);  context_vec_24 = None
+        context_vec_25: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_35.flatten(-2);  transpose_35 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_26: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_25, l_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_, None);  context_vec_25 = l_self_modules_decoder_modules_layers_modules_2_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out_8: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_5 + context_vec_26;  context_vec_26 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_16: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_5.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_16: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_16.pow(2)
+        mean_15: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_16.mean(-1, keepdim = True);  pow_16 = None
+        add_30: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_15 + 1e-06;  mean_15 = None
+        rsqrt_15: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_30);  add_30 = None
+        mul_30: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_16 * rsqrt_15;  float_16 = rsqrt_15 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_15: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_30.type_as(proj_out_5);  mul_30 = proj_out_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_31: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_15 * l_self_modules_decoder_modules_layers_modules_2_modules_cross_attn_norm_parameters_weight_;  output_15 = l_self_modules_decoder_modules_layers_modules_2_modules_cross_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:79 in forward, code: x=self.do(self.cross_attn_norm(x)), x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
+        dropout_21: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_31, 0.3, True, False);  mul_31 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:197 in forward, code: queries = self.q(x)
+        queries_18: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(dropout_21, l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_q_parameters_weight_, None);  dropout_21 = l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_q_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:198 in forward, code: keys, values = self.kv(x_kv).chunk(2, dim=-1)
+        linear_33: "f32[256, s0, 768][768*s0, 768, 1]cuda:0" = torch._C._nn.linear(proj_out_3, l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_kv_parameters_weight_, None);  l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_kv_parameters_weight_ = None
+        chunk_9 = linear_33.chunk(2, dim = -1);  linear_33 = None
+        keys_18: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_9[0]
+        values_18: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_9[1];  chunk_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_27: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = queries_18.unflatten(-1, [6, 64]);  queries_18 = None
+        queries_19: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = unflatten_27.transpose(1, 2);  unflatten_27 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_28: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = keys_18.unflatten(-1, [6, 64]);  keys_18 = None
+        keys_19: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_28.transpose(1, 2);  unflatten_28 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_29: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = values_18.unflatten(-1, [6, 64]);  values_18 = None
+        values_19: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_29.transpose(1, 2);  unflatten_29 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_27: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_19, keys_19, values_19, dropout_p = False, is_causal = False);  queries_19 = keys_19 = values_19 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_39: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_27.transpose(1, 2);  context_vec_27 = None
+        context_vec_28: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_39.flatten(-2);  transpose_39 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_29: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_28, l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_proj_parameters_weight_, None);  context_vec_28 = l_self_modules_decoder_modules_layers_modules_2_modules_cross_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:78 in forward, code: attn_out = attn_out + self.cross_attention(
+        attn_out_9: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_8 + context_vec_29;  attn_out_8 = context_vec_29 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_17: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_9.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_17: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_17.pow(2)
+        mean_16: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_17.mean(-1, keepdim = True);  pow_17 = None
+        add_32: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_16 + 1e-06;  mean_16 = None
+        rsqrt_16: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_32);  add_32 = None
+        mul_32: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_17 * rsqrt_16;  float_17 = rsqrt_16 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_16: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_32.type_as(attn_out_9);  mul_32 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_37: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_16 * l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_;  output_16 = l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_38: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch._C._nn.linear(input_37, l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_37 = l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_39: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.silu(input_38, inplace = False);  input_38 = None
+        input_40: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_39, 0.3, True, False);  input_39 = None
+        input_41: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(input_40, l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_40 = l_self_modules_decoder_modules_layers_modules_2_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_42: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(input_41, 0.3, True, False);  input_41 = None
+        proj_out_6: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_9 + input_42;  attn_out_9 = input_42 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_18: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_6.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_18: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_18.pow(2)
+        mean_17: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_18.mean(-1, keepdim = True);  pow_18 = None
+        add_34: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_17 + 1e-06;  mean_17 = None
+        rsqrt_17: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_34);  add_34 = None
+        mul_34: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_18 * rsqrt_17;  float_18 = rsqrt_17 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_17: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_34.type_as(proj_out_6);  mul_34 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_35: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_17 * l_self_modules_decoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_;  output_17 = l_self_modules_decoder_modules_layers_modules_3_modules_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        dropout_24: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_35, 0.3, True, False);  mul_35 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        linear_37: "f32[256, s5, 1152][1152*s5, 1152, 1]cuda:0" = torch._C._nn.linear(dropout_24, l_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_, None);  dropout_24 = l_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_qkv_parameters_weight_ = None
+        chunk_10 = linear_37.chunk(3, dim = -1);  linear_37 = None
+        queries_20: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_10[0]
+        keys_20: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_10[1]
+        values_20: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0" = chunk_10[2];  chunk_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_30: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = queries_20.unflatten(-1, [6, 64]);  queries_20 = None
+        queries_21: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_30.transpose(1, 2);  unflatten_30 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_31: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = keys_20.unflatten(-1, [6, 64]);  keys_20 = None
+        keys_21: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_31.transpose(1, 2);  unflatten_31 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_32: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = values_20.unflatten(-1, [6, 64]);  values_20 = None
+        values_21: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten_32.transpose(1, 2);  unflatten_32 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_30: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_21, keys_21, values_21, dropout_p = False, is_causal = True);  queries_21 = keys_21 = values_21 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_43: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_30.transpose(1, 2);  context_vec_30 = None
+        context_vec_31: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_43.flatten(-2);  transpose_43 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_32: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_31, l_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_, None);  context_vec_31 = l_self_modules_decoder_modules_layers_modules_3_modules_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out_10: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_6 + context_vec_32;  context_vec_32 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_19: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = proj_out_6.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_19: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_19.pow(2)
+        mean_18: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_19.mean(-1, keepdim = True);  pow_19 = None
+        add_36: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_18 + 1e-06;  mean_18 = None
+        rsqrt_18: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_36);  add_36 = None
+        mul_36: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_19 * rsqrt_18;  float_19 = rsqrt_18 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_18: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_36.type_as(proj_out_6);  mul_36 = proj_out_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_37: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_18 * l_self_modules_decoder_modules_layers_modules_3_modules_cross_attn_norm_parameters_weight_;  output_18 = l_self_modules_decoder_modules_layers_modules_3_modules_cross_attn_norm_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:79 in forward, code: x=self.do(self.cross_attn_norm(x)), x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
+        dropout_25: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(mul_37, 0.3, True, False);  mul_37 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:197 in forward, code: queries = self.q(x)
+        queries_22: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(dropout_25, l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_q_parameters_weight_, None);  dropout_25 = l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_q_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:198 in forward, code: keys, values = self.kv(x_kv).chunk(2, dim=-1)
+        linear_40: "f32[256, s0, 768][768*s0, 768, 1]cuda:0" = torch._C._nn.linear(proj_out_3, l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_kv_parameters_weight_, None);  proj_out_3 = l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_kv_parameters_weight_ = None
+        chunk_11 = linear_40.chunk(2, dim = -1);  linear_40 = None
+        keys_22: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_11[0]
+        values_22: "f32[256, s0, 384][768*s0, 768, 1]cuda:0" = chunk_11[1];  chunk_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_33: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = queries_22.unflatten(-1, [6, 64]);  queries_22 = None
+        queries_23: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = unflatten_33.transpose(1, 2);  unflatten_33 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_34: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = keys_22.unflatten(-1, [6, 64]);  keys_22 = None
+        keys_23: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_34.transpose(1, 2);  unflatten_34 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_35: "f32[256, s0, 6, 64][768*s0, 768, 64, 1]cuda:0" = values_22.unflatten(-1, [6, 64]);  values_22 = None
+        values_23: "f32[256, 6, s0, 64][768*s0, 64, 768, 1]cuda:0" = unflatten_35.transpose(1, 2);  unflatten_35 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec_33: "f32[256, 6, s5, 64][384*s5, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries_23, keys_23, values_23, dropout_p = False, is_causal = False);  queries_23 = keys_23 = values_23 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_47: "f32[256, s5, 6, 64][384*s5, 384, 64, 1]cuda:0" = context_vec_33.transpose(1, 2);  context_vec_33 = None
+        context_vec_34: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = transpose_47.flatten(-2);  transpose_47 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        context_vec_35: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(context_vec_34, l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_proj_parameters_weight_, None);  context_vec_34 = l_self_modules_decoder_modules_layers_modules_3_modules_cross_attention_modules_proj_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:78 in forward, code: attn_out = attn_out + self.cross_attention(
+        attn_out_11: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_10 + context_vec_35;  attn_out_10 = context_vec_35 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        float_20: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_11.float()
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_20: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_20.pow(2)
+        mean_19: "f32[256, s5, 1][s5, 1, 1]cuda:0" = pow_20.mean(-1, keepdim = True);  pow_20 = None
+        add_38: "f32[256, s5, 1][s5, 1, 1]cuda:0" = mean_19 + 1e-06;  mean_19 = None
+        rsqrt_19: "f32[256, s5, 1][s5, 1, 1]cuda:0" = torch.rsqrt(add_38);  add_38 = None
+        mul_38: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = float_20 * rsqrt_19;  float_20 = rsqrt_19 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:31 in forward, code: output = self._norm(x.float()).type_as(x)
+        output_19: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = mul_38.type_as(attn_out_11);  mul_38 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        input_43: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = output_19 * l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_;  output_19 = l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_0_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_44: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch._C._nn.linear(input_43, l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_, None);  input_43 = l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_0_parameters_weight_ = None
+        input_45: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.silu(input_44, inplace = False);  input_44 = None
+        input_46: "f32[256, s5, 1024][1024*s5, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_45, 0.3, True, False);  input_45 = None
+        input_47: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch._C._nn.linear(input_46, l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_, None);  input_46 = l_self_modules_decoder_modules_layers_modules_3_modules_ff_modules_1_modules_mlp_modules_3_parameters_weight_ = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        input_48: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = torch.nn.functional.dropout(input_47, 0.3, True, False);  input_47 = None
+        proj_out_7: "f32[256, s5, 384][384*s5, 384, 1]cuda:0" = attn_out_11 + input_48;  attn_out_11 = input_48 = None
+        return (proj_out_7,)
+        

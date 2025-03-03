@@ -1,0 +1,10 @@
+class <lambda>(torch.nn.Module):
+    def forward(self, arg0_1: "f32[s0, 128][128, 1]cuda:0", arg1_1: "i64[257][1]cuda:0", arg2_1: "f32[s3, 0][1, 1]cuda:0", arg3_1: "f32[s4, 0][1, 1]cuda:0", arg4_1: "Sym(s1)"):
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_1: "f32[s0, 128][128, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(arg0_1, 2)
+        mean: "f32[s0, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_1, [1], True);  pow_1 = None
+        add: "f32[s0, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean, 1e-06);  mean = None
+        rsqrt: "f32[s0, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add);  add = None
+        mul: "f32[s0, 128][128, 1]cuda:0" = torch.ops.aten.mul.Tensor(arg0_1, rsqrt);  arg0_1 = rsqrt = None
+        return (mul, arg1_1, arg2_1, arg3_1)
+        

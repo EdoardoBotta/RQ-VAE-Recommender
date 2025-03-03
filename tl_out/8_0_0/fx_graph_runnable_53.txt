@@ -1,0 +1,147 @@
+
+import torch
+from torch import tensor, device
+import torch.fx as fx
+from torch._dynamo.testing import rand_strided
+from math import inf
+import torch._inductor.inductor_prims
+
+import torch._dynamo.config
+import torch._inductor.config
+import torch._functorch.config
+import torch.fx.experimental._config
+torch._dynamo.config.suppress_errors = True
+
+torch._functorch.config.unlift_effect_tokens = True
+
+
+
+isolate_fails_code_str = None
+
+
+
+# torch version: 2.5.1+cu124
+# torch cuda version: 12.4
+# torch git version: a8d6afb511a69687bbb2b7e88a3cf67917e1697e
+
+
+# CUDA Info: 
+# nvcc: NVIDIA (R) Cuda compiler driver 
+# Copyright (c) 2005-2024 NVIDIA Corporation 
+# Built on Thu_Mar_28_02:18:24_PDT_2024 
+# Cuda compilation tools, release 12.4, V12.4.131 
+# Build cuda_12.4.r12.4/compiler.34097967_0 
+
+# GPU Hardware Info: 
+# NVIDIA L4 : 1 
+
+
+from torch.nn import *
+class Repro(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+    
+    
+    def forward(self, primals_1, primals_2, primals_3, primals_4, primals_5, primals_6, primals_7, primals_8, primals_9, primals_10, primals_11):
+        pow_1 = torch.ops.aten.pow.Tensor_Scalar(primals_1, 2)
+        mean = torch.ops.aten.mean.dim(pow_1, [1], True);  pow_1 = None
+        add = torch.ops.aten.add.Tensor(mean, 1e-06);  mean = None
+        rsqrt = torch.ops.aten.rsqrt.default(add);  add = None
+        mul = torch.ops.aten.mul.Tensor(primals_1, rsqrt)
+        mul_1 = torch.ops.aten.mul.Tensor(mul, primals_6);  mul = None
+        sym_size_int = torch.ops.aten.sym_size.int(primals_1, 0)
+        inductor_seeds_default = torch.ops.prims.inductor_seeds.default(3, device(type='cuda', index=0))
+        inductor_lookup_seed_default = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 0)
+        inductor_random_default_2 = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default, 'rand');  inductor_lookup_seed_default = None
+        gt = torch.ops.aten.gt.Scalar(inductor_random_default_2, 0.3);  inductor_random_default_2 = None
+        mul_2 = torch.ops.aten.mul.Tensor(gt, mul_1);  mul_1 = None
+        mul_3 = torch.ops.aten.mul.Tensor(mul_2, 1.4285714285714286);  mul_2 = None
+        permute = torch.ops.aten.permute.default(primals_7, [1, 0])
+        mm = torch.ops.aten.mm.default(mul_3, permute);  permute = None
+        split = torch.ops.aten.split.Tensor(mm, 384, 1);  mm = None
+        getitem = split[0]
+        getitem_1 = split[1]
+        getitem_2 = split[2];  split = None
+        view = torch.ops.aten.view.default(getitem, [sym_size_int, 6, 64]);  getitem = None
+        permute_1 = torch.ops.aten.permute.default(view, [1, 0, 2]);  view = None
+        view_1 = torch.ops.aten.view.default(getitem_1, [sym_size_int, 6, 64]);  getitem_1 = None
+        permute_2 = torch.ops.aten.permute.default(view_1, [1, 0, 2]);  view_1 = None
+        view_2 = torch.ops.aten.view.default(getitem_2, [sym_size_int, 6, 64]);  getitem_2 = None
+        permute_3 = torch.ops.aten.permute.default(view_2, [1, 0, 2]);  view_2 = None
+        permute_4 = torch.ops.aten.permute.default(permute_1, [1, 0, 2]);  permute_1 = None
+        permute_5 = torch.ops.aten.permute.default(permute_2, [1, 0, 2]);  permute_2 = None
+        permute_6 = torch.ops.aten.permute.default(permute_3, [1, 0, 2]);  permute_3 = None
+        convert_element_type = torch.ops.prims.convert_element_type.default(primals_2, torch.int32)
+        unsqueeze = torch.ops.aten.unsqueeze.default(permute_4, 0);  permute_4 = None
+        unsqueeze_1 = torch.ops.aten.unsqueeze.default(permute_5, 0);  permute_5 = None
+        unsqueeze_2 = torch.ops.aten.unsqueeze.default(permute_6, 0);  permute_6 = None
+        sym_size_int_1 = torch.ops.aten.sym_size.int(primals_4, 0)
+        _efficient_attention_forward = torch.ops.aten._efficient_attention_forward.default(unsqueeze, unsqueeze_1, unsqueeze_2, None, convert_element_type, convert_element_type, sym_size_int_1, sym_size_int_1, 0.0, 0, True)
+        getitem_3 = _efficient_attention_forward[0]
+        getitem_4 = _efficient_attention_forward[1]
+        getitem_5 = _efficient_attention_forward[2]
+        getitem_6 = _efficient_attention_forward[3];  _efficient_attention_forward = None
+        squeeze = torch.ops.aten.squeeze.dim(getitem_3, 0)
+        permute_7 = torch.ops.aten.permute.default(squeeze, [1, 0, 2]);  squeeze = None
+        permute_8 = torch.ops.aten.permute.default(permute_7, [1, 0, 2]);  permute_7 = None
+        view_3 = torch.ops.aten.view.default(permute_8, [sym_size_int, 384]);  permute_8 = None
+        permute_9 = torch.ops.aten.permute.default(primals_8, [1, 0])
+        mm_1 = torch.ops.aten.mm.default(view_3, permute_9);  view_3 = permute_9 = None
+        add_1 = torch.ops.aten.add.Tensor(primals_1, mm_1)
+        pow_2 = torch.ops.aten.pow.Tensor_Scalar(add_1, 2)
+        mean_1 = torch.ops.aten.mean.dim(pow_2, [1], True);  pow_2 = None
+        add_2 = torch.ops.aten.add.Tensor(mean_1, 1e-06);  mean_1 = None
+        rsqrt_1 = torch.ops.aten.rsqrt.default(add_2);  add_2 = None
+        mul_4 = torch.ops.aten.mul.Tensor(add_1, rsqrt_1)
+        mul_5 = torch.ops.aten.mul.Tensor(mul_4, primals_9);  mul_4 = None
+        permute_10 = torch.ops.aten.permute.default(primals_10, [1, 0])
+        mm_2 = torch.ops.aten.mm.default(mul_5, permute_10);  permute_10 = None
+        sigmoid = torch.ops.aten.sigmoid.default(mm_2)
+        mul_6 = torch.ops.aten.mul.Tensor(mm_2, sigmoid);  sigmoid = None
+        inductor_lookup_seed_default_1 = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 1)
+        inductor_random_default_1 = torch.ops.prims.inductor_random.default([sym_size_int, 1024], inductor_lookup_seed_default_1, 'rand');  inductor_lookup_seed_default_1 = None
+        gt_1 = torch.ops.aten.gt.Scalar(inductor_random_default_1, 0.3);  inductor_random_default_1 = None
+        mul_7 = torch.ops.aten.mul.Tensor(gt_1, mul_6);  mul_6 = None
+        mul_8 = torch.ops.aten.mul.Tensor(mul_7, 1.4285714285714286);  mul_7 = None
+        permute_11 = torch.ops.aten.permute.default(primals_11, [1, 0])
+        mm_3 = torch.ops.aten.mm.default(mul_8, permute_11);  permute_11 = None
+        inductor_lookup_seed_default_2 = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 2);  inductor_seeds_default = None
+        inductor_random_default = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_2, 'rand');  inductor_lookup_seed_default_2 = None
+        gt_2 = torch.ops.aten.gt.Scalar(inductor_random_default, 0.3);  inductor_random_default = None
+        mul_9 = torch.ops.aten.mul.Tensor(gt_2, mm_3);  mm_3 = None
+        mul_10 = torch.ops.aten.mul.Tensor(mul_9, 1.4285714285714286);  mul_9 = None
+        add_3 = torch.ops.aten.add.Tensor(add_1, mul_10);  add_1 = mul_10 = None
+        return (add_3, primals_2, primals_3, primals_4, primals_1, primals_6, primals_7, primals_8, primals_9, primals_10, primals_11, rsqrt, gt, mul_3, convert_element_type, unsqueeze, unsqueeze_1, unsqueeze_2, getitem_3, getitem_4, getitem_5, getitem_6, mm_1, rsqrt_1, mul_5, mm_2, gt_1, mul_8, gt_2, sym_size_int, sym_size_int_1)
+        
+def load_args(reader):
+    buf0 = reader.storage(None, 1536*s1, device=device(type='cuda', index=0))
+    reader.tensor(buf0, (s1, 384), is_leaf=True)  # primals_1
+    buf1 = reader.storage(None, 2056, device=device(type='cuda', index=0), dtype_hint=torch.int64)
+    reader.tensor(buf1, (257,), dtype=torch.int64, is_leaf=True)  # primals_2
+    buf2 = reader.storage(None, 0, device=device(type='cuda', index=0))
+    reader.tensor(buf2, (s3, 0), is_leaf=True)  # primals_3
+    buf3 = reader.storage(None, 0, device=device(type='cuda', index=0))
+    reader.tensor(buf3, (s4, 0), is_leaf=True)  # primals_4
+    reader.symint(j1)  # primals_5
+    buf4 = reader.storage(None, 1536, device=device(type='cuda', index=0))
+    reader.tensor(buf4, (384,), is_leaf=True)  # primals_6
+    buf5 = reader.storage(None, 1769472, device=device(type='cuda', index=0))
+    reader.tensor(buf5, (1152, 384), is_leaf=True)  # primals_7
+    buf6 = reader.storage(None, 589824, device=device(type='cuda', index=0))
+    reader.tensor(buf6, (384, 384), is_leaf=True)  # primals_8
+    buf7 = reader.storage(None, 1536, device=device(type='cuda', index=0))
+    reader.tensor(buf7, (384,), is_leaf=True)  # primals_9
+    buf8 = reader.storage(None, 1572864, device=device(type='cuda', index=0))
+    reader.tensor(buf8, (1024, 384), is_leaf=True)  # primals_10
+    buf9 = reader.storage(None, 1572864, device=device(type='cuda', index=0))
+    reader.tensor(buf9, (384, 1024), is_leaf=True)  # primals_11
+load_args._version = 0
+mod = Repro()
+if __name__ == '__main__':
+    from torch._dynamo.repro.after_aot import run_repro
+    with torch.no_grad():
+        run_repro(mod, load_args, accuracy=False, command='run', save_dir=None, tracing_mode='symbolic', check_str=None)
+        # To run it separately, do 
+        # mod, args = run_repro(mod, load_args, accuracy=False, command='get_args', save_dir=None, tracing_mode='symbolic', check_str=None)
+        # mod(*args)

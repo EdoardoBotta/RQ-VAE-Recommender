@@ -1,0 +1,34 @@
+
+TREE_GUARD_MANAGER:
++- RootGuardManager
+| +- DEFAULT_DEVICE: utils_device.CURRENT_DEVICE == None                           # _dynamo/output_graph.py:471 in init_ambient_guards
+| +- GLOBAL_STATE: ___check_global_state()
+| +- TORCH_FUNCTION_MODE_STACK: ___check_torch_function_mode_stack()
+| +- GuardManager: source=L['x'], accessed_by=DictGetItemGuardAccessor(x)
+| | +- TYPE_MATCH: ___check_type_id(L['x'], 94485813910080)                    
+| | +- LAMBDA_GUARD: ___check_metadata_140433249317504_c13/0                     
+| | +- TENSOR_MATCH: check_tensor(L['x'], NestedTensor, DispatchKeySet(CUDA, NestedTensorCUDA, BackendSelect, Python, ADInplaceOrView, AutogradCUDA, AutogradNestedTensor, PythonTLSSnapshot), torch.float32, device=0, requires_grad=True, size=[256, None, 256], stride=[None, 256, 1])
+| | +- NO_HASATTR: hasattr(L['x'], '_dynamo_dynamic_indices') == False         
+| | +- NO_TENSOR_ALIASING: check_no_aliasing(L['x'], L['x']._values, L['x']._offsets, L['x']._max_seqlen_tensor, L['x']._min_seqlen_tensor)
+| | +- GuardManager: source=L['x']._values, accessed_by=GetAttrGuardAccessor(_values)
+| | | +- TENSOR_MATCH: check_tensor(L['x']._values, Tensor, DispatchKeySet(CUDA, BackendSelect, ADInplaceOrView, AutogradCUDA), torch.float32, device=0, requires_grad=False, size=[None, 256], stride=[256, 1])
+| | | +- NO_HASATTR: hasattr(L['x']._values, '_dynamo_dynamic_indices') == False 
+| | | +- NO_TENSOR_ALIASING
+| | +- GuardManager: source=L['x']._offsets, accessed_by=GetAttrGuardAccessor(_offsets)
+| | | +- TENSOR_MATCH: check_tensor(L['x']._offsets, Tensor, DispatchKeySet(CUDA, BackendSelect, ADInplaceOrView, AutogradCUDA), torch.int64, device=0, requires_grad=False, size=[257], stride=[1])
+| | | +- NO_HASATTR: hasattr(L['x']._offsets, '_dynamo_dynamic_indices') == False
+| | | +- NO_TENSOR_ALIASING
+| | +- GuardManager: source=L['x']._max_seqlen_tensor, accessed_by=GetAttrGuardAccessor(_max_seqlen_tensor)
+| | | +- TENSOR_MATCH: check_tensor(L['x']._max_seqlen_tensor, Tensor, DispatchKeySet(CPU, BackendSelect, ADInplaceOrView, AutogradCPU), torch.float32, device=None, requires_grad=False, size=[None, 0], stride=[1, 1])
+| | | +- DYNAMIC_INDICES: ((L['x']._max_seqlen_tensor._dynamo_dynamic_indices.issubset({0})) if hasattr(L['x']._max_seqlen_tensor, '_dynamo_dynamic_indices') else True)
+| | | +- NO_TENSOR_ALIASING
+| | +- GuardManager: source=L['x']._min_seqlen_tensor, accessed_by=GetAttrGuardAccessor(_min_seqlen_tensor)
+| | | +- TENSOR_MATCH: check_tensor(L['x']._min_seqlen_tensor, Tensor, DispatchKeySet(CPU, BackendSelect, ADInplaceOrView, AutogradCPU), torch.float32, device=None, requires_grad=False, size=[None, 0], stride=[1, 1])
+| | | +- DYNAMIC_INDICES: ((L['x']._min_seqlen_tensor._dynamo_dynamic_indices.issubset({0})) if hasattr(L['x']._min_seqlen_tensor, '_dynamo_dynamic_indices') else True)
+| | | +- NO_TENSOR_ALIASING
+| | +- GuardManager: source=L['x'].__tensor_flatten__()[0], accessed_by=PythonLambdaGuardAccessor
+| | | +- EQUALS_MATCH: L['x'].__tensor_flatten__()[0] == ['_values', '_offsets', '_min_seqlen_tensor', '_max_seqlen_tensor']
++- LAMBDA_GUARD: L['x'].stride()[0] == 256*L['x'].size()[1]                    # _dynamo/output_graph.py:463 in init_ambient_guards
++- LAMBDA_GUARD: 2 <= L['x']._values.size()[0]                                 # _dynamo/output_graph.py:463 in init_ambient_guards
++- LAMBDA_GUARD: 2 <= L['x']._min_seqlen_tensor.size()[0]                      # _dynamo/output_graph.py:463 in init_ambient_guards
++- LAMBDA_GUARD: 2 <= L['x']._max_seqlen_tensor.size()[0]                      # _dynamo/output_graph.py:463 in init_ambient_guards

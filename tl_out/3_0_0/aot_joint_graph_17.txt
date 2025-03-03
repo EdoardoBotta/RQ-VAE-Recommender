@@ -1,0 +1,43 @@
+class joint_helper(torch.nn.Module):
+    def forward(self, primals, tangents):
+        primals_1: "i64[256, 80][80, 1]cuda:0"; primals_2: "i64[256, 80][80, 1]cuda:0"; primals_3: "b8[256, 80][80, 1]cuda:0"; primals_4: "i64[256, 4][4, 1]cuda:0"; primals_5: "i64[256, 4][4, 1]cuda:0"; primals_6: "f32[1025, 128][128, 1]cuda:0"; tangents_1: "f32[256, 80, 128][10240, 128, 1]cuda:0"; tangents_2: "f32[256, 4, 128][512, 128, 1]cuda:0"; 
+    
+        primals_1, primals_2, primals_3, primals_4, primals_5, primals_6, tangents_1, tangents_2, = fx_pytree.tree_flatten_spec([primals, tangents], self._in_spec)
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:29 in forward, code: sem_ids = batch.token_type_ids*self.num_embeddings + batch.sem_ids
+        mul: "i64[256, 80][80, 1]cuda:0" = torch.ops.aten.mul.Tensor(primals_1, 256);  primals_1 = None
+        add: "i64[256, 80][80, 1]cuda:0" = torch.ops.aten.add.Tensor(mul, primals_2);  mul = primals_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:30 in forward, code: sem_ids[~batch.seq_mask] = self.padding_idx
+        bitwise_not: "b8[256, 80][80, 1]cuda:0" = torch.ops.aten.bitwise_not.default(primals_3);  primals_3 = None
+        _tensor_constant0 = self._tensor_constant0
+        lift_fresh_copy: "i64[][]cpu" = torch.ops.aten.lift_fresh_copy.default(_tensor_constant0);  _tensor_constant0 = None
+        index_put: "i64[256, 80][80, 1]cuda:0" = torch.ops.aten.index_put.default(add, [bitwise_not], lift_fresh_copy);  add = bitwise_not = lift_fresh_copy = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:33 in forward, code: sem_ids_fut = batch.token_type_ids_fut*self.num_embeddings + batch.sem_ids_fut
+        mul_1: "i64[256, 4][4, 1]cuda:0" = torch.ops.aten.mul.Tensor(primals_5, 256);  primals_5 = None
+        add_1: "i64[256, 4][4, 1]cuda:0" = torch.ops.aten.add.Tensor(mul_1, primals_4);  mul_1 = primals_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:34 in forward, code: sem_ids_fut = self.emb(sem_ids_fut)
+        embedding: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_6, add_1, 1024)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:38 in forward, code: seq=self.emb(sem_ids),
+        embedding_1: "f32[256, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_6, index_put, 1024);  primals_6 = None
+        eq: "b8[256, 80][80, 1]cuda:0" = torch.ops.aten.eq.Scalar(index_put, 1024)
+        unsqueeze: "b8[256, 80, 1][80, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq, -1);  eq = None
+        scalar_tensor: "f32[][]cuda:0" = torch.ops.aten.scalar_tensor.default(0.0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0))
+        where: "f32[256, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze, scalar_tensor, tangents_1);  unsqueeze = scalar_tensor = tangents_1 = None
+        full: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.full.default([1025, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put_1: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full, [index_put], where, True);  full = index_put = where = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:34 in forward, code: sem_ids_fut = self.emb(sem_ids_fut)
+        eq_1: "b8[256, 4][4, 1]cuda:0" = torch.ops.aten.eq.Scalar(add_1, 1024)
+        unsqueeze_1: "b8[256, 4, 1][4, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq_1, -1);  eq_1 = None
+        scalar_tensor_1: "f32[][]cuda:0" = torch.ops.aten.scalar_tensor.default(0.0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0))
+        where_1: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze_1, scalar_tensor_1, tangents_2);  unsqueeze_1 = scalar_tensor_1 = tangents_2 = None
+        full_1: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.full.default([1025, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put_2: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full_1, [add_1], where_1, True);  full_1 = add_1 = where_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:34 in forward, code: sem_ids_fut = self.emb(sem_ids_fut)
+        add_2: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.add.Tensor(index_put_1, index_put_2);  index_put_1 = index_put_2 = None
+        return pytree.tree_unflatten([embedding_1, embedding, None, None, None, None, None, add_2], self._out_spec)
+        

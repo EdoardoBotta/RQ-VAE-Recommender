@@ -1,0 +1,13 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, L_x_: "f32[256, s0, 384][384*s0, 384, 1]cuda:0", s0: "Sym(s0)", L_self_modules_mlp_modules_0_parameters_weight_: "f32[1024, 384][384, 1]cuda:0", L_self_modules_mlp_modules_3_parameters_weight_: "f32[384, 1024][1024, 1]cuda:0"):
+        l_x_ = L_x_
+        l_self_modules_mlp_modules_0_parameters_weight_ = L_self_modules_mlp_modules_0_parameters_weight_
+        l_self_modules_mlp_modules_3_parameters_weight_ = L_self_modules_mlp_modules_3_parameters_weight_
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        input_1: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch._C._nn.linear(l_x_, l_self_modules_mlp_modules_0_parameters_weight_, None);  l_x_ = l_self_modules_mlp_modules_0_parameters_weight_ = None
+        input_2: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.silu(input_1, inplace = False);  input_1 = None
+        input_3: "f32[256, s0, 1024][1024*s0, 1024, 1]cuda:0" = torch.nn.functional.dropout(input_2, 0.3, True, False);  input_2 = None
+        input_4: "f32[256, s0, 384][384*s0, 384, 1]cuda:0" = torch._C._nn.linear(input_3, l_self_modules_mlp_modules_3_parameters_weight_, None);  input_3 = l_self_modules_mlp_modules_3_parameters_weight_ = None
+        return (input_4,)
+        

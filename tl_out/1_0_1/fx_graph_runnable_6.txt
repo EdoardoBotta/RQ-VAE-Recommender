@@ -1,0 +1,102 @@
+
+import torch
+from torch import tensor, device
+import torch.fx as fx
+from torch._dynamo.testing import rand_strided
+from math import inf
+import torch._inductor.inductor_prims
+
+import torch._dynamo.config
+import torch._inductor.config
+import torch._functorch.config
+import torch.fx.experimental._config
+torch._dynamo.config.suppress_errors = True
+
+torch._functorch.config.unlift_effect_tokens = True
+
+
+
+isolate_fails_code_str = None
+
+
+
+# torch version: 2.5.1+cu124
+# torch cuda version: 12.4
+# torch git version: a8d6afb511a69687bbb2b7e88a3cf67917e1697e
+
+
+# CUDA Info: 
+# nvcc: NVIDIA (R) Cuda compiler driver 
+# Copyright (c) 2005-2024 NVIDIA Corporation 
+# Built on Thu_Mar_28_02:18:24_PDT_2024 
+# Cuda compilation tools, release 12.4, V12.4.131 
+# Build cuda_12.4.r12.4/compiler.34097967_0 
+
+# GPU Hardware Info: 
+# NVIDIA L4 : 1 
+
+
+from torch.nn import *
+class Repro(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+    
+    
+    def forward(self, primals_1, primals_2, primals_3, primals_4, primals_5, primals_6, primals_7, primals_8, primals_9, primals_10, primals_11):
+        remainder = torch.ops.aten.remainder.Scalar(primals_1, 2000);  primals_1 = None
+        embedding = torch.ops.aten.embedding.default(primals_2, remainder);  primals_2 = None
+        mul = torch.ops.aten.mul.Tensor(primals_3, 256);  primals_3 = None
+        add = torch.ops.aten.add.Tensor(mul, primals_4);  mul = primals_4 = None
+        bitwise_not = torch.ops.aten.bitwise_not.default(primals_5)
+        full_default = torch.ops.aten.full.default([], 1024, dtype = torch.int64, layout = torch.strided, device = device(type='cpu'), pin_memory = False)
+        index_put = torch.ops.aten.index_put.default(add, [bitwise_not], full_default);  add = bitwise_not = full_default = None
+        mul_1 = torch.ops.aten.mul.Tensor(primals_7, 256)
+        add_1 = torch.ops.aten.add.Tensor(mul_1, primals_6);  mul_1 = primals_6 = None
+        embedding_1 = torch.ops.aten.embedding.default(primals_8, add_1, 1024)
+        embedding_2 = torch.ops.aten.embedding.default(primals_8, index_put, 1024);  primals_8 = None
+        sum_1 = torch.ops.aten.sum.dim_IntList(primals_5, [1]);  primals_5 = None
+        iota = torch.ops.prims.iota.default(80, start = 0, step = 1, dtype = torch.int64, device = device(type='cuda', index=0), requires_grad = False)
+        unsqueeze = torch.ops.aten.unsqueeze.default(iota, 0);  iota = None
+        embedding_3 = torch.ops.aten.embedding.default(primals_9, unsqueeze);  primals_9 = None
+        add_2 = torch.ops.aten.add.Tensor(embedding_3, embedding_2);  embedding_3 = embedding_2 = None
+        cat = torch.ops.aten.cat.default([embedding, add_2], 1);  embedding = add_2 = None
+        repeat = torch.ops.aten.repeat.default(primals_10, [256, 1, 1]);  primals_10 = None
+        embedding_4 = torch.ops.aten.embedding.default(primals_11, primals_7);  primals_11 = None
+        add_3 = torch.ops.aten.add.Tensor(embedding_1, embedding_4);  embedding_1 = embedding_4 = None
+        cat_1 = torch.ops.aten.cat.default([repeat, add_3], 1);  repeat = add_3 = None
+        add_4 = torch.ops.aten.add.Tensor(sum_1, 1);  sum_1 = None
+        return (cat, add_4, cat_1, primals_7, remainder, index_put, add_1, unsqueeze)
+        
+def load_args(reader):
+    buf0 = reader.storage(None, 2048, device=device(type='cuda', index=0), dtype_hint=torch.int64)
+    reader.tensor(buf0, (256, 1), dtype=torch.int64, is_leaf=True)  # primals_1
+    buf1 = reader.storage(None, 1024000, device=device(type='cuda', index=0))
+    reader.tensor(buf1, (2000, 128), is_leaf=True)  # primals_2
+    buf2 = reader.storage(None, 163840, device=device(type='cuda', index=0), dtype_hint=torch.int64)
+    reader.tensor(buf2, (256, 80), dtype=torch.int64, is_leaf=True)  # primals_3
+    buf3 = reader.storage(None, 163840, device=device(type='cuda', index=0), dtype_hint=torch.int64)
+    reader.tensor(buf3, (256, 80), dtype=torch.int64, is_leaf=True)  # primals_4
+    buf4 = reader.storage(None, 20480, device=device(type='cuda', index=0), dtype_hint=torch.bool)
+    reader.tensor(buf4, (256, 80), dtype=torch.bool, is_leaf=True)  # primals_5
+    buf5 = reader.storage(None, 8192, device=device(type='cuda', index=0), dtype_hint=torch.int64)
+    reader.tensor(buf5, (256, 4), dtype=torch.int64, is_leaf=True)  # primals_6
+    buf6 = reader.storage(None, 8192, device=device(type='cuda', index=0), dtype_hint=torch.int64)
+    reader.tensor(buf6, (256, 4), dtype=torch.int64, is_leaf=True)  # primals_7
+    buf7 = reader.storage(None, 524800, device=device(type='cuda', index=0))
+    reader.tensor(buf7, (1025, 128), is_leaf=True)  # primals_8
+    buf8 = reader.storage(None, 40960, device=device(type='cuda', index=0))
+    reader.tensor(buf8, (80, 128), is_leaf=True)  # primals_9
+    buf9 = reader.storage(None, 512, device=device(type='cuda', index=0))
+    reader.tensor(buf9, (128,), is_leaf=True)  # primals_10
+    buf10 = reader.storage(None, 2048, device=device(type='cuda', index=0))
+    reader.tensor(buf10, (4, 128), is_leaf=True)  # primals_11
+load_args._version = 0
+mod = Repro()
+if __name__ == '__main__':
+    from torch._dynamo.repro.after_aot import run_repro
+    with torch.no_grad():
+        run_repro(mod, load_args, accuracy=False, command='run', save_dir=None, tracing_mode='real', check_str=None)
+        # To run it separately, do 
+        # mod, args = run_repro(mod, load_args, accuracy=False, command='get_args', save_dir=None, tracing_mode='real', check_str=None)
+        # mod(*args)

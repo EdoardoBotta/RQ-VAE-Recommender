@@ -1,0 +1,54 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, primals_7: "i64[256, 4][4, 1]cuda:0", remainder: "i64[256, 1][1, 1]cuda:0", index_put: "i64[256, 80][80, 1]cuda:0", add_1: "i64[256, 4][4, 1]cuda:0", unsqueeze: "i64[1, 80][80, 1]cuda:0", tangents_1: "f32[256, 81, 128][10368, 128, 1]cuda:0", tangents_2: "f32[256, 5, 128][640, 128, 1]cuda:0"):
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:306 in _predict, code: input_embedding_fut = torch.cat([
+        slice_1: "f32[256, 1, 128][640, 128, 1]cuda:0" = torch.ops.aten.slice.Tensor(tangents_2, 1, 0, 1)
+        slice_2: "f32[256, 4, 128][640, 128, 1]cuda:0" = torch.ops.aten.slice.Tensor(tangents_2, 1, 1, 5);  tangents_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:305 in _predict, code: tte_fut = self.tte(batch.token_type_ids_fut)
+        eq: "b8[256, 4][4, 1]cuda:0" = torch.ops.aten.eq.Scalar(primals_7, -1)
+        unsqueeze_1: "b8[256, 4, 1][4, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq, -1);  eq = None
+        full_default_1: "f32[][]cuda:0" = torch.ops.aten.full.default([], 0.0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        where: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze_1, full_default_1, slice_2);  unsqueeze_1 = None
+        full_default_2: "f32[4, 128][128, 1]cuda:0" = torch.ops.aten.full.default([4, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put_1: "f32[4, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full_default_2, [primals_7], where, True);  full_default_2 = primals_7 = where = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:303 in _predict, code: input_embedding_fut = self.bos_emb.repeat(B, 1, 1)
+        sum_2: "f32[1, 128][128, 1]cuda:0" = torch.ops.aten.sum.dim_IntList(slice_1, [0]);  slice_1 = None
+        sum_3: "f32[128][1]cuda:0" = torch.ops.aten.sum.dim_IntList(sum_2, [0]);  sum_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:302 in _predict, code: input_embedding = torch.cat([user_emb, wpe + sem_ids_emb], axis=1)
+        slice_3: "f32[256, 1, 128][10368, 128, 1]cuda:0" = torch.ops.aten.slice.Tensor(tangents_1, 1, 0, 1)
+        slice_4: "f32[256, 80, 128][10368, 128, 1]cuda:0" = torch.ops.aten.slice.Tensor(tangents_1, 1, 1, 81);  tangents_1 = None
+        sum_4: "f32[1, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.sum.dim_IntList(slice_4, [0], True)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:300 in _predict, code: wpe = self.wpe(pos)
+        eq_1: "b8[1, 80][80, 1]cuda:0" = torch.ops.aten.eq.Scalar(unsqueeze, -1)
+        unsqueeze_2: "b8[1, 80, 1][80, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq_1, -1);  eq_1 = None
+        where_1: "f32[1, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze_2, full_default_1, sum_4);  unsqueeze_2 = sum_4 = None
+        full_default_4: "f32[80, 128][128, 1]cuda:0" = torch.ops.aten.full.default([80, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put_2: "f32[80, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full_default_4, [unsqueeze], where_1, True);  full_default_4 = unsqueeze = where_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:38 in forward, code: seq=self.emb(sem_ids),
+        eq_2: "b8[256, 80][80, 1]cuda:0" = torch.ops.aten.eq.Scalar(index_put, 1024)
+        unsqueeze_3: "b8[256, 80, 1][80, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq_2, -1);  eq_2 = None
+        where_2: "f32[256, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze_3, full_default_1, slice_4);  unsqueeze_3 = slice_4 = None
+        full_default_6: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.full.default([1025, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put_3: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full_default_6, [index_put], where_2, True);  index_put = where_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:34 in forward, code: sem_ids_fut = self.emb(sem_ids_fut)
+        eq_3: "b8[256, 4][4, 1]cuda:0" = torch.ops.aten.eq.Scalar(add_1, 1024)
+        unsqueeze_4: "b8[256, 4, 1][4, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq_3, -1);  eq_3 = None
+        where_3: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze_4, full_default_1, slice_2);  unsqueeze_4 = slice_2 = None
+        index_put_4: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full_default_6, [add_1], where_3, True);  full_default_6 = add_1 = where_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:34 in forward, code: sem_ids_fut = self.emb(sem_ids_fut)
+        add_5: "f32[1025, 128][128, 1]cuda:0" = torch.ops.aten.add.Tensor(index_put_3, index_put_4);  index_put_3 = index_put_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:53 in forward, code: return self.emb(hashed_indices)
+        eq_4: "b8[256, 1][1, 1]cuda:0" = torch.ops.aten.eq.Scalar(remainder, -1)
+        unsqueeze_5: "b8[256, 1, 1][1, 1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(eq_4, -1);  eq_4 = None
+        where_4: "f32[256, 1, 128][128, 128, 1]cuda:0" = torch.ops.aten.where.self(unsqueeze_5, full_default_1, slice_3);  unsqueeze_5 = full_default_1 = slice_3 = None
+        full_default_10: "f32[2000, 128][128, 1]cuda:0" = torch.ops.aten.full.default([2000, 128], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        index_put_5: "f32[2000, 128][128, 1]cuda:0" = torch.ops.aten.index_put.default(full_default_10, [remainder], where_4, True);  full_default_10 = remainder = where_4 = None
+        return (None, index_put_5, None, None, None, None, None, add_5, index_put_2, sum_3, index_put_1)
+        

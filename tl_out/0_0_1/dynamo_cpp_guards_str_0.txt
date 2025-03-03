@@ -1,0 +1,14 @@
+
+TREE_GUARD_MANAGER:
++- RootGuardManager
+| +- DEFAULT_DEVICE: utils_device.CURRENT_DEVICE == None                           # _dynamo/output_graph.py:471 in init_ambient_guards
+| +- GLOBAL_STATE: ___check_global_state()
+| +- TORCH_FUNCTION_MODE_STACK: ___check_torch_function_mode_stack()
+| +- GuardManager: source=L['self'], accessed_by=DictGetItemGuardAccessor(self)
+| | +- TYPE_MATCH: ___check_type_id(L['self'], 94485852253984)                 
+| +- GuardManager: source=L['batch'], accessed_by=DictGetItemGuardAccessor(batch)
+| | +- TYPE_MATCH: ___check_type_id(L['batch'], 94485825490064)                
+| | +- LENGTH_CHECK: len(L['batch']) == 6                                        
+| | +- GuardManager: source=L['batch'][3], accessed_by=TupleGetItemGuardAccessor(3)
+| | | +- TENSOR_MATCH: check_tensor(L['batch'][3], Tensor, DispatchKeySet(CUDA, BackendSelect, ADInplaceOrView, AutogradCUDA), torch.bool, device=0, requires_grad=False, size=[256, 80], stride=[80, 1])
+| | | +- NO_HASATTR: hasattr(L['batch'][3], '_dynamo_dynamic_indices') == False  

@@ -1,0 +1,57 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, primals_1: "i64[256, 1][1, 1]cuda:0", primals_2: "f32[2000, 128][128, 1]cuda:0", primals_3: "i64[256, 80][80, 1]cuda:0", primals_4: "i64[256, 80][80, 1]cuda:0", primals_5: "b8[256, 80][80, 1]cuda:0", primals_6: "i64[256, 4][4, 1]cuda:0", primals_7: "i64[256, 4][4, 1]cuda:0", primals_8: "f32[1025, 128][128, 1]cuda:0", primals_9: "f32[80, 128][128, 1]cuda:0", primals_10: "f32[128][1]cuda:0", primals_11: "f32[4, 128][128, 1]cuda:0"):
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:51 in forward, code: hashed_indices = x % self.num_buckets
+        remainder: "i64[256, 1][1, 1]cuda:0" = torch.ops.aten.remainder.Scalar(primals_1, 2000);  primals_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:53 in forward, code: return self.emb(hashed_indices)
+        embedding: "f32[256, 1, 128][128, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_2, remainder);  primals_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:29 in forward, code: sem_ids = batch.token_type_ids*self.num_embeddings + batch.sem_ids
+        mul: "i64[256, 80][80, 1]cuda:0" = torch.ops.aten.mul.Tensor(primals_3, 256);  primals_3 = None
+        add: "i64[256, 80][80, 1]cuda:0" = torch.ops.aten.add.Tensor(mul, primals_4);  mul = primals_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:30 in forward, code: sem_ids[~batch.seq_mask] = self.padding_idx
+        bitwise_not: "b8[256, 80][80, 1]cuda:0" = torch.ops.aten.bitwise_not.default(primals_5)
+        full_default: "i64[][]cpu" = torch.ops.aten.full.default([], 1024, dtype = torch.int64, layout = torch.strided, device = device(type='cpu'), pin_memory = False)
+        index_put: "i64[256, 80][80, 1]cuda:0" = torch.ops.aten.index_put_.default(add, [bitwise_not], full_default);  add = bitwise_not = full_default = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:33 in forward, code: sem_ids_fut = batch.token_type_ids_fut*self.num_embeddings + batch.sem_ids_fut
+        mul_1: "i64[256, 4][4, 1]cuda:0" = torch.ops.aten.mul.Tensor(primals_7, 256)
+        add_1: "i64[256, 4][4, 1]cuda:0" = torch.ops.aten.add.Tensor(mul_1, primals_6);  mul_1 = primals_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:34 in forward, code: sem_ids_fut = self.emb(sem_ids_fut)
+        embedding_1: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_8, add_1, 1024)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:38 in forward, code: seq=self.emb(sem_ids),
+        embedding_2: "f32[256, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_8, index_put, 1024);  primals_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:292 in _predict, code: seq_lengths = batch.seq_mask.sum(axis=1)
+        sum_1: "i64[256][1]cuda:0" = torch.ops.aten.sum.dim_IntList(primals_5, [1]);  primals_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:299 in _predict, code: pos = torch.arange(N, device=sem_ids_emb.device).unsqueeze(0)
+        iota: "i64[80][1]cuda:0" = torch.ops.prims.iota.default(80, start = 0, step = 1, dtype = torch.int64, device = device(type='cuda', index=0), requires_grad = False)
+        unsqueeze: "i64[1, 80][80, 1]cuda:0" = torch.ops.aten.unsqueeze.default(iota, 0);  iota = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:300 in _predict, code: wpe = self.wpe(pos)
+        embedding_3: "f32[1, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_9, unsqueeze);  primals_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:302 in _predict, code: input_embedding = torch.cat([user_emb, wpe + sem_ids_emb], axis=1)
+        add_2: "f32[256, 80, 128][10240, 128, 1]cuda:0" = torch.ops.aten.add.Tensor(embedding_3, embedding_2);  embedding_3 = embedding_2 = None
+        cat: "f32[256, 81, 128][10368, 128, 1]cuda:0" = torch.ops.aten.cat.default([embedding, add_2], 1);  embedding = add_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:303 in _predict, code: input_embedding_fut = self.bos_emb.repeat(B, 1, 1)
+        repeat: "f32[256, 1, 128][128, 128, 1]cuda:0" = torch.ops.aten.repeat.default(primals_10, [256, 1, 1]);  primals_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:305 in _predict, code: tte_fut = self.tte(batch.token_type_ids_fut)
+        embedding_4: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_11, primals_7);  primals_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:308 in _predict, code: sem_ids_emb_fut + tte_fut
+        add_3: "f32[256, 4, 128][512, 128, 1]cuda:0" = torch.ops.aten.add.Tensor(embedding_1, embedding_4);  embedding_1 = embedding_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:306 in _predict, code: input_embedding_fut = torch.cat([
+        cat_1: "f32[256, 5, 128][640, 128, 1]cuda:0" = torch.ops.aten.cat.default([repeat, add_3], 1);  repeat = add_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:313 in _predict, code: input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths+1)
+        add_4: "i64[256][1]cuda:0" = torch.ops.aten.add.Tensor(sum_1, 1);  sum_1 = None
+        return (cat, add_4, cat_1, primals_7, remainder, index_put, add_1, unsqueeze)
+        

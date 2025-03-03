@@ -1,0 +1,26 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, L_qu_: "f32[256, s5, 384][1152*s5, 1152, 1]cuda:0", s5: "Sym(s5)", L_ke_: "f32[256, s8, 384][1152*s8, 1152, 1]cuda:0", s8: "Sym(s8)", L_va_: "f32[256, s11, 384][1152*s11, 1152, 1]cuda:0", s11: "Sym(s11)"):
+        l_qu_ = L_qu_
+        l_ke_ = L_ke_
+        l_va_ = L_va_
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten: "f32[256, s5, 6, 64][1152*s5, 1152, 64, 1]cuda:0" = l_qu_.unflatten(-1, [6, 64]);  l_qu_ = None
+        queries: "f32[256, 6, s5, 64][1152*s5, 64, 1152, 1]cuda:0" = unflatten.transpose(1, 2);  unflatten = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_1: "f32[256, s8, 6, 64][1152*s8, 1152, 64, 1]cuda:0" = l_ke_.unflatten(-1, [6, 64]);  l_ke_ = None
+        keys: "f32[256, 6, s8, 64][1152*s8, 64, 1152, 1]cuda:0" = unflatten_1.transpose(1, 2);  unflatten_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        unflatten_2: "f32[256, s11, 6, 64][1152*s11, 1152, 64, 1]cuda:0" = l_va_.unflatten(-1, [6, 64]);  l_va_ = None
+        values: "f32[256, 6, s11, 64][1152*s11, 64, 1152, 1]cuda:0" = unflatten_2.transpose(1, 2);  unflatten_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        context_vec: "f32[256, 6, s11, 64][384*s11, 64, 384, 1]cuda:0" = torch._C._nn.scaled_dot_product_attention(queries, keys, values, dropout_p = False, is_causal = False);  queries = keys = values = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        transpose_3: "f32[256, s11, 6, 64][384*s11, 384, 64, 1]cuda:0" = context_vec.transpose(1, 2);  context_vec = None
+        context_vec_1: "f32[256, s11, 384][384*s11, 384, 1]cuda:0" = transpose_3.flatten(-2);  transpose_3 = None
+        return (context_vec_1,)
+        

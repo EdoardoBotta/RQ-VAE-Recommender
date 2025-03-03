@@ -1,0 +1,417 @@
+class GraphModule(torch.nn.Module):
+    def forward(self, primals_1: "f32[s1, 384][384, 1]cuda:0", primals_2: "i64[257][1]cuda:0", primals_3: "f32[s3, 0][1, 1]cuda:0", primals_4: "f32[s4, 0][1, 1]cuda:0", primals_5: "Sym(s0)", primals_6: "f32[384][1]cuda:0", primals_7: "f32[1152, 384][384, 1]cuda:0", primals_8: "f32[384, 384][384, 1]cuda:0", primals_9: "f32[384][1]cuda:0", primals_10: "f32[1024, 384][384, 1]cuda:0", primals_11: "f32[384, 1024][1024, 1]cuda:0", primals_12: "f32[384][1]cuda:0", primals_13: "f32[1152, 384][384, 1]cuda:0", primals_14: "f32[384, 384][384, 1]cuda:0", primals_15: "f32[384][1]cuda:0", primals_16: "f32[1024, 384][384, 1]cuda:0", primals_17: "f32[384, 1024][1024, 1]cuda:0", primals_18: "f32[384][1]cuda:0", primals_19: "f32[1152, 384][384, 1]cuda:0", primals_20: "f32[384, 384][384, 1]cuda:0", primals_21: "f32[384][1]cuda:0", primals_22: "f32[1024, 384][384, 1]cuda:0", primals_23: "f32[384, 1024][1024, 1]cuda:0", primals_24: "f32[384][1]cuda:0", primals_25: "f32[1152, 384][384, 1]cuda:0", primals_26: "f32[384, 384][384, 1]cuda:0", primals_27: "f32[384][1]cuda:0", primals_28: "f32[1024, 384][384, 1]cuda:0", primals_29: "f32[384, 1024][1024, 1]cuda:0"):
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_1: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(primals_1, 2)
+        mean: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_1, [1], True);  pow_1 = None
+        add: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean, 1e-06);  mean = None
+        rsqrt: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add);  add = None
+        mul: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(primals_1, rsqrt)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_1: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul, primals_6);  mul = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        sym_size_int: "Sym(s1)" = torch.ops.aten.sym_size.int(primals_1, 0)
+        
+        # No stacktrace found for following nodes
+        inductor_seeds_default: "i64[12][1]cuda:0" = torch.ops.prims.inductor_seeds.default(12, device(type='cuda', index=0))
+        inductor_lookup_seed_default: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 0)
+        inductor_random_default_11: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default, 'rand');  inductor_lookup_seed_default = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        gt: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_11, 0.3);  inductor_random_default_11 = None
+        mul_2: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt, mul_1);  mul_1 = None
+        mul_3: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_2, 1.4285714285714286);  mul_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        permute: "f32[384, 1152][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_7, [1, 0])
+        mm: "f32[s1, 1152][1152, 1]cuda:0" = torch.ops.aten.mm.default(mul_3, permute);  permute = None
+        split = torch.ops.aten.split.Tensor(mm, 384, 1);  mm = None
+        getitem: "f32[s1, 384][1152, 1]cuda:0" = split[0]
+        getitem_1: "f32[s1, 384][1152, 1]cuda:0" = split[1]
+        getitem_2: "f32[s1, 384][1152, 1]cuda:0" = split[2];  split = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem, [sym_size_int, 6, 64]);  getitem = None
+        permute_1: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view, [1, 0, 2]);  view = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_1: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_1, [sym_size_int, 6, 64]);  getitem_1 = None
+        permute_2: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_1, [1, 0, 2]);  view_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_2: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_2, [sym_size_int, 6, 64]);  getitem_2 = None
+        permute_3: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_2, [1, 0, 2]);  view_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        permute_4: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_1, [1, 0, 2]);  permute_1 = None
+        permute_5: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_2, [1, 0, 2]);  permute_2 = None
+        permute_6: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_3, [1, 0, 2]);  permute_3 = None
+        convert_element_type: "i32[257][1]cuda:0" = torch.ops.prims.convert_element_type.default(primals_2, torch.int32)
+        unsqueeze: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_4, 0);  permute_4 = None
+        unsqueeze_1: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_5, 0);  permute_5 = None
+        unsqueeze_2: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_6, 0);  permute_6 = None
+        sym_size_int_1: "Sym(s4)" = torch.ops.aten.sym_size.int(primals_4, 0)
+        _efficient_attention_forward = torch.ops.aten._efficient_attention_forward.default(unsqueeze, unsqueeze_1, unsqueeze_2, None, convert_element_type, convert_element_type, sym_size_int_1, sym_size_int_1, 0.0, 0, True)
+        getitem_3: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_forward[0]
+        getitem_4: "f32[256, 6, 32*CeilToInt(IntTrueDiv(s4, 32))][192*CeilToInt(IntTrueDiv(s4, 32)), 32*CeilToInt(IntTrueDiv(s4, 32)), 1]cuda:0" = _efficient_attention_forward[1]
+        getitem_5: "i64[][]cuda:0" = _efficient_attention_forward[2]
+        getitem_6: "i64[][]cuda:0" = _efficient_attention_forward[3];  _efficient_attention_forward = None
+        squeeze: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem_3, 0)
+        permute_7: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(squeeze, [1, 0, 2]);  squeeze = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        permute_8: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_7, [1, 0, 2]);  permute_7 = None
+        view_3: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.reshape.default(permute_8, [sym_size_int, 384]);  permute_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        permute_9: "f32[384, 384][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_8, [1, 0])
+        mm_1: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(view_3, permute_9);  view_3 = permute_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        add_1: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.add.Tensor(primals_1, mm_1)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_2: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(add_1, 2)
+        mean_1: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_2, [1], True);  pow_2 = None
+        add_2: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean_1, 1e-06);  mean_1 = None
+        rsqrt_1: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add_2);  add_2 = None
+        mul_4: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(add_1, rsqrt_1)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_5: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_4, primals_9);  mul_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        permute_10: "f32[384, 1024][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_10, [1, 0])
+        mm_2: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mm.default(mul_5, permute_10);  permute_10 = None
+        sigmoid: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.sigmoid.default(mm_2)
+        mul_6: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mm_2, sigmoid);  sigmoid = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_1: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 1)
+        inductor_random_default_10: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 1024], inductor_lookup_seed_default_1, 'rand');  inductor_lookup_seed_default_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        gt_1: "b8[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_10, 0.3);  inductor_random_default_10 = None
+        mul_7: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_1, mul_6);  mul_6 = None
+        mul_8: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_7, 1.4285714285714286);  mul_7 = None
+        permute_11: "f32[1024, 384][1, 1024]cuda:0" = torch.ops.aten.permute.default(primals_11, [1, 0])
+        mm_3: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(mul_8, permute_11);  permute_11 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_2: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 2)
+        inductor_random_default_9: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_2, 'rand');  inductor_lookup_seed_default_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        gt_2: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_9, 0.3);  inductor_random_default_9 = None
+        mul_9: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_2, mm_3);  mm_3 = None
+        mul_10: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_9, 1.4285714285714286);  mul_9 = None
+        add_3: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.add.Tensor(add_1, mul_10);  add_1 = mul_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_3: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(add_3, 2)
+        mean_2: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_3, [1], True);  pow_3 = None
+        add_4: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean_2, 1e-06);  mean_2 = None
+        rsqrt_2: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add_4);  add_4 = None
+        mul_11: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(add_3, rsqrt_2)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_12: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_11, primals_12);  mul_11 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_3: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 3)
+        inductor_random_default_8: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_3, 'rand');  inductor_lookup_seed_default_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        gt_3: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_8, 0.3);  inductor_random_default_8 = None
+        mul_13: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_3, mul_12);  mul_12 = None
+        mul_14: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_13, 1.4285714285714286);  mul_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        permute_12: "f32[384, 1152][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_13, [1, 0])
+        mm_4: "f32[s1, 1152][1152, 1]cuda:0" = torch.ops.aten.mm.default(mul_14, permute_12);  permute_12 = None
+        split_1 = torch.ops.aten.split.Tensor(mm_4, 384, 1);  mm_4 = None
+        getitem_9: "f32[s1, 384][1152, 1]cuda:0" = split_1[0]
+        getitem_10: "f32[s1, 384][1152, 1]cuda:0" = split_1[1]
+        getitem_11: "f32[s1, 384][1152, 1]cuda:0" = split_1[2];  split_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_4: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_9, [sym_size_int, 6, 64]);  getitem_9 = None
+        permute_13: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_4, [1, 0, 2]);  view_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_5: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_10, [sym_size_int, 6, 64]);  getitem_10 = None
+        permute_14: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_5, [1, 0, 2]);  view_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_6: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_11, [sym_size_int, 6, 64]);  getitem_11 = None
+        permute_15: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_6, [1, 0, 2]);  view_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        permute_16: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_13, [1, 0, 2]);  permute_13 = None
+        permute_17: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_14, [1, 0, 2]);  permute_14 = None
+        permute_18: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_15, [1, 0, 2]);  permute_15 = None
+        convert_element_type_2: "i32[257][1]cuda:0" = torch.ops.prims.convert_element_type.default(primals_2, torch.int32)
+        unsqueeze_3: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_16, 0);  permute_16 = None
+        unsqueeze_4: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_17, 0);  permute_17 = None
+        unsqueeze_5: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_18, 0);  permute_18 = None
+        _efficient_attention_forward_1 = torch.ops.aten._efficient_attention_forward.default(unsqueeze_3, unsqueeze_4, unsqueeze_5, None, convert_element_type_2, convert_element_type_2, sym_size_int_1, sym_size_int_1, 0.0, 0, True)
+        getitem_12: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_forward_1[0]
+        getitem_13: "f32[256, 6, 32*CeilToInt(IntTrueDiv(s4, 32))][192*CeilToInt(IntTrueDiv(s4, 32)), 32*CeilToInt(IntTrueDiv(s4, 32)), 1]cuda:0" = _efficient_attention_forward_1[1]
+        getitem_14: "i64[][]cuda:0" = _efficient_attention_forward_1[2]
+        getitem_15: "i64[][]cuda:0" = _efficient_attention_forward_1[3];  _efficient_attention_forward_1 = None
+        squeeze_1: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem_12, 0)
+        permute_19: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(squeeze_1, [1, 0, 2]);  squeeze_1 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        permute_20: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_19, [1, 0, 2]);  permute_19 = None
+        view_7: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.reshape.default(permute_20, [sym_size_int, 384]);  permute_20 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        permute_21: "f32[384, 384][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_14, [1, 0])
+        
+        # No stacktrace found for following nodes
+        addmm_default_2: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.addmm.default(add_3, view_7, permute_21);  view_7 = permute_21 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_4: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(addmm_default_2, 2)
+        mean_3: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_4, [1], True);  pow_4 = None
+        add_6: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean_3, 1e-06);  mean_3 = None
+        rsqrt_3: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add_6);  add_6 = None
+        mul_15: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(addmm_default_2, rsqrt_3)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_16: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_15, primals_15);  mul_15 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        permute_22: "f32[384, 1024][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_16, [1, 0])
+        mm_6: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mm.default(mul_16, permute_22);  permute_22 = None
+        sigmoid_1: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.sigmoid.default(mm_6)
+        mul_17: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mm_6, sigmoid_1);  sigmoid_1 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_4: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 4)
+        inductor_random_default_7: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 1024], inductor_lookup_seed_default_4, 'rand');  inductor_lookup_seed_default_4 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        gt_4: "b8[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_7, 0.3);  inductor_random_default_7 = None
+        mul_18: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_4, mul_17);  mul_17 = None
+        mul_19: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_18, 1.4285714285714286);  mul_18 = None
+        permute_23: "f32[1024, 384][1, 1024]cuda:0" = torch.ops.aten.permute.default(primals_17, [1, 0])
+        mm_7: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(mul_19, permute_23);  permute_23 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_5: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 5)
+        inductor_random_default_6: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_5, 'rand');  inductor_lookup_seed_default_5 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        gt_5: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_6, 0.3);  inductor_random_default_6 = None
+        mul_20: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_5, mm_7);  mm_7 = None
+        mul_21: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_20, 1.4285714285714286);  mul_20 = None
+        add_7: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.add.Tensor(addmm_default_2, mul_21);  mul_21 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_5: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(add_7, 2)
+        mean_4: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_5, [1], True);  pow_5 = None
+        add_8: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean_4, 1e-06);  mean_4 = None
+        rsqrt_4: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add_8);  add_8 = None
+        mul_22: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(add_7, rsqrt_4)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_23: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_22, primals_18);  mul_22 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_6: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 6)
+        inductor_random_default_5: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_6, 'rand');  inductor_lookup_seed_default_6 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        gt_6: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_5, 0.3);  inductor_random_default_5 = None
+        mul_24: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_6, mul_23);  mul_23 = None
+        mul_25: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_24, 1.4285714285714286);  mul_24 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        permute_24: "f32[384, 1152][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_19, [1, 0])
+        mm_8: "f32[s1, 1152][1152, 1]cuda:0" = torch.ops.aten.mm.default(mul_25, permute_24);  permute_24 = None
+        split_2 = torch.ops.aten.split.Tensor(mm_8, 384, 1);  mm_8 = None
+        getitem_18: "f32[s1, 384][1152, 1]cuda:0" = split_2[0]
+        getitem_19: "f32[s1, 384][1152, 1]cuda:0" = split_2[1]
+        getitem_20: "f32[s1, 384][1152, 1]cuda:0" = split_2[2];  split_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_8: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_18, [sym_size_int, 6, 64]);  getitem_18 = None
+        permute_25: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_8, [1, 0, 2]);  view_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_9: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_19, [sym_size_int, 6, 64]);  getitem_19 = None
+        permute_26: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_9, [1, 0, 2]);  view_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_10: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_20, [sym_size_int, 6, 64]);  getitem_20 = None
+        permute_27: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_10, [1, 0, 2]);  view_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        permute_28: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_25, [1, 0, 2]);  permute_25 = None
+        permute_29: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_26, [1, 0, 2]);  permute_26 = None
+        permute_30: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_27, [1, 0, 2]);  permute_27 = None
+        convert_element_type_4: "i32[257][1]cuda:0" = torch.ops.prims.convert_element_type.default(primals_2, torch.int32)
+        unsqueeze_6: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_28, 0);  permute_28 = None
+        unsqueeze_7: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_29, 0);  permute_29 = None
+        unsqueeze_8: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_30, 0);  permute_30 = None
+        _efficient_attention_forward_2 = torch.ops.aten._efficient_attention_forward.default(unsqueeze_6, unsqueeze_7, unsqueeze_8, None, convert_element_type_4, convert_element_type_4, sym_size_int_1, sym_size_int_1, 0.0, 0, True)
+        getitem_21: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_forward_2[0]
+        getitem_22: "f32[256, 6, 32*CeilToInt(IntTrueDiv(s4, 32))][192*CeilToInt(IntTrueDiv(s4, 32)), 32*CeilToInt(IntTrueDiv(s4, 32)), 1]cuda:0" = _efficient_attention_forward_2[1]
+        getitem_23: "i64[][]cuda:0" = _efficient_attention_forward_2[2]
+        getitem_24: "i64[][]cuda:0" = _efficient_attention_forward_2[3];  _efficient_attention_forward_2 = None
+        squeeze_2: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem_21, 0)
+        permute_31: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(squeeze_2, [1, 0, 2]);  squeeze_2 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        permute_32: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_31, [1, 0, 2]);  permute_31 = None
+        view_11: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.reshape.default(permute_32, [sym_size_int, 384]);  permute_32 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        permute_33: "f32[384, 384][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_20, [1, 0])
+        
+        # No stacktrace found for following nodes
+        addmm_default_1: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.addmm.default(add_7, view_11, permute_33);  view_11 = permute_33 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_6: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(addmm_default_1, 2)
+        mean_5: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_6, [1], True);  pow_6 = None
+        add_10: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean_5, 1e-06);  mean_5 = None
+        rsqrt_5: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add_10);  add_10 = None
+        mul_26: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(addmm_default_1, rsqrt_5)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_27: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_26, primals_21);  mul_26 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        permute_34: "f32[384, 1024][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_22, [1, 0])
+        mm_10: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mm.default(mul_27, permute_34);  permute_34 = None
+        sigmoid_2: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.sigmoid.default(mm_10)
+        mul_28: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mm_10, sigmoid_2);  sigmoid_2 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_7: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 7)
+        inductor_random_default_4: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 1024], inductor_lookup_seed_default_7, 'rand');  inductor_lookup_seed_default_7 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        gt_7: "b8[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_4, 0.3);  inductor_random_default_4 = None
+        mul_29: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_7, mul_28);  mul_28 = None
+        mul_30: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_29, 1.4285714285714286);  mul_29 = None
+        permute_35: "f32[1024, 384][1, 1024]cuda:0" = torch.ops.aten.permute.default(primals_23, [1, 0])
+        mm_11: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(mul_30, permute_35);  permute_35 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_8: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 8)
+        inductor_random_default_3: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_8, 'rand');  inductor_lookup_seed_default_8 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        gt_8: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_3, 0.3);  inductor_random_default_3 = None
+        mul_31: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_8, mm_11);  mm_11 = None
+        mul_32: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_31, 1.4285714285714286);  mul_31 = None
+        add_11: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.add.Tensor(addmm_default_1, mul_32);  mul_32 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_7: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(add_11, 2)
+        mean_6: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_7, [1], True);  pow_7 = None
+        add_12: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean_6, 1e-06);  mean_6 = None
+        rsqrt_6: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add_12);  add_12 = None
+        mul_33: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(add_11, rsqrt_6)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_34: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_33, primals_24);  mul_33 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_9: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 9)
+        inductor_random_default_2: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_9, 'rand');  inductor_lookup_seed_default_9 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:76 in forward, code: attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        gt_9: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_2, 0.3);  inductor_random_default_2 = None
+        mul_35: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_9, mul_34);  mul_34 = None
+        mul_36: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_35, 1.4285714285714286);  mul_35 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:200 in forward, code: queries, keys, values = self.qkv(x).chunk(3, dim=-1)
+        permute_36: "f32[384, 1152][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_25, [1, 0])
+        mm_12: "f32[s1, 1152][1152, 1]cuda:0" = torch.ops.aten.mm.default(mul_36, permute_36);  permute_36 = None
+        split_3 = torch.ops.aten.split.Tensor(mm_12, 384, 1);  mm_12 = None
+        getitem_27: "f32[s1, 384][1152, 1]cuda:0" = split_3[0]
+        getitem_28: "f32[s1, 384][1152, 1]cuda:0" = split_3[1]
+        getitem_29: "f32[s1, 384][1152, 1]cuda:0" = split_3[2];  split_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:114 in jagged_forward, code: queries = qu.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_12: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_27, [sym_size_int, 6, 64]);  getitem_27 = None
+        permute_37: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_12, [1, 0, 2]);  view_12 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:115 in jagged_forward, code: keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_13: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_28, [sym_size_int, 6, 64]);  getitem_28 = None
+        permute_38: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_13, [1, 0, 2]);  view_13 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:116 in jagged_forward, code: values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
+        view_14: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.reshape.default(getitem_29, [sym_size_int, 6, 64]);  getitem_29 = None
+        permute_39: "f32[6, s1, 64][64, 1152, 1]cuda:0" = torch.ops.aten.permute.default(view_14, [1, 0, 2]);  view_14 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:120 in jagged_forward, code: context_vec = F.scaled_dot_product_attention(
+        permute_40: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_37, [1, 0, 2]);  permute_37 = None
+        permute_41: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_38, [1, 0, 2]);  permute_38 = None
+        permute_42: "f32[s1, 6, 64][1152, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_39, [1, 0, 2]);  permute_39 = None
+        convert_element_type_6: "i32[257][1]cuda:0" = torch.ops.prims.convert_element_type.default(primals_2, torch.int32)
+        unsqueeze_9: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_40, 0);  permute_40 = None
+        unsqueeze_10: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_41, 0);  permute_41 = None
+        unsqueeze_11: "f32[1, s1, 6, 64][1152*s1, 1152, 64, 1]cuda:0" = torch.ops.aten.unsqueeze.default(permute_42, 0);  permute_42 = None
+        _efficient_attention_forward_3 = torch.ops.aten._efficient_attention_forward.default(unsqueeze_9, unsqueeze_10, unsqueeze_11, None, convert_element_type_6, convert_element_type_6, sym_size_int_1, sym_size_int_1, 0.0, 0, True)
+        getitem_30: "f32[1, s1, 6, 64][384*s1, 384, 64, 1]cuda:0" = _efficient_attention_forward_3[0]
+        getitem_31: "f32[256, 6, 32*CeilToInt(IntTrueDiv(s4, 32))][192*CeilToInt(IntTrueDiv(s4, 32)), 32*CeilToInt(IntTrueDiv(s4, 32)), 1]cuda:0" = _efficient_attention_forward_3[1]
+        getitem_32: "i64[][]cuda:0" = _efficient_attention_forward_3[2]
+        getitem_33: "i64[][]cuda:0" = _efficient_attention_forward_3[3];  _efficient_attention_forward_3 = None
+        squeeze_3: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.squeeze.dim(getitem_30, 0)
+        permute_43: "f32[6, s1, 64][64, 384, 1]cuda:0" = torch.ops.aten.permute.default(squeeze_3, [1, 0, 2]);  squeeze_3 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:123 in jagged_forward, code: context_vec = context_vec.transpose(1, 2).flatten(-2)
+        permute_44: "f32[s1, 6, 64][384, 64, 1]cuda:0" = torch.ops.aten.permute.default(permute_43, [1, 0, 2]);  permute_43 = None
+        view_15: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.reshape.default(permute_44, [sym_size_int, 384]);  permute_44 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/attention.py:231 in forward, code: context_vec = self.proj(context_vec)
+        permute_45: "f32[384, 384][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_26, [1, 0])
+        
+        # No stacktrace found for following nodes
+        addmm_default: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.addmm.default(add_11, view_15, permute_45);  view_15 = permute_45 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:28 in _norm, code: return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+        pow_8: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.pow.Tensor_Scalar(addmm_default, 2)
+        mean_7: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.mean.dim(pow_8, [1], True);  pow_8 = None
+        add_14: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.add.Tensor(mean_7, 1e-06);  mean_7 = None
+        rsqrt_7: "f32[s1, 1][1, 1]cuda:0" = torch.ops.aten.rsqrt.default(add_14);  add_14 = None
+        mul_37: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(addmm_default, rsqrt_7)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/normalize.py:32 in forward, code: return output * self.weight
+        mul_38: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_37, primals_27);  mul_37 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        permute_46: "f32[384, 1024][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_28, [1, 0])
+        mm_14: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mm.default(mul_38, permute_46);  permute_46 = None
+        sigmoid_3: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.sigmoid.default(mm_14)
+        mul_39: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mm_14, sigmoid_3);  sigmoid_3 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_10: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 10)
+        inductor_random_default_1: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 1024], inductor_lookup_seed_default_10, 'rand');  inductor_lookup_seed_default_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/encoder.py:36 in forward, code: return self.mlp(x)
+        gt_10: "b8[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default_1, 0.3);  inductor_random_default_1 = None
+        mul_40: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_10, mul_39);  mul_39 = None
+        mul_41: "f32[s1, 1024][1024, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_40, 1.4285714285714286);  mul_40 = None
+        permute_47: "f32[1024, 384][1, 1024]cuda:0" = torch.ops.aten.permute.default(primals_29, [1, 0])
+        mm_15: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(mul_41, permute_47);  permute_47 = None
+        
+        # No stacktrace found for following nodes
+        inductor_lookup_seed_default_11: "i64[][]cuda:0" = torch.ops.prims.inductor_lookup_seed.default(inductor_seeds_default, 11);  inductor_seeds_default = None
+        inductor_random_default: "f32[s1, 384][384, 1]cuda:0" = torch.ops.prims.inductor_random.default([sym_size_int, 384], inductor_lookup_seed_default_11, 'rand');  inductor_lookup_seed_default_11 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/transformer/model.py:81 in forward, code: proj_out = attn_out + self.ff(attn_out)
+        gt_11: "b8[s1, 384][384, 1]cuda:0" = torch.ops.aten.gt.Scalar(inductor_random_default, 0.3);  inductor_random_default = None
+        mul_42: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(gt_11, mm_15);  mm_15 = None
+        mul_43: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.mul.Tensor(mul_42, 1.4285714285714286);  mul_42 = None
+        add_15: "f32[s1, 384][384, 1]cuda:0" = torch.ops.aten.add.Tensor(addmm_default, mul_43);  mul_43 = None
+        return (add_15, primals_2, primals_3, primals_4, primals_1, primals_6, primals_7, primals_8, primals_9, primals_10, primals_11, primals_12, primals_13, primals_14, primals_15, primals_16, primals_17, primals_18, primals_19, primals_20, primals_21, primals_22, primals_23, primals_24, primals_25, primals_26, primals_27, primals_28, primals_29, rsqrt, gt, mul_3, convert_element_type, unsqueeze, unsqueeze_1, unsqueeze_2, getitem_3, getitem_4, getitem_5, getitem_6, mm_1, rsqrt_1, mul_5, mm_2, gt_1, mul_8, gt_2, add_3, rsqrt_2, gt_3, mul_14, convert_element_type_2, unsqueeze_3, unsqueeze_4, unsqueeze_5, getitem_12, getitem_13, getitem_14, getitem_15, addmm_default_2, rsqrt_3, mul_16, mm_6, gt_4, mul_19, gt_5, add_7, rsqrt_4, gt_6, mul_25, convert_element_type_4, unsqueeze_6, unsqueeze_7, unsqueeze_8, getitem_21, getitem_22, getitem_23, getitem_24, addmm_default_1, rsqrt_5, mul_27, mm_10, gt_7, mul_30, gt_8, add_11, rsqrt_6, gt_9, mul_36, convert_element_type_6, unsqueeze_9, unsqueeze_10, unsqueeze_11, getitem_30, getitem_31, getitem_32, getitem_33, addmm_default, rsqrt_7, mul_38, mm_14, gt_10, mul_41, gt_11, sym_size_int, sym_size_int_1)
+        

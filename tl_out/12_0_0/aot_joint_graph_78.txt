@@ -1,0 +1,94 @@
+class joint_fn(torch.nn.Module):
+    def forward(self, primals, tangents):
+        primals_1: "f32[s1, 384][384, 1]cuda:0"; primals_2: "i64[257][1]cuda:0"; primals_3: "f32[s3, 0][1, 1]cuda:0"; primals_4: "f32[s4, 0][1, 1]cuda:0"; primals_5: "Sym(s0)"; primals_6: "f32[256, 384][384, 1]cuda:0"; primals_7: "i64[256, 4][4, 1]cuda:0"; tangents_1: "f32[][]cuda:0"; tangents_2: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0"; 
+    
+        primals_1, primals_2, primals_3, primals_4, primals_5, primals_6, primals_7, tangents_1, tangents_2, = fx_pytree.tree_flatten_spec([primals, tangents], self._in_spec)
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:429 in torch_dynamo_resume_in_forward_at_426, code: predict_out = self.out_proj(trnsf_out)
+        permute: "f32[384, 256][1, 384]cuda:0" = torch.ops.aten.permute.default(primals_6, [1, 0])
+        mm: "f32[s1, 256][256, 1]cuda:0" = torch.ops.aten.mm.default(primals_1, permute);  permute = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/utils.py:67 in jagged_to_flattened_tensor, code: return x.values()
+        alias: "f32[s1, 256][256, 1]cuda:0" = torch.ops.aten.alias.default(mm);  mm = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:431 in torch_dynamo_resume_in_forward_at_426, code: logits = rearrange(jagged_to_flattened_tensor(predict_out), "(b n) d -> b n d", b=B)[:,:-1,:].flatten(end_dim=1)
+        sym_size_int: "Sym(s1)" = torch.ops.aten.sym_size.int(primals_1, 0)
+        floordiv: "Sym((s1//256))" = sym_size_int // 256
+        view: "f32[256, (s1//256), 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.view.default(alias, [256, floordiv, 256]);  alias = floordiv = None
+        sym_size_int_1: "Sym((s1//256))" = torch.ops.aten.sym_size.int(view, 1)
+        slice_1: "f32[256, (s1//256), 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.slice.Tensor(view, 0, 0, 9223372036854775807);  view = None
+        slice_2: "f32[256, (s1//256) - 1, 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.slice.Tensor(slice_1, 1, 0, -1);  slice_1 = None
+        sym_size_int_2: "Sym((s1//256) - 1)" = torch.ops.aten.sym_size.int(slice_2, 1)
+        slice_3: "f32[256, (s1//256) - 1, 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.slice.Tensor(slice_2, 2, 0, 9223372036854775807);  slice_2 = None
+        mul_14: "Sym(256*((s1//256)) - 256)" = 256 * sym_size_int_2
+        clone: "f32[256, (s1//256) - 1, 256][256*((s1//256)) - 256, 256, 1]cuda:0" = torch.ops.aten.clone.default(slice_3, memory_format = torch.contiguous_format);  slice_3 = None
+        view_1: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.view.default(clone, [mul_14, 256]);  clone = mul_14 = None
+        sym_size_int_3: "Sym(256*((s1//256)) - 256)" = torch.ops.aten.sym_size.int(view_1, 0)
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:432 in torch_dynamo_resume_in_forward_at_426, code: target = batch.sem_ids_fut.flatten(end_dim=1)
+        view_2: "i64[1024][1]cuda:0" = torch.ops.aten.view.default(primals_7, [1024]);  primals_7 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:433 in torch_dynamo_resume_in_forward_at_426, code: loss = rearrange(F.cross_entropy(logits, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B).sum(axis=1).mean()
+        amax: "f32[256*((s1//256)) - 256, 1][1, 1]cuda:0" = torch.ops.aten.amax.default(view_1, [1], True)
+        sub_6: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.sub.Tensor(view_1, amax);  amax = None
+        exp: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.exp.default(sub_6)
+        sum_1: "f32[256*((s1//256)) - 256, 1][1, 1]cuda:0" = torch.ops.aten.sum.dim_IntList(exp, [1], True);  exp = None
+        log: "f32[256*((s1//256)) - 256, 1][1, 1]cuda:0" = torch.ops.aten.log.default(sum_1);  sum_1 = None
+        sub_7: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.sub.Tensor(sub_6, log);  sub_6 = log = None
+        alias_1: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.alias.default(sub_7)
+        alias_2: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.alias.default(alias_1);  alias_1 = None
+        ne_9: "b8[1024][1]cuda:0" = torch.ops.aten.ne.Scalar(view_2, -1)
+        scalar_tensor: "i64[][]cuda:0" = torch.ops.aten.scalar_tensor.default(0, dtype = torch.int64, layout = torch.strided, device = device(type='cuda', index=0))
+        where: "i64[1024][1]cuda:0" = torch.ops.aten.where.self(ne_9, view_2, scalar_tensor);  ne_9 = scalar_tensor = None
+        unsqueeze: "i64[1024, 1][1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(where, 1);  where = None
+        gather: "f32[1024, 1][1, 1]cuda:0" = torch.ops.aten.gather.default(sub_7, 1, unsqueeze);  sub_7 = unsqueeze = None
+        squeeze: "f32[1024][1]cuda:0" = torch.ops.aten.squeeze.dim(gather, 1);  gather = None
+        neg: "f32[1024][1]cuda:0" = torch.ops.aten.neg.default(squeeze);  squeeze = None
+        ne_10: "b8[1024][1]cuda:0" = torch.ops.aten.ne.Scalar(view_2, -1)
+        scalar_tensor_1: "f32[][]cuda:0" = torch.ops.aten.scalar_tensor.default(0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0))
+        where_1: "f32[1024][1]cuda:0" = torch.ops.aten.where.self(ne_10, neg, scalar_tensor_1);  ne_10 = neg = scalar_tensor_1 = None
+        view_3: "f32[256, 4][4, 1]cuda:0" = torch.ops.aten.view.default(where_1, [256, 4]);  where_1 = None
+        sum_2: "f32[256][1]cuda:0" = torch.ops.aten.sum.dim_IntList(view_3, [1]);  view_3 = None
+        mean: "f32[][]cuda:0" = torch.ops.aten.mean.default(sum_2);  sum_2 = None
+        expand: "f32[256][0]cuda:0" = torch.ops.aten.expand.default(tangents_1, [256]);  tangents_1 = None
+        div: "f32[256][1]cuda:0" = torch.ops.aten.div.Scalar(expand, 256);  expand = None
+        unsqueeze_1: "f32[256, 1][1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(div, 1);  div = None
+        expand_1: "f32[256, 4][1, 0]cuda:0" = torch.ops.aten.expand.default(unsqueeze_1, [256, 4]);  unsqueeze_1 = None
+        clone_1: "f32[256, 4][4, 1]cuda:0" = torch.ops.aten.clone.default(expand_1, memory_format = torch.contiguous_format);  expand_1 = None
+        view_4: "f32[1024][1]cuda:0" = torch.ops.aten.view.default(clone_1, [1024]);  clone_1 = None
+        unsqueeze_2: "i64[1024, 1][1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(view_2, 1);  view_2 = None
+        ne_11: "b8[1024, 1][1, 1]cuda:0" = torch.ops.aten.ne.Scalar(unsqueeze_2, -1)
+        scalar_tensor_2: "i64[][]cuda:0" = torch.ops.aten.scalar_tensor.default(0, dtype = torch.int64, layout = torch.strided, device = device(type='cuda', index=0))
+        where_2: "i64[1024, 1][1, 1]cuda:0" = torch.ops.aten.where.self(ne_11, unsqueeze_2, scalar_tensor_2);  ne_11 = scalar_tensor_2 = None
+        full_1: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.full.default([sym_size_int_3, 256], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False);  sym_size_int_3 = None
+        scatter: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.scatter.value(full_1, 1, where_2, -1.0);  full_1 = where_2 = None
+        unsqueeze_3: "f32[1024, 1][1, 1]cuda:0" = torch.ops.aten.unsqueeze.default(view_4, 1);  view_4 = None
+        ne_12: "b8[1024, 1][1, 1]cuda:0" = torch.ops.aten.ne.Scalar(unsqueeze_2, -1);  unsqueeze_2 = None
+        scalar_tensor_3: "f32[][]cuda:0" = torch.ops.aten.scalar_tensor.default(0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0))
+        where_3: "f32[1024, 1][1, 1]cuda:0" = torch.ops.aten.where.self(ne_12, unsqueeze_3, scalar_tensor_3);  ne_12 = unsqueeze_3 = scalar_tensor_3 = None
+        mul_40: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.mul.Tensor(scatter, where_3);  scatter = where_3 = None
+        alias_3: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.alias.default(alias_2);  alias_2 = None
+        alias_4: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.alias.default(alias_3);  alias_3 = None
+        exp_1: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.exp.default(alias_4);  alias_4 = None
+        sum_3: "f32[256*((s1//256)) - 256, 1][1, 1]cuda:0" = torch.ops.aten.sum.dim_IntList(mul_40, [1], True)
+        mul_41: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.mul.Tensor(exp_1, sum_3);  exp_1 = sum_3 = None
+        sub_10: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.sub.Tensor(mul_40, mul_41);  mul_40 = mul_41 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:433 in torch_dynamo_resume_in_forward_at_426, code: loss = rearrange(F.cross_entropy(logits, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B).sum(axis=1).mean()
+        add_29: "f32[256*((s1//256)) - 256, 256][256, 1]cuda:0" = torch.ops.aten.add.Tensor(tangents_2, sub_10);  tangents_2 = sub_10 = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:431 in torch_dynamo_resume_in_forward_at_426, code: logits = rearrange(jagged_to_flattened_tensor(predict_out), "(b n) d -> b n d", b=B)[:,:-1,:].flatten(end_dim=1)
+        view_5: "f32[256, (s1//256) - 1, 256][256*((s1//256)) - 256, 256, 1]cuda:0" = torch.ops.aten.view.default(add_29, [256, sym_size_int_2, 256]);  add_29 = None
+        full_2: "f32[256, (s1//256) - 1, 256][256*((s1//256)) - 256, 256, 1]cuda:0" = torch.ops.aten.full.default([256, sym_size_int_2, 256], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False);  sym_size_int_2 = None
+        slice_scatter: "f32[256, (s1//256) - 1, 256][256*((s1//256)) - 256, 256, 1]cuda:0" = torch.ops.aten.slice_scatter.default(full_2, view_5, 2, 0, 9223372036854775807);  full_2 = view_5 = None
+        full_3: "f32[256, (s1//256), 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.full.default([256, sym_size_int_1, 256], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False)
+        slice_scatter_1: "f32[256, (s1//256), 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.slice_scatter.default(full_3, slice_scatter, 1, 0, -1);  full_3 = slice_scatter = None
+        full_4: "f32[256, (s1//256), 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.full.default([256, sym_size_int_1, 256], 0, dtype = torch.float32, layout = torch.strided, device = device(type='cuda', index=0), pin_memory = False);  sym_size_int_1 = None
+        slice_scatter_2: "f32[256, (s1//256), 256][256*((s1//256)), 256, 1]cuda:0" = torch.ops.aten.slice_scatter.default(full_4, slice_scatter_1, 0, 0, 9223372036854775807);  full_4 = slice_scatter_1 = None
+        view_6: "f32[256*((s1//256)), 256][256, 1]cuda:0" = torch.ops.aten.view.default(slice_scatter_2, [sym_size_int, 256]);  slice_scatter_2 = sym_size_int = None
+        
+         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/model.py:429 in torch_dynamo_resume_in_forward_at_426, code: predict_out = self.out_proj(trnsf_out)
+        mm_1: "f32[256*((s1//256)), 384][384, 1]cuda:0" = torch.ops.aten.mm.default(view_6, primals_6);  primals_6 = None
+        permute_1: "f32[256, 256*((s1//256))][1, 256]cuda:0" = torch.ops.aten.permute.default(view_6, [1, 0]);  view_6 = None
+        mm_2: "f32[256, 384][384, 1]cuda:0" = torch.ops.aten.mm.default(permute_1, primals_1);  permute_1 = primals_1 = None
+        return pytree.tree_unflatten([mean, view_1, mm_1, primals_2, primals_3, primals_4, None, mm_2, None], self._out_spec)
+        

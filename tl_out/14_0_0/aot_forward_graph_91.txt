@@ -1,0 +1,7 @@
+class <lambda>(torch.nn.Module):
+    def forward(self, arg0_1: "Sym(s0)", arg1_1: "f32[s0, 256][256, 1]cuda:0"):
+         # File: /home/ec2-user/.local/lib/python3.9/site-packages/einops/einops.py:591 in rearrange, code: return reduce(tensor, pattern, reduction="rearrange", **axes_lengths)
+        floordiv: "Sym((s0//256))" = arg0_1 // 256;  arg0_1 = None
+        view: "f32[256, (s0//256), 256][256*((s0//256)), 256, 1]cuda:0" = torch.ops.aten.view.default(arg1_1, [256, floordiv, 256]);  arg1_1 = floordiv = None
+        return (view,)
+        
