@@ -1,4 +1,0 @@
-class GraphModule(torch.nn.Module):
-    def forward(self, primals_1: "f32[s1, 256][256, 1]cuda:0", primals_2: "i64[257][1]cuda:0", primals_3: "f32[s3, 0][1, 1]cuda:0", primals_4: "f32[s4, 0][1, 1]cuda:0", primals_5: "Sym(s0)"):
-        return (primals_1, primals_2, primals_3, primals_4)
-        

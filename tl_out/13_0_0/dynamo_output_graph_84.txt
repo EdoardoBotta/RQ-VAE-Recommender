@@ -1,8 +1,0 @@
-class GraphModule(torch.nn.Module):
-    def forward(self, L_x_: "f32[256, s0, 256][256*s0, 256, 1]cuda:0", s0: "Sym(s0)"):
-        l_x_ = L_x_
-        
-         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/utils.py:67 in jagged_to_flattened_tensor, code: return x.values()
-        values: "f32[s1, 256][256, 1]cuda:0" = l_x_.values();  l_x_ = None
-        return (values,)
-        

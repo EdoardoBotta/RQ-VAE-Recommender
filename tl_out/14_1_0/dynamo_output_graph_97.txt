@@ -1,8 +1,0 @@
-class GraphModule(torch.nn.Module):
-    def forward(self, s0: "Sym(s0)", L_tensor_: "f32[s0][1]cuda:0"):
-        l_tensor_ = L_tensor_
-        
-         # File: /home/ec2-user/.local/lib/python3.9/site-packages/einops/einops.py:591 in rearrange, code: return reduce(tensor, pattern, reduction="rearrange", **axes_lengths)
-        reduce: "f32[256, (s0//256)][(s0//256), 1]cuda:0" = einops_einops_reduce(l_tensor_, '(b n) -> b n', reduction = 'rearrange', b = 256);  l_tensor_ = None
-        return (reduce,)
-        

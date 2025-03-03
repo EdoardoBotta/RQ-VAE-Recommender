@@ -1,9 +1,0 @@
-class GraphModule(torch.nn.Module):
-    def forward(self, primals_1: "i64[256, 1][1, 1]cuda:0", primals_2: "f32[2000, 128][128, 1]cuda:0"):
-         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:51 in forward, code: hashed_indices = x % self.num_buckets
-        remainder: "i64[256, 1][1, 1]cuda:0" = torch.ops.aten.remainder.Scalar(primals_1, 2000);  primals_1 = None
-        
-         # File: /home/ec2-user/code/RQ-VAE-Recommender/modules/embedding/id_embedder.py:53 in forward, code: return self.emb(hashed_indices)
-        embedding: "f32[256, 1, 128][128, 128, 1]cuda:0" = torch.ops.aten.embedding.default(primals_2, remainder);  primals_2 = None
-        return (embedding, remainder)
-        
