@@ -55,12 +55,9 @@ def maybe_repeat_interleave(x, repeats, dim):
 
 
 @torch.compiler.disable
-def padded_to_jagged_tensor(x: Tensor, lengths: Tensor) -> NestedTensor:
-    return torch.nested.nested_tensor(
-        [i[:j.item()] for i, j in zip(x, lengths)],
-        layout=torch.jagged,
-        device=x.device
-    )
+def padded_to_jagged_tensor(x: Tensor, lengths: Tensor, max_len: int) -> NestedTensor:
+    mask = torch.arange(max_len, device=x.device).unsqueeze(0).repeat(x.shape[0], 1) < lengths.unsqueeze(1)
+    return torch.nested.nested_tensor_from_jagged(values=x[mask], lengths=lengths)
 
 
 def jagged_to_flattened_tensor(x: NestedTensor) -> Tensor:

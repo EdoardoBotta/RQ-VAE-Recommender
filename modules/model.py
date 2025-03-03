@@ -310,10 +310,10 @@ class EncoderDecoderRetrievalModel(nn.Module):
             )
 
         if self.jagged_mode:
-            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths+1)
+            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=(seq_lengths+1), max_len=input_embedding.shape[1])
 
-            seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B, 1)
-            input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut)
+            seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B)
+            input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut, max_len=input_embedding_fut.shape[1])
         
         transformer_context = self.in_proj_context(self.do(self.norm(input_embedding)))
         transformer_input = self.in_proj(input_embedding_fut)
@@ -418,7 +418,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
             log_probas=log_probas.squeeze()
         )
             
-    @torch.compile
+    #@torch.compile
+    # TODO: Fix compile for torch padded -> Jagged
     def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         B, N = seq_mask.shape

@@ -108,7 +108,7 @@ def train(
     start_iter = 0
     if pretrained_rqvae_path is not None:
         model.load_pretrained(pretrained_rqvae_path)
-        state = torch.load(pretrained_rqvae_path, map_location=device)
+        state = torch.load(pretrained_rqvae_path, map_location=device, weights_only=False)
         optimizer.load_state_dict(state["optimizer"])
         start_iter = state["iter"]+1
 

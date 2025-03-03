@@ -101,7 +101,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         return next(self.encoder.parameters()).device
     
     def load_pretrained(self, path: str) -> None:
-        state = torch.load(path, map_location=self.device)
+        state = torch.load(path, map_location=self.device, weights_only=False)
         self.load_state_dict(state["model"])
         print(f"---Loaded RQVAE Iter {state['iter']}---")
 
