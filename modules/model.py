@@ -101,7 +101,7 @@ class DecoderRetrievalModel(nn.Module):
 
         if self.jagged_mode:
             seq_lengths = batch.seq_mask.sum(axis=1)
-            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
+            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths, max_len=input_embedding.shape[1])
         
         transformer_input = self.in_proj(input_embedding)
         transformer_output = self.decoder(transformer_input, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
@@ -399,7 +399,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
                 cache[cache_mask] = self.transformer.cached_enc_output.values()
                 lengths = self.transformer.cached_enc_output.offsets().diff().repeat_interleave(k)
                 cache = cache.repeat_interleave(k, dim=0)
-                self.transformer.cached_enc_output = padded_to_jagged_tensor(cache, lengths)
+                self.transformer.cached_enc_output = padded_to_jagged_tensor(cache, lengths, max_len=cache.shape[1])
 
                 input_batch = TokenizedSeqBatch(
                     user_ids=input_batch.user_ids.repeat_interleave(k, dim=0),
