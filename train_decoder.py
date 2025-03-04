@@ -177,7 +177,7 @@ def train(
     
     start_iter = 0
     if pretrained_decoder_path is not None:
-        checkpoint = torch.load(pretrained_decoder_path, map_location=device)
+        checkpoint = torch.load(pretrained_decoder_path, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         if "scheduler" in checkpoint:

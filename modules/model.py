@@ -25,6 +25,7 @@ from torch.nn import functional as F
 # Needed to make torch.compile succeed
 torch._dynamo.config.suppress_errors = True
 
+
 torch.set_float32_matmul_precision('high')
 
 
@@ -101,7 +102,7 @@ class DecoderRetrievalModel(nn.Module):
 
         if self.jagged_mode:
             seq_lengths = batch.seq_mask.sum(axis=1)
-            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths)
+            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths, max_len=input_embedding.shape[1])
         
         transformer_input = self.in_proj(input_embedding)
         transformer_output = self.decoder(transformer_input, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
@@ -259,6 +260,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
 
         self.bos_emb = nn.Parameter(torch.rand(embedding_dim))
         self.norm = RMSNorm(embedding_dim)
+        self.norm_cxt = RMSNorm(embedding_dim)
         self.do = nn.Dropout(p=0.5)
 
         self.sem_id_embedder = SemIdEmbedder(
@@ -310,13 +312,13 @@ class EncoderDecoderRetrievalModel(nn.Module):
             )
 
         if self.jagged_mode:
-            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths+1)
+            input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths+1, max_len=input_embedding.shape[1])
 
-            seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B, 1)
-            input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut)
+            seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B)
+            input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut, max_len=input_embedding_fut.shape[1])
         
         transformer_context = self.in_proj_context(self.do(self.norm(input_embedding)))
-        transformer_input = self.in_proj(input_embedding_fut)
+        transformer_input = self.in_proj(self.do(self.norm_cxt(input_embedding_fut)))
 
         transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
 
@@ -399,7 +401,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
                 cache[cache_mask] = self.transformer.cached_enc_output.values()
                 lengths = self.transformer.cached_enc_output.offsets().diff().repeat_interleave(k)
                 cache = cache.repeat_interleave(k, dim=0)
-                self.transformer.cached_enc_output = padded_to_jagged_tensor(cache, lengths)
+                self.transformer.cached_enc_output = padded_to_jagged_tensor(cache, lengths, max_len=cache.shape[1])
 
                 input_batch = TokenizedSeqBatch(
                     user_ids=input_batch.user_ids.repeat_interleave(k, dim=0),

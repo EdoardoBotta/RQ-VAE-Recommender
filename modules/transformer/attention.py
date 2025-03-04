@@ -82,8 +82,8 @@ class KVCache(nn.Module):
     @torch.no_grad
     @torch.compiler.disable
     def as_jagged(self):
-        keys_jagged = padded_to_jagged_tensor(self.keys, self.seq_lengths.squeeze())
-        values_jagged = padded_to_jagged_tensor(self.values, self.seq_lengths.squeeze())
+        keys_jagged = padded_to_jagged_tensor(self.keys, lengths=self.seq_lengths.squeeze(), max_len=self.keys.shape[1])
+        values_jagged = padded_to_jagged_tensor(self.values, lengths=self.seq_lengths.squeeze(), max_len=self.values.shape[1])
         return keys_jagged, values_jagged
 
     @torch.no_grad
