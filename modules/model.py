@@ -260,6 +260,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
 
         self.bos_emb = nn.Parameter(torch.rand(embedding_dim))
         self.norm = RMSNorm(embedding_dim)
+        self.norm_cxt = RMSNorm(embedding_dim)
         self.do = nn.Dropout(p=0.5)
 
         self.sem_id_embedder = SemIdEmbedder(
@@ -317,7 +318,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
             input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut, max_len=input_embedding_fut.shape[1])
         
         transformer_context = self.in_proj_context(self.do(self.norm(input_embedding)))
-        transformer_input = self.in_proj(input_embedding_fut)
+        transformer_input = self.in_proj(self.do(self.norm_cxt(input_embedding_fut)))
 
         transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
 
