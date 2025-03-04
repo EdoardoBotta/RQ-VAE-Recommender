@@ -25,6 +25,7 @@ from torch.nn import functional as F
 # Needed to make torch.compile succeed
 torch._dynamo.config.suppress_errors = True
 
+
 torch.set_float32_matmul_precision('high')
 
 
@@ -419,7 +420,6 @@ class EncoderDecoderRetrievalModel(nn.Module):
         )
             
     @torch.compile
-    # TODO: Fix compile for torch padded -> Jagged
     def forward(self, batch: TokenizedSeqBatch) -> ModelOutput:
         seq_mask = batch.seq_mask
         B, N = seq_mask.shape
