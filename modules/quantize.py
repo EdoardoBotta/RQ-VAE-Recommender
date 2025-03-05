@@ -55,7 +55,7 @@ class Quantize(nn.Module):
         sim_vq: bool = False,  # https://arxiv.org/pdf/2411.02038
         commitment_weight: float = 0.25,
         forward_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX,
-        distance: QuantizeDistance = QuantizeDistance.L2
+        distance_mode: QuantizeDistance = QuantizeDistance.L2
     ) -> None:
         super().__init__()
 
@@ -63,7 +63,7 @@ class Quantize(nn.Module):
         self.n_embed = n_embed
         self.embedding = nn.Embedding(n_embed, embed_dim)
         self.forward_mode = forward_mode
-        self.distance = distance
+        self.distance_mode = distance_mode
         self.do_kmeans_init = do_kmeans_init
         self.kmeans_initted = False
 
@@ -104,13 +104,13 @@ class Quantize(nn.Module):
 
         codebook = self.out_proj(self.embedding.weight)
         
-        if self.distance == QuantizeDistance.L2:
+        if self.distance_mode == QuantizeDistance.L2:
             dist = (
                 (x**2).sum(axis=1, keepdim=True) +
                 (codebook.T**2).sum(axis=0, keepdim=True) -
                 2 * x @ codebook.T
             )
-        elif self.distance == QuantizeDistance.COSINE:
+        elif self.distance_mode == QuantizeDistance.COSINE:
             dist = -(
                 x / x.norm(dim=1, keepdim=True) @
                 (codebook.T) / codebook.T.norm(dim=0, keepdim=True)
