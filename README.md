@@ -42,7 +42,7 @@ To train both models on the **MovieLens 32M** dataset, run the following command
 ### References
 * [Recommender Systems with Generative Retrieval](https://arxiv.org/pdf/2305.05065) by Shashank Rajput, Nikhil Mehta, Anima Singh, Raghunandan H. Keshavan, Trung Vu, Lukasz Heldt, Lichan Hong, Yi Tay, Vinh Q. Tran, Jonah Samost, Maciej Kula, Ed H. Chi, Maheswaran Sathiamoorthy
 * [Categorical Reparametrization with Gumbel-Softmax](https://openreview.net/pdf?id=rkE3y85ee) by Eric Jang, Shixiang Gu, Ben Poole
-* [Restructuring Vector Quantization with the Rotation Trick] by Christopher Fifty, Ronald G. Junkins, Dennis Duan, Aniketh Iger, Jerry W. Liu, Ehsan Amid, Sebastian Thrun, Christopher Ré
+* [Restructuring Vector Quantization with the Rotation Trick](https://arxiv.org/abs/2410.06424) by Christopher Fifty, Ronald G. Junkins, Dennis Duan, Aniketh Iger, Jerry W. Liu, Ehsan Amid, Sebastian Thrun, Christopher Ré
 * [vector-quantize-pytorch](https://github.com/lucidrains/vector-quantize-pytorch) by lucidrains
 * [deep-vector-quantization](https://github.com/karpathy/deep-vector-quantization) by karpathy
   
