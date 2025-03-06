@@ -1,8 +1,8 @@
 import torch
 import torch.nn.functional as F
 
-from modules.utils import jagged_to_flattened_tensor
-from modules.utils import padded_to_jagged_tensor
+from ops.triton.jagged import jagged_to_flattened_tensor
+from ops.triton.jagged import padded_to_jagged_tensor
 from torch import nn
 from torch import Tensor
 from torch.nested import Tensor as NestedTensor

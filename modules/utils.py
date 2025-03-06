@@ -4,45 +4,6 @@ import torch
 from data.schemas import TokenizedSeqBatch
 from einops import rearrange
 from torch import Tensor
-from torch.nested import Tensor as NestedTensor
-from torch.autograd import Function
-
-
-class PaddedToJaggedTensor(Function):
-    @staticmethod
-    def forward(ctx, x: Tensor, lengths: Tensor, max_len: int):
-        mask = torch.arange(max_len, device=x.device).unsqueeze(0).repeat(x.shape[0], 1) < lengths.unsqueeze(1)
-        
-        ctx.save_for_backward(mask)
-        return torch.nested.nested_tensor(
-            [i[:j.item()] for i, j in zip(x, lengths)],
-            layout=torch.jagged,
-            device=x.device,
-            requires_grad=x.requires_grad
-        )
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        (mask,) = ctx.saved_tensors
-        grad_values = grad_output.values()
-
-        grad_x = torch.zeros(*mask.shape, grad_values.shape[-1], dtype=grad_values.dtype, device=grad_values.device)
-        grad_x[mask] = grad_values
-
-        return grad_x, None, None
-
-
-@torch.compiler.disable 
-def padded_to_jagged_tensor(x: Tensor, lengths: Tensor, max_len: int) -> NestedTensor:
-    """
-      Differentiable padded -> Jagged conversion. 
-      This will cause a graph break as nested tensor creation is not supported by torch.compile.
-    """
-    return PaddedToJaggedTensor.apply(x, lengths, max_len)
-
-
-def jagged_to_flattened_tensor(x: NestedTensor) -> Tensor:
-    return x.values()
 
 
 def reset_kv_cache(fn):
@@ -97,6 +58,7 @@ def parse_config():
     parser.add_argument("config_path", type=str, help="Path to gin config file.")
     args = parser.parse_args()
     gin.parse_config_file(args.config_path)
+
 
 @torch.no_grad
 def compute_debug_metrics(batch: TokenizedSeqBatch) -> dict:

@@ -11,12 +11,12 @@ from modules.transformer.attention import AttentionInput
 from modules.transformer.model import TransformerDecoder
 from modules.transformer.model import TransformerEncoderDecoder
 from modules.utils import eval_mode
-from modules.utils import jagged_to_flattened_tensor
 from modules.utils import maybe_repeat_interleave
-from modules.utils import padded_to_jagged_tensor
 from modules.utils import reset_encoder_cache
 from modules.utils import reset_kv_cache
 from modules.utils import select_columns_per_row
+from ops.triton.jagged import jagged_to_flattened_tensor
+from ops.triton.jagged import padded_to_jagged_tensor
 from typing import NamedTuple
 from torch import nn
 from torch import Tensor
@@ -24,8 +24,6 @@ from torch.nn import functional as F
 
 # Needed to make torch.compile succeed
 torch._dynamo.config.suppress_errors = True
-
-
 torch.set_float32_matmul_precision('high')
 
 
@@ -314,7 +312,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         if self.jagged_mode:
             input_embedding = padded_to_jagged_tensor(input_embedding, lengths=seq_lengths+1, max_len=input_embedding.shape[1])
 
-            seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device).repeat(B)
+            seq_lengths_fut = torch.tensor(input_embedding_fut.shape[1], device=input_embedding_fut.device, dtype=torch.int64).repeat(B)
             input_embedding_fut = padded_to_jagged_tensor(input_embedding_fut, lengths=seq_lengths_fut, max_len=input_embedding_fut.shape[1])
         
         transformer_context = self.in_proj_context(self.do(self.norm(input_embedding)))
@@ -395,7 +393,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
                 next_sem_ids = top_k_samples.reshape(-1, 1)
 
                 # Explode encoder cache on dim 0 to match input size B*k
-                # TODO: Figure out how to avoid jagged - padded conversions
+                # TODO: Figure out how to avoid jagged - padded conversions 
+                # (E.g. Implement repeat_interleave jagged kernel)
                 cache = torch.zeros(input_batch.sem_ids.shape[0], input_batch.sem_ids.shape[1]+1, self.attn_dim, device=input_batch.sem_ids.device)
                 cache_mask = torch.cat([torch.ones(input_batch.sem_ids.shape[0], 1, dtype=bool, device=input_batch.seq_mask.device), input_batch.seq_mask], axis=1)
                 cache[cache_mask] = self.transformer.cached_enc_output.values()

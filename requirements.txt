@@ -6,8 +6,9 @@ pandas==1.5.3
 polars==1.9.0
 sentence_transformers==3.3.1
 tlparse==0.3.30
-torch==2.5.1
-torchvision==0.20.1
+torch>=2.5.1
+torchvision>=0.20.1
 torch_geometric==2.6.1
+triton==3.2.0
 tqdm==4.65.0
 wandb==0.19.0
