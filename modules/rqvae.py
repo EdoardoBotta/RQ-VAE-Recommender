@@ -68,7 +68,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                 forward_mode=codebook_mode,
                 do_kmeans_init=codebook_kmeans_init,
                 codebook_normalize=i == 0 and codebook_normalize,
-                sim_vq=codebook_sim_vq
+                sim_vq=codebook_sim_vq,
+                commitment_weight=commitment_weight
             ) for i in range(n_layers)
         ])
 
@@ -90,7 +91,6 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             CategoricalReconstuctionLoss(n_cat_features) if n_cat_features != 0
             else ReconstructionLoss()
         )
-        self.rqvae_loss = QuantizeLoss(self.commitment_weight)
     
     @cached_property
     def config(self) -> dict:
