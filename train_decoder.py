@@ -12,9 +12,7 @@ from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
 from evaluate.metrics import TopKAccumulator
-from modules.model import DecoderRetrievalModel
 from modules.model import EncoderDecoderRetrievalModel
-from modules.model import ModelType
 from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
 from modules.utils import compute_debug_metrics
@@ -27,19 +25,12 @@ from torch.utils.data import RandomSampler
 from tqdm import tqdm
 
 
-SUPPORTED_MODELS = [
-    ModelType.DECODER, 
-    ModelType.ENCODER_DECODER
-]
-
-
 @gin.configurable
 def train(
     iterations=500000,
     batch_size=64,
     learning_rate=0.001,
     weight_decay=0.01,
-    model_type=ModelType.DECODER,
     dataset_folder="dataset/ml-1m",
     save_dir_root="out/",
     dataset=RecDataset.ML_1M,
@@ -70,13 +61,11 @@ def train(
     dataset_split="beauty",
     push_vae_to_hf=False,
     train_data_subsample=True,
+    model_jagged_mode=True,
     vae_hf_model_name="edobotta/rqvae-amazon-beauty"
 ):  
-    if model_type not in SUPPORTED_MODELS:
-        raise Exception(f"Unsupported model choice. Must be one of {SUPPORTED_MODELS}")
-
-    if model_type == ModelType.ENCODER_DECODER and dataset != RecDataset.AMAZON:
-        raise Exception(f"Model type {model_type} does not currently support dataset {dataset}")
+    if dataset != RecDataset.AMAZON:
+        raise Exception(f"Dataset currently not supported: {dataset}.")
 
     if wandb_logging:
         params = locals()
@@ -115,12 +104,8 @@ def train(
         subsample=False, 
         split=dataset_split
     )
-    
-    if model_type == ModelType.DECODER:
-        train_sampler = BatchSampler(RandomSampler(train_dataset), batch_size, drop_last=True)
-        train_dataloader = DataLoader(train_dataset, batch_size=None, sampler=train_sampler, collate_fn=lambda batch: batch)
-    else:
-        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     
     train_dataloader = cycle(train_dataloader)
     eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=True)
@@ -146,13 +131,8 @@ def train(
     if push_vae_to_hf:
         login()
         tokenizer.rq_vae.push_to_hub(vae_hf_model_name)
-    
-    if model_type == ModelType.DECODER:
-        retrieval_model_class = DecoderRetrievalModel
-    else:
-        retrieval_model_class = EncoderDecoderRetrievalModel
 
-    model = retrieval_model_class(
+    model = EncoderDecoderRetrievalModel(
         embedding_dim=decoder_embed_dim,
         attn_dim=attn_embed_dim,
         dropout=dropout_p,
@@ -161,7 +141,8 @@ def train(
         num_embeddings=vae_codebook_size,
         inference_verifier_fn=lambda x: tokenizer.exists_prefix(x),
         sem_id_dim=tokenizer.sem_ids_dim,
-        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim
+        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim,
+        jagged_mode=model_jagged_mode
     )
 
     optimizer = AdamW(
@@ -210,6 +191,7 @@ def train(
                     total_loss += loss
 
                 accelerator.backward(total_loss)
+                assert model.sem_id_embedder.emb.weight.grad is not None
 
             pbar.set_description(f'loss: {total_loss.item():.4f}')
 
