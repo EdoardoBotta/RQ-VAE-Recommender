@@ -17,6 +17,7 @@ class PaddedToJaggedTensor(Function):
         B, N, D = x.shape
         mask = torch.arange(max_len, device=x.device).unsqueeze(0).repeat(x.shape[0], 1) < lengths.unsqueeze(1)
         ctx.save_for_backward(mask)
+        lengths = lengths.to(torch.int32)
 
         # Previous version (breaks compile graph): 
         # return torch.nested.nested_tensor(
@@ -31,7 +32,7 @@ class PaddedToJaggedTensor(Function):
             lengths.cumsum(dim=0)
         ])
 
-        jagged_batch_size = lengths.sum().to(torch.int64)
+        jagged_batch_size = lengths.sum().to(torch.int32)
 
         # Initialize empty tensor with right shapes
         target = torch.nested.nested_tensor(
