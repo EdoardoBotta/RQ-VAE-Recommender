@@ -30,6 +30,7 @@ torch.set_float32_matmul_precision('high')
 class ModelOutput(NamedTuple):
     loss: Tensor
     logits: Tensor
+    loss_d: Tensor
 
 
 class GenerationOutput(NamedTuple):
@@ -136,7 +137,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         
         transformer_context = self.in_proj_context(self.do(self.norm(input_embedding)))
         transformer_input = self.in_proj(self.do(self.norm_cxt(input_embedding_fut)))
-
+        
         if self.jagged_mode:
             transformer_output = self.transformer(x=transformer_input, context=transformer_context, padding_mask=batch.seq_mask, jagged=self.jagged_mode)
         else:
@@ -256,22 +257,26 @@ class EncoderDecoderRetrievalModel(nn.Module):
                 # This works because batch.sem_ids_fut is fixed length, no padding.
                 logits = rearrange(jagged_to_flattened_tensor(predict_out), "(b n) d -> b n d", b=B)[:,:-1,:].flatten(end_dim=1)
                 target = batch.sem_ids_fut.flatten(end_dim=1)
-                loss = rearrange(F.cross_entropy(logits, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B).sum(axis=1).mean()
+                unred_loss = rearrange(F.cross_entropy(logits, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B)
+                loss = unred_loss.sum(axis=1).mean()
             else:
                 logits = predict_out
                 out = logits[:, :-1, :].flatten(end_dim=1)
                 target = batch.sem_ids_fut.flatten(end_dim=1)
-                loss = F.cross_entropy(out, target)
+                loss = rearrange(F.cross_entropy(out, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B).sum(axis=1).mean()
             if not self.training and self.jagged_mode:
                 self.transformer.cached_enc_output = None
+            loss_d = unred_loss.mean(axis=0)
         elif self.jagged_mode:
             trnsf_out = trnsf_out.contiguous()
             trnsf_out_flattened = rearrange(jagged_to_flattened_tensor(trnsf_out), "(b n) d -> b n d", b=B)[:,-1,:]
             logits = self.out_proj(trnsf_out_flattened)
             loss = None
+            loss_d = None
         else:
             trnsf_out_flattened = trnsf_out[:,-1,:]
             logits = self.out_proj(trnsf_out_flattened)
             loss = None
+            loss_d = None
 
-        return ModelOutput(loss=loss, logits=logits)
+        return ModelOutput(loss=loss, logits=logits, loss_d=loss_d)

@@ -182,13 +182,13 @@ def train(
                 data = next_batch(train_dataloader, device)
                 tokenized_data = tokenizer(data)
 
-                if wandb_logging and accelerator.is_main_process:
-                    train_debug_metrics = compute_debug_metrics(tokenized_data)
-
                 with accelerator.autocast():
                     model_output = model(tokenized_data)
                     loss = model_output.loss / gradient_accumulate_every
                     total_loss += loss
+                
+                if wandb_logging and accelerator.is_main_process:
+                    train_debug_metrics = compute_debug_metrics(tokenized_data, model_output)
 
                 accelerator.backward(total_loss)
                 assert model.sem_id_embedder.emb.weight.grad is not None
@@ -213,10 +213,8 @@ def train(
                         model_output_eval = model(tokenized_data)
 
                     if wandb_logging and accelerator.is_main_process:
-                        eval_debug_metrics = {}
+                        eval_debug_metrics = compute_debug_metrics(tokenized_data, model_output_eval, "eval")
                         eval_debug_metrics["eval_loss"] = model_output_eval.loss.detach().cpu().item()
-
-                    if accelerator.is_main_process and wandb_logging:
                         wandb.log(eval_debug_metrics)
 
             if (iter+1) % full_eval_every == 0:
@@ -226,9 +224,6 @@ def train(
                     for batch in pbar_eval:
                         data = batch_to(batch, device)
                         tokenized_data = tokenizer(data)
-
-                        if wandb_logging and accelerator.is_main_process:
-                            eval_debug_metrics = compute_debug_metrics(tokenized_data)
 
                         generated = model.generate_next_sem_id(tokenized_data, top_k=True, temperature=1)
                         actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
