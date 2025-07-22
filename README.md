@@ -36,6 +36,20 @@ To train both models on the **MovieLens 32M** dataset, run the following command
 * **RQ-VAE tokenizer model training:** Trains the RQ-VAE tokenizer on the item corpus. Executed via `python train_rqvae.py configs/rqvae_ml32m.gin`
 * **Retrieval model training:** Trains retrieval model using a frozen RQ-VAE: `python train_decoder.py configs/decoder_ml32m.gin`
 
+#### Semantic IDs for custom data
+If you want to train an RQ-VAE model to produce semantic ids from a pretrained content model embeddings you can use a predefined `custom.gin` config. It utilizes a `CustomDataset` class that loads raw data without any preprocessing.
+
+`CustomDataset` expects two files in a folder you provide in `train.dataset_folder`:
+- `item_embeddings.npy`: a numpy array of shape `[num_items, dimension_dim]` containing item embeddings from a content model. Item position corresponds to item id.
+- `is_train.npy`: an optional boolean numpy array indicating whether an item belongs to a train split (or eval). If the file does not exist then your config should have `train.do_eval=False`.
+
+By default you would do the following:
+1. Put `item_embeddings.npy` into `dataset/custom`
+2. Train the model with `python train_rqvae.py configs/custom.gin`
+3. Calculate semantic ids with `python run_rqvae.py configs/custom.gin`
+
+The resulting file contains `train.vae_n_layers + 1` id for every item in dataset as in the original paper, so that the combination of semantic ids is unique for every item.
+
 ### Next steps
 * Comparison encoder-decoder model vs. decoder-only model.
 

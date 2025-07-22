@@ -6,6 +6,7 @@ import torch
 from data.amazon import AmazonReviews
 from data.ml1m import RawMovieLens1M
 from data.ml32m import RawMovieLens32M
+from data.custom import CustomDataset
 from data.schemas import SeqBatch
 from enum import Enum
 from torch import Tensor
@@ -17,12 +18,14 @@ PROCESSED_MOVIE_LENS_SUFFIX = "/processed/data.pt"
 
 @gin.constants_from_enum
 class RecDataset(Enum):
+    CUSTOM = 0
     AMAZON = 1
     ML_1M = 2
     ML_32M = 3
 
 
 DATASET_NAME_TO_RAW_DATASET = {
+    RecDataset.CUSTOM: CustomDataset,
     RecDataset.AMAZON: AmazonReviews,
     RecDataset.ML_1M: RawMovieLens1M,
     RecDataset.ML_32M: RawMovieLens32M
@@ -30,6 +33,7 @@ DATASET_NAME_TO_RAW_DATASET = {
 
 
 DATASET_NAME_TO_MAX_SEQ_LEN = {
+    RecDataset.CUSTOM: None,
     RecDataset.AMAZON: 20,
     RecDataset.ML_1M: 200,
     RecDataset.ML_32M: 200
@@ -70,7 +74,7 @@ class ItemData(Dataset):
 
     def __getitem__(self, idx):
         item_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
-        x = self.item_data[idx, :768]
+        x = self.item_data[idx]
         return SeqBatch(
             user_ids=-1 * torch.ones_like(item_ids.squeeze(0)),
             ids=item_ids,
@@ -108,6 +112,7 @@ class SeqData(Dataset):
         self.subsample = subsample
         self.sequence_data = raw_data.data[("user", "rated", "item")]["history"][split]
 
+        # todo: make compatible with custom dataset
         if not self.subsample:
             self.sequence_data["itemId"] = torch.nn.utils.rnn.pad_sequence(
                 [torch.tensor(l[-max_seq_len:]) for l in self.sequence_data["itemId"]],
@@ -144,10 +149,10 @@ class SeqData(Dataset):
             item_ids_fut = self.sequence_data["itemId_fut"][idx]
         
         assert (item_ids >= -1).all(), "Invalid movie id found"
-        x = self.item_data[item_ids, :768]
+        x = self.item_data[item_ids]
         x[item_ids == -1] = -1
 
-        x_fut = self.item_data[item_ids_fut, :768]
+        x_fut = self.item_data[item_ids_fut]
         x_fut[item_ids_fut == -1] = -1
 
         return SeqBatch(

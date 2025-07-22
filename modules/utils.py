@@ -59,7 +59,7 @@ def parse_config():
     parser = argparse.ArgumentParser()
     parser.add_argument("config_path", type=str, help="Path to gin config file.")
     args = parser.parse_args()
-    gin.parse_config_file(args.config_path)
+    gin.parse_config_file(args.config_path, skip_unknown=True)
 
 
 @torch.no_grad
