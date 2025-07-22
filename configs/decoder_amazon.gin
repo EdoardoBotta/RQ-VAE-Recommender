@@ -7,11 +7,10 @@ train.weight_decay=0.035
 train.batch_size=256
 train.vae_input_dim=768
 train.vae_hidden_dims=[512, 256, 128]
-train.vae_embed_dim=32
+train.vae_embed_dim=32  
 train.vae_n_cat_feats=0
 train.vae_codebook_size=256
 train.wandb_logging=True
-train.model_type=%modules.model.ModelType.ENCODER_DECODER
 # https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/ilggivkz, https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/ufe656js
 train.pretrained_rqvae_path="trained_models/rqvae_amazon_beauty/checkpoint_high_entropy.pt"
 # Best run: https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/xb46itxc
@@ -25,7 +24,8 @@ train.full_eval_every=10000
 train.partial_eval_every=5000
 train.dataset_split="beauty"
 train.dropout_p=0.3
-train.attn_heads=6
-train.attn_embed_dim=384
+train.attn_heads=8
+train.attn_embed_dim=512
 train.attn_layers=8
 train.decoder_embed_dim=128
+train.model_jagged_mode=True

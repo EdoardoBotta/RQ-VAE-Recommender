@@ -172,13 +172,30 @@ def train(
             accelerator.wait_for_everyone()
 
             id_diversity_log = {}
+            if accelerator.is_main_process and wandb_logging:
+                # Compute logs depending on training model_output here to avoid cuda graph overwrite from eval graph.
+                emb_norms_avg = model_output.embs_norm.mean(axis=0)
+                emb_norms_avg_log = {
+                    f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
+                }
+                train_log = {
+                    "learning_rate": optimizer.param_groups[0]["lr"],
+                    "total_loss": total_loss.cpu().item(),
+                    "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
+                    "rqvae_loss": model_output.rqvae_loss.cpu().item(),
+                    "temperature": t,
+                    "p_unique_ids": model_output.p_unique_ids.cpu().item(),
+                    **emb_norms_avg_log,
+                }
+
             if do_eval and ((iter+1) % eval_every == 0 or iter+1 == iterations):
                 model.eval()
                 with tqdm(eval_dataloader, desc=f'Eval {iter+1}', disable=True) as pbar_eval:
                     eval_losses = [[], [], []]
                     for batch in pbar_eval:
                         data = batch_to(batch, device)
-                        eval_model_output = model(data, gumbel_t=t)
+                        with torch.no_grad():
+                            eval_model_output = model(data, gumbel_t=t)
 
                         eval_losses[0].append(eval_model_output.loss.cpu().item())
                         eval_losses[1].append(eval_model_output.reconstruction_loss.cpu().item())
@@ -222,19 +239,8 @@ def train(
                     id_diversity_log["max_id_duplicates"] = max_duplicates.cpu().item()
                 
                 if wandb_logging:
-                    emb_norms_avg = model_output.embs_norm.mean(axis=0)
-                    emb_norms_avg_log = {
-                        f"emb_avg_norm_{i}": emb_norms_avg[i].cpu().item() for i in range(vae_n_layers)
-                    }
-
                     wandb.log({
-                        "learning_rate": optimizer.param_groups[0]["lr"],
-                        "total_loss": total_loss.cpu().item(),
-                        "reconstruction_loss": model_output.reconstruction_loss.cpu().item(),
-                        "rqvae_loss": model_output.rqvae_loss.cpu().item(),
-                        "temperature": t,
-                        "p_unique_ids": model_output.p_unique_ids.cpu().item(),
-                        **emb_norms_avg_log,
+                        **train_log,
                         **id_diversity_log
                     })
 

@@ -1,8 +1,8 @@
 import torch
 import torch.nn.functional as F
 
-from modules.utils import jagged_to_flattened_tensor
-from modules.utils import padded_to_jagged_tensor
+from ops.triton.jagged import jagged_to_flattened_tensor
+from ops.triton.jagged import padded_to_jagged_tensor
 from torch import nn
 from torch import Tensor
 from torch.nested import Tensor as NestedTensor
@@ -153,11 +153,12 @@ class MultiHeadAttention(nn.Module):
         cross_attn=False,
         dropout=0.0,
         qkv_bias=False,
-        enable_kv_cache=True
+        enable_kv_cache=False
     ) -> None:
         super().__init__()
 
         assert d_out % num_heads == 0, "embed_dim is indivisible by num_heads"
+        assert not enable_kv_cache, "KV Cache currently not supported"
 
         self.cross_attn = cross_attn
         self.num_heads = num_heads
@@ -175,7 +176,7 @@ class MultiHeadAttention(nn.Module):
 
         self.attend = Attend(self.d_out, self.num_heads, self.head_dim, dropout=False)
 
-        self._kv_cache = KVCache((2560, 80, 384)) if enable_kv_cache else None # (640, 800, 64)
+        self._kv_cache = KVCache((2560, 80, 384)) if enable_kv_cache else None # (640, 800, 64) TODO: Revisit KV Cache
     
     @property
     def kv_cache(self) -> KVCache:
