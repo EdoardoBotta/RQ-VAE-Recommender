@@ -137,6 +137,9 @@ class Quantize(nn.Module):
                     emb / (emb.norm(dim=-1, keepdim=True) + 1e-8),
                     x
                 )
+                emb_out = emb_out * (
+                    torch.norm(emb, dim=1, keepdim=True) / (torch.norm(x, dim=1, keepdim=True) + 1e-6)
+                ).detach()
             else:
                 raise Exception("Unsupported Quantize forward mode.")
             
