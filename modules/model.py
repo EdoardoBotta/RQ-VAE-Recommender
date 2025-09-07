@@ -160,8 +160,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
 
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
-        k = 32 if top_k else 1
-        n_top_k_candidates = 200 if top_k else 1
+        k = 64 if top_k else 1
+        n_top_k_candidates = 256 if top_k else 1
 
         input_batch = TokenizedSeqBatch(
             user_ids=batch.user_ids,
@@ -215,7 +215,6 @@ class EncoderDecoderRetrievalModel(nn.Module):
                 log_probas = torch.clone(top_k_log_probas.detach())
             else:
                 next_sem_ids = top_k_samples.reshape(-1, 1)
-
                 # Explode encoder cache on dim 0 to match input size B*k
                 # TODO: Figure out how to avoid jagged - padded conversions 
                 # (E.g. Implement repeat_interleave jagged kernel)
@@ -263,7 +262,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
                 logits = predict_out
                 out = logits[:, :-1, :].flatten(end_dim=1)
                 target = batch.sem_ids_fut.flatten(end_dim=1)
-                loss = rearrange(F.cross_entropy(out, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B).sum(axis=1).mean()
+                unred_loss = rearrange(F.cross_entropy(out, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B)
+                loss = unred_loss.sum(axis=1).mean()
             if not self.training and self.jagged_mode:
                 self.transformer.cached_enc_output = None
             loss_d = unred_loss.mean(axis=0)

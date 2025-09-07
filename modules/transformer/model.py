@@ -73,10 +73,10 @@ class TransformerBlock(nn.Module):
         is_causal: Optional[bool] = True,
         jagged: Optional[bool] = False
     ) -> AttentionInput:
-        attn_out = x + self.attention(self.do(self.attn_norm(x)), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
+        attn_out = x + self.attention(self.attn_norm(x), padding_mask=padding_mask, is_causal=is_causal, jagged=jagged, use_cache=not self.training and self.enable_kv_cache)
         if self.do_cross_attn:
             attn_out = attn_out + self.cross_attention(
-                x=self.do(self.cross_attn_norm(x)), x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
+                x=self.cross_attn_norm(attn_out), x_kv=x_kv, padding_mask=padding_mask, is_causal=False, jagged=jagged, use_cache=not self.training and self.enable_kv_cache
             )
         proj_out = attn_out + self.ff(attn_out)
         return proj_out

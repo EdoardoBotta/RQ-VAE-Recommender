@@ -39,8 +39,8 @@ class PreprocessingMixin:
     @staticmethod
     def _encode_text_feature(text_feat, model=None):
         if model is None:
-            model = SentenceTransformer('sentence-transformers/sentence-t5-xl')
-        embeddings = model.encode(sentences=text_feat, show_progress_bar=True, convert_to_tensor=True).cpu()
+            model = SentenceTransformer('sentence-transformers/sentence-t5-xxl')
+        embeddings = model.encode(batch_size=2, sentences=text_feat, show_progress_bar=True, convert_to_tensor=True).cpu()
         return embeddings
     
     @staticmethod

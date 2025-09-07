@@ -12,7 +12,7 @@ train.vae_n_cat_feats=0
 train.vae_codebook_size=256
 train.wandb_logging=True
 # https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/ilggivkz, https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/ufe656js
-train.pretrained_rqvae_path="trained_models/rqvae_amazon_beauty/checkpoint_high_entropy.pt"
+train.pretrained_rqvae_path="trained_models/rqvae_amazon_beauty/checkpoint_399999.pt"
 # Best run: https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/xb46itxc
 # Checkpoint run: https://api.wandb.ai/links/botta-edoardo-carnegie-mellon-university/6m2fkl1y
 # train.pretrained_decoder_path="trained_models/transformer_amazon_beauty/checkpoint_199999.pt"
@@ -23,7 +23,7 @@ train.force_dataset_process=False
 train.full_eval_every=10000
 train.partial_eval_every=5000
 train.dataset_split="beauty"
-train.dropout_p=0.3
+train.dropout_p=0.15
 train.attn_heads=8
 train.attn_embed_dim=512
 train.attn_layers=8

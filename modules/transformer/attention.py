@@ -115,7 +115,7 @@ class Attend(nn.Module):
         keys = ke.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
         values = va.unflatten(-1, [self.num_heads, self.head_dim]).transpose(1, 2)
 
-        dropout_p = 0. if not self.training else self.dropout
+        dropout_p = 0. if not self.training else 0.0
 
         context_vec = F.scaled_dot_product_attention(
             queries, keys, values, dropout_p=dropout_p, is_causal=is_causal)
