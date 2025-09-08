@@ -1,0 +1,30 @@
+import data.processed
+import modules.quantize
+
+train.iterations=400000
+train.learning_rate=0.0005
+train.weight_decay=0.01
+train.batch_size=64
+train.vae_input_dim=512
+train.vae_n_cat_feats=0
+train.vae_hidden_dims=[256, 128]
+train.vae_embed_dim=32
+train.vae_codebook_size=256
+train.vae_codebook_normalize=False
+train.vae_sim_vq=False
+train.save_model_every=5000
+train.eval_every=5000
+train.dataset_folder="dataset/custom"
+train.dataset=%data.processed.RecDataset.CUSTOM
+train.save_dir_root="out/rqvae/custom/"
+train.wandb_logging=True
+train.commitment_weight=0.25
+train.vae_n_layers=3
+train.vae_codebook_mode=%modules.quantize.QuantizeForwardMode.ROTATION_TRICK
+train.force_dataset_process=False
+train.dataset_split="beauty"
+train.do_eval=False
+
+generate_semantic_ids.pretrained_model_path="out/rqvae/custom/checkpoint_399999.pt"
+generate_semantic_ids.output_path="dataset/custom/semantic_ids.npy"
+generate_semantic_ids.batch_size=64
