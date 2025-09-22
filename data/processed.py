@@ -44,6 +44,7 @@ class ItemData(Dataset):
         force_process: bool = False,
         dataset: RecDataset = RecDataset.ML_1M,
         train_test_split: str = "all",
+        snap_preproc_root: str = "trained_models/merged_predictions_tensor.pt",
         **kwargs
     ) -> None:
         
@@ -62,15 +63,19 @@ class ItemData(Dataset):
             filt = ~raw_data.data["item"]["is_train"]
         elif train_test_split == "all":
             filt = torch.ones_like(raw_data.data["item"]["x"][:,0], dtype=bool)
-
-        self.item_data, self.item_text = raw_data.data["item"]["x"][filt], raw_data.data["item"]["text"][filt]
+        
+        if snap_preproc_root is not None:
+            self.item_data = torch.load(snap_preproc_root)
+            self.item_text = None
+        else:
+            self.item_data, self.item_text = raw_data.data["item"]["x"][filt], raw_data.data["item"]["text"][filt]
 
     def __len__(self):
         return self.item_data.shape[0]
 
     def __getitem__(self, idx):
         item_ids = torch.tensor(idx).unsqueeze(0) if not isinstance(idx, torch.Tensor) else idx
-        x = self.item_data[idx, :768]
+        x = self.item_data[idx]
         return SeqBatch(
             user_ids=-1 * torch.ones_like(item_ids.squeeze(0)),
             ids=item_ids,

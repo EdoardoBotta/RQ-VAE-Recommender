@@ -4,6 +4,7 @@ import gin
 import torch
 import wandb
 
+from transformers import get_linear_schedule_with_warmup
 from accelerate import Accelerator
 from data.processed import ItemData
 from data.processed import RecDataset
@@ -62,7 +63,8 @@ def train(
     push_vae_to_hf=False,
     train_data_subsample=True,
     model_jagged_mode=True,
-    vae_hf_model_name="edobotta/rqvae-amazon-beauty"
+    vae_hf_model_name="edobotta/rqvae-amazon-beauty",
+    warmup=10000,
 ):  
     if dataset != RecDataset.AMAZON:
         raise Exception(f"Dataset currently not supported: {dataset}.")
@@ -151,9 +153,10 @@ def train(
         weight_decay=weight_decay
     )
 
-    lr_scheduler = InverseSquareRootScheduler(
-        optimizer=optimizer,
-        warmup_steps=10000
+    lr_scheduler = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=warmup,
+        num_training_steps=iterations,
     )
     
     start_iter = 0

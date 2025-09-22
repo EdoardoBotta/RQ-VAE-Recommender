@@ -8,6 +8,7 @@ from modules.loss import CategoricalReconstuctionLoss
 from modules.loss import ReconstructionLoss
 from modules.loss import QuantizeLoss
 from modules.normalize import l2norm
+from modules.normalize import L2NormalizationLayer
 from modules.quantize import Quantize
 from modules.quantize import QuantizeForwardMode
 from huggingface_hub import PyTorchModelHubMixin
@@ -44,9 +45,11 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         codebook_kmeans_init: bool = True,
         codebook_normalize: bool = False,
         codebook_sim_vq: bool = False,
+        normalize_residuals: bool = True,
         codebook_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX,
         n_layers: int = 3,
         commitment_weight: float = 0.25,
+        reconstruction_weight: float = 1.0,
         n_cat_features: int = 18,
     ) -> None:
         self._config = locals()
@@ -59,6 +62,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.n_layers = n_layers
         self.codebook_size = codebook_size
         self.commitment_weight = commitment_weight
+        self.reconstruction_weight = reconstruction_weight
+        self.normalize_residuals = normalize_residuals
         self.n_cat_feats = n_cat_features
 
         self.layers = nn.ModuleList(modules=[
@@ -84,7 +89,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             input_dim=embed_dim,
             hidden_dims=hidden_dims[-1::-1],
             out_dim=input_dim,
-            normalize=True
+            normalize=False
         )
 
         self.reconstruction_loss = (
@@ -122,6 +127,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         embs, residuals, sem_ids = [], [], []
 
         for layer in self.layers:
+            if self.normalize_residuals:
+                res = nn.functional.normalize(res, dim=-1)
             residuals.append(res)
             quantized = layer(res, temperature=gumbel_t)
             quantize_loss += quantized.loss
@@ -147,7 +154,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
 
         reconstuction_loss = self.reconstruction_loss(x_hat, x)
         rqvae_loss = quantized.quantize_loss
-        loss = (reconstuction_loss + rqvae_loss).mean()
+        loss = (self.reconstruction_weight * reconstuction_loss + rqvae_loss).mean()
 
         with torch.no_grad():
             # Compute debug ID statistics

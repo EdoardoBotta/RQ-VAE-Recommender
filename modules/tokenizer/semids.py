@@ -144,6 +144,7 @@ class SemanticIdTokenizer(nn.Module):
         
         token_type_ids = torch.arange(D, device=sem_ids.device).repeat(B, N)
         token_type_ids_fut = torch.arange(D, device=sem_ids.device).repeat(B, 1)
+
         return TokenizedSeqBatch(
             user_ids=batch.user_ids,
             sem_ids=sem_ids,

@@ -5,6 +5,7 @@ import numpy as np
 import wandb
 
 from accelerate import Accelerator
+from transformers import get_linear_schedule_with_warmup
 from data.processed import ItemData
 from data.processed import RecDataset
 from data.utils import batch_to
@@ -40,8 +41,10 @@ def train(
     mixed_precision_type="fp16",
     gradient_accumulate_every=1,
     save_model_every=1000000,
+    warmup=1000,
     eval_every=50000,
     commitment_weight=0.25,
+    reconstruction_weight=1.0,
     vae_n_cat_feats=18,
     vae_input_dim=18,
     vae_embed_dim=16,
@@ -89,13 +92,20 @@ def train(
         codebook_mode=vae_codebook_mode,
         n_layers=vae_n_layers,
         n_cat_features=vae_n_cat_feats,
-        commitment_weight=commitment_weight
+        commitment_weight=commitment_weight,
+        reconstruction_weight=reconstruction_weight,
     )
 
     optimizer = AdamW(
         params=model.parameters(),
         lr=learning_rate,
         weight_decay=weight_decay
+    )
+
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=warmup,
+        num_training_steps=iterations,
     )
 
     if wandb_logging and accelerator.is_main_process:
@@ -112,8 +122,8 @@ def train(
         optimizer.load_state_dict(state["optimizer"])
         start_iter = state["iter"]+1
 
-    model, optimizer = accelerator.prepare(
-        model, optimizer
+    model, optimizer, scheduler = accelerator.prepare(
+        model, optimizer, scheduler
     )
 
     tokenizer = SemanticIdTokenizer(
@@ -168,6 +178,7 @@ def train(
             accelerator.wait_for_everyone()
 
             optimizer.step()
+            scheduler.step()
             
             accelerator.wait_for_everyone()
 

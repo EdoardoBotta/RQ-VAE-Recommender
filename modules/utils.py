@@ -70,9 +70,4 @@ def compute_debug_metrics(batch: TokenizedSeqBatch, model_output = None, prefix:
         prefix + f"seq_length_p{q}": torch.quantile(seq_lengths, q=q).detach().cpu().item() 
         for q in [0.25, 0.5, 0.75, 0.9, 1]
     }
-    if model_output is not None:
-        loss_debug_metrics = {
-            prefix + f"loss_{d}": model_output.loss_d[d].detach().cpu().item() for d in range(batch.sem_ids_fut.shape[1])
-        }
-        debug_metrics.update(loss_debug_metrics)
     return debug_metrics
