@@ -56,6 +56,12 @@ def train(
     if wandb_logging:
         params = locals()
 
+    if not torch.cuda.is_available() and torch.backends.mps.is_available():
+        os.environ.setdefault("ACCELERATE_USE_MPS_DEVICE", "True")
+        if amp:
+            print("Warning: MPS does not support mixed precision training. Disabling amp.")
+            amp = False
+
     accelerator = Accelerator(
         split_batches=split_batches,
         mixed_precision=mixed_precision_type if amp else 'no'
@@ -75,7 +81,7 @@ def train(
 
     index_dataset = ItemData(root=dataset_folder, dataset=dataset, force_process=False, train_test_split="all", split=dataset_split) if do_eval else train_dataset
     
-    train_dataloader = accelerator.prepare(train_dataloader)
+    #train_dataloader = accelerator.prepare(train_dataloader)
     # TODO: Investigate bug with prepare eval_dataloader
 
     model = RqVae(
@@ -138,7 +144,8 @@ def train(
             t = 0.2
             if iter == 0 and use_kmeans_init:
                 kmeans_init_data = batch_to(train_dataset[torch.arange(min(20000, len(train_dataset)))], device)
-                model(kmeans_init_data, t)
+                with accelerator.autocast():
+                    model(kmeans_init_data, t)
 
             optimizer.zero_grad()
             for _ in range(gradient_accumulate_every):

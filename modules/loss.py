@@ -7,7 +7,7 @@ class ReconstructionLoss(nn.Module):
         super().__init__()
 
     def forward(self, x_hat: Tensor, x: Tensor) -> Tensor:
-        return ((x_hat - x)**2).sum(axis=-1)
+        return ((x_hat - x)**2).mean(axis=-1)
 
 
 class CategoricalReconstuctionLoss(nn.Module):

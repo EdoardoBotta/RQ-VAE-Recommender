@@ -84,7 +84,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             input_dim=embed_dim,
             hidden_dims=hidden_dims[-1::-1],
             out_dim=input_dim,
-            normalize=True
+            normalize=False
         )
 
         self.reconstruction_loss = (
@@ -116,6 +116,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         x: Tensor,
         gumbel_t: float = 0.001
     ) -> RqVaeOutput:
+        x = x.to(next(self.encoder.parameters()).dtype)
         res = self.encode(x)
         
         quantize_loss = 0
@@ -137,7 +138,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             quantize_loss=quantize_loss
         )
 
-    @torch.compile(mode="reduce-overhead")
+    #@torch.compile(mode="reduce-overhead")
     def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)

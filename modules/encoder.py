@@ -26,7 +26,7 @@ class MLP(nn.Module):
         for i, (in_d, out_d) in enumerate(zip(dims[:-1], dims[1:])):
             self.mlp.append(nn.Linear(in_d, out_d, bias=False))
             if i != len(dims)-2:
-                self.mlp.append(nn.SiLU())
+                self.mlp.append(nn.ReLU())
                 if dropout != 0:
                     self.mlp.append(nn.Dropout(dropout))
         self.mlp.append(L2NormalizationLayer() if normalize else nn.Identity())
