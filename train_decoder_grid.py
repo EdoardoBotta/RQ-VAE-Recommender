@@ -172,10 +172,9 @@ class GRIDTransformer(nn.Module):
             is_decoder=True,
             is_encoder_decoder=False,
         )
-        # embed_tokens is required by T5Stack.__init__; SemanticIDDecoderModule
-        # deletes it from the stack right after construction.
-        _embed = nn.Embedding(num_embeddings_per_hierarchy * num_hierarchies, t5_d_model)
-        t5_decoder = T5Stack(decoder_config, embed_tokens=_embed)
+        # SemanticIDDecoderModule deletes embed_tokens right after construction;
+        # newer transformers versions create it internally in T5Stack.__init__.
+        t5_decoder = T5Stack(decoder_config)
 
         bos_token = nn.Parameter(torch.randn(1, t5_d_model), requires_grad=True)
         decoder_mlp = nn.ModuleList(

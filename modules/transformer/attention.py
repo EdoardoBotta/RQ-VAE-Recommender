@@ -118,7 +118,7 @@ class Attend(nn.Module):
         dropout_p = 0. if not self.training else 0.0
 
         context_vec = F.scaled_dot_product_attention(
-            queries, keys, values, dropout_p=dropout_p, is_causal=is_causal)
+            queries, keys, values, dropout_p=0.1, is_causal=is_causal)
         
         context_vec = context_vec.transpose(1, 2).flatten(-2)
         return context_vec

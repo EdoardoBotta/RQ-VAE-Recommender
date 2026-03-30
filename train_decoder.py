@@ -5,6 +5,7 @@ import torch
 import wandb
 
 from accelerate import Accelerator
+from data.schemas import TokenizedSeqBatch
 from data.processed import ItemData
 from data.processed import RecDataset
 from data.processed import SeqData
@@ -23,6 +24,37 @@ from torch.utils.data import BatchSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import RandomSampler
 from tqdm import tqdm
+
+
+def _strip_dedup_col(tensor: torch.Tensor, sem_ids_dim: int, n_layers: int) -> torch.Tensor:
+    """Strip the deduplication column appended by SemanticIdTokenizer.
+
+    The tokenizer stores sem_ids with shape [B, N * (n_layers + 1)], where the
+    last column per item is a corpus deduplication index, not a codebook token.
+
+    Args:
+        tensor:      [B, N * sem_ids_dim]  where sem_ids_dim = n_layers + 1
+        sem_ids_dim: tokens per item including the dedup column
+        n_layers:    number of RQ-VAE codebook levels
+
+    Returns:
+        [B, N * n_layers]
+    """
+    B, total = tensor.shape
+    N = total // sem_ids_dim
+    return tensor.view(B, N, sem_ids_dim)[:, :, :n_layers].contiguous().view(B, N * n_layers)
+
+
+def _strip_dedup_from_batch(batch: TokenizedSeqBatch, sem_ids_dim: int, n_layers: int) -> TokenizedSeqBatch:
+    """Return a new TokenizedSeqBatch with the deduplication column removed."""
+    return TokenizedSeqBatch(
+        user_ids=batch.user_ids,
+        sem_ids=_strip_dedup_col(batch.sem_ids, sem_ids_dim, n_layers),
+        sem_ids_fut=batch.sem_ids_fut[:, :n_layers] if batch.sem_ids_fut is not None else None,
+        seq_mask=_strip_dedup_col(batch.seq_mask.long(), sem_ids_dim, n_layers).bool(),
+        token_type_ids=_strip_dedup_col(batch.token_type_ids, sem_ids_dim, n_layers),
+        token_type_ids_fut=batch.token_type_ids_fut[:, :n_layers] if batch.token_type_ids_fut is not None else None,
+    )
 
 
 @gin.configurable
@@ -62,7 +94,10 @@ def train(
     push_vae_to_hf=False,
     train_data_subsample=True,
     model_jagged_mode=True,
-    vae_hf_model_name="edobotta/rqvae-amazon-beauty"
+    vae_hf_model_name="edobotta/rqvae-amazon-beauty",
+    strip_dedup_col=False,
+    model_per_hierarchy_heads=False,
+    max_grad_norm=None,
 ):  
     if dataset != RecDataset.AMAZON:
         raise Exception(f"Dataset currently not supported: {dataset}.")
@@ -140,9 +175,11 @@ def train(
         n_layers=attn_layers,
         num_embeddings=vae_codebook_size,
         inference_verifier_fn=lambda x: tokenizer.exists_prefix(x),
-        sem_id_dim=tokenizer.sem_ids_dim,
-        max_pos=train_dataset.max_seq_len*tokenizer.sem_ids_dim,
-        jagged_mode=model_jagged_mode
+        sem_id_dim=vae_n_layers if strip_dedup_col else tokenizer.sem_ids_dim,
+        max_pos=train_dataset.max_seq_len*(vae_n_layers if strip_dedup_col else tokenizer.sem_ids_dim),
+        jagged_mode=model_jagged_mode,
+        per_hierarchy_heads=model_per_hierarchy_heads,
+        n_codebook_layers=vae_n_layers,
     )
 
     optimizer = AdamW(
@@ -181,6 +218,8 @@ def train(
             for _ in range(gradient_accumulate_every):
                 data = next_batch(train_dataloader, device)
                 tokenized_data = tokenizer(data)
+                if strip_dedup_col:
+                    tokenized_data = _strip_dedup_from_batch(tokenized_data, tokenizer.sem_ids_dim, vae_n_layers)
 
                 with accelerator.autocast():
                     model_output = model(tokenized_data)
@@ -197,6 +236,8 @@ def train(
 
             accelerator.wait_for_everyone()
 
+            if max_grad_norm is not None:
+                accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
             optimizer.step()
             lr_scheduler.step()
 
@@ -208,6 +249,8 @@ def train(
                 for batch in eval_dataloader:
                     data = batch_to(batch, device)
                     tokenized_data = tokenizer(data)
+                    if strip_dedup_col:
+                        tokenized_data = _strip_dedup_from_batch(tokenized_data, tokenizer.sem_ids_dim, vae_n_layers)
 
                     with torch.no_grad():
                         model_output_eval = model(tokenized_data)
@@ -224,14 +267,16 @@ def train(
                     for batch in pbar_eval:
                         data = batch_to(batch, device)
                         tokenized_data = tokenizer(data)
+                        if strip_dedup_col:
+                            tokenized_data = _strip_dedup_from_batch(tokenized_data, tokenizer.sem_ids_dim, vae_n_layers)
 
                         generated = model.generate_next_sem_id(tokenized_data, top_k=True, temperature=1)
                         actual, top_k = tokenized_data.sem_ids_fut, generated.sem_ids
 
                         metrics_accumulator.accumulate(actual=actual, top_k=top_k)
 
-                        if accelerator.is_main_process and wandb_logging:
-                            wandb.log(eval_debug_metrics)
+                        #if accelerator.is_main_process and wandb_logging:
+                        #    wandb.log(eval_debug_metrics)
                 
                 eval_metrics = metrics_accumulator.reduce()
                 

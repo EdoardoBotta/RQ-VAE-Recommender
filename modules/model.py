@@ -17,7 +17,7 @@ from modules.utils import reset_kv_cache
 from modules.utils import select_columns_per_row
 from ops.triton.jagged import jagged_to_flattened_tensor
 from ops.triton.jagged import padded_to_jagged_tensor
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from torch import nn
 from torch import Tensor
 from torch.nn import functional as F
@@ -51,6 +51,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
         inference_verifier_fn,
         max_pos=2048,
         jagged_mode: bool = True,
+        per_hierarchy_heads: bool = False,
+        n_codebook_layers: Optional[int] = None,
     ) -> None:
         super().__init__()
 
@@ -97,7 +99,43 @@ class EncoderDecoderRetrievalModel(nn.Module):
         self.in_proj = nn.Linear(embedding_dim, attn_dim, bias=False)
         self.in_proj_context = nn.Linear(embedding_dim, attn_dim, bias=False)
         self.out_proj = nn.Linear(attn_dim, num_embeddings, bias=False)
-    
+
+        self.per_hierarchy_heads = per_hierarchy_heads
+        self.n_codebook_layers = n_codebook_layers if n_codebook_layers is not None else sem_id_dim
+        if per_hierarchy_heads:
+            self.out_projs = nn.ModuleList([
+                nn.Linear(attn_dim, num_embeddings, bias=False)
+                for _ in range(self.n_codebook_layers)
+            ])
+
+    def _proj_step(self, hidden: Tensor, step: int) -> Tensor:
+        """Select the output head for a given generation step.
+
+        When per_hierarchy_heads is True, uses the per-hierarchy head for
+        codebook positions (step < n_codebook_layers) and falls back to the
+        shared out_proj for the dedup position (step >= n_codebook_layers),
+        which is only reached when strip_dedup_col is False.
+        """
+        if self.per_hierarchy_heads:
+            proj = self.out_projs[step] if step < self.n_codebook_layers else self.out_proj
+            return proj(hidden)
+        return self.out_proj(hidden)
+
+    def _proj_all(self, hidden: Tensor) -> Tensor:
+        """Apply output heads to all sem_id positions in training/eval mode.
+
+        Args:
+            hidden: [B, sem_id_dim, attn_dim]
+        Returns:
+            [B, sem_id_dim, num_embeddings]
+        """
+        if self.per_hierarchy_heads:
+            return torch.stack([
+                (self.out_projs[p] if p < self.n_codebook_layers else self.out_proj)(hidden[:, p, :])
+                for p in range(self.sem_id_dim)
+            ], dim=1)
+        return self.out_proj(hidden)
+
     def _predict(self, batch: TokenizedSeqBatch) -> AttentionInput:
         user_emb = self.user_id_embedder(batch.user_ids)
         sem_ids_emb = self.sem_id_embedder(batch)
@@ -160,8 +198,8 @@ class EncoderDecoderRetrievalModel(nn.Module):
 
         B, N = batch.sem_ids.shape
         generated, log_probas = None, 0
-        k = 64 if top_k else 1
-        n_top_k_candidates = 256 if top_k else 1
+        k = 10 if top_k else 1
+        n_top_k_candidates = 64 if top_k else 1
 
         input_batch = TokenizedSeqBatch(
             user_ids=batch.user_ids,
@@ -249,18 +287,19 @@ class EncoderDecoderRetrievalModel(nn.Module):
         B, N = seq_mask.shape
 
         trnsf_out = self._predict(batch)
-        
+
         if self.training or not self.enable_generation:
-            predict_out = self.out_proj(trnsf_out)
             if self.jagged_mode:
                 # This works because batch.sem_ids_fut is fixed length, no padding.
-                logits = rearrange(jagged_to_flattened_tensor(predict_out), "(b n) d -> b n d", b=B)[:,:-1,:].flatten(end_dim=1)
+                hidden = rearrange(jagged_to_flattened_tensor(trnsf_out), "(b n) d -> b n d", b=B)[:,:-1,:]
+                logits = self._proj_all(hidden).flatten(end_dim=1)
                 target = batch.sem_ids_fut.flatten(end_dim=1)
                 unred_loss = rearrange(F.cross_entropy(logits, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B)
                 loss = unred_loss.sum(axis=1).mean()
             else:
-                logits = predict_out
-                out = logits[:, :-1, :].flatten(end_dim=1)
+                hidden = trnsf_out[:, :-1, :]
+                logits = self._proj_all(hidden)
+                out = logits.flatten(end_dim=1)
                 target = batch.sem_ids_fut.flatten(end_dim=1)
                 unred_loss = rearrange(F.cross_entropy(out, target, reduction="none", ignore_index=-1), "(b n) -> b n", b=B)
                 loss = unred_loss.sum(axis=1).mean()
@@ -270,12 +309,14 @@ class EncoderDecoderRetrievalModel(nn.Module):
         elif self.jagged_mode:
             trnsf_out = trnsf_out.contiguous()
             trnsf_out_flattened = rearrange(jagged_to_flattened_tensor(trnsf_out), "(b n) d -> b n d", b=B)[:,-1,:]
-            logits = self.out_proj(trnsf_out_flattened)
+            step = 0 if batch.sem_ids_fut is None else batch.sem_ids_fut.shape[1]
+            logits = self._proj_step(trnsf_out_flattened, step)
             loss = None
             loss_d = None
         else:
             trnsf_out_flattened = trnsf_out[:,-1,:]
-            logits = self.out_proj(trnsf_out_flattened)
+            step = 0 if batch.sem_ids_fut is None else batch.sem_ids_fut.shape[1]
+            logits = self._proj_step(trnsf_out_flattened, step)
             loss = None
             loss_d = None
 

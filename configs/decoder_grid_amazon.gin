@@ -16,8 +16,8 @@ train.save_dir_root="out/decoder_grid/amazon/"
 train.dataset_folder="dataset/amazon"
 train.dataset=%data.processed.RecDataset.AMAZON
 train.force_dataset_process=False
-train.full_eval_every=10000
-train.partial_eval_every=5000
+train.full_eval_every=1000
+train.partial_eval_every=1000
 train.dataset_split="beauty"
 # GRID T5 transformer hyperparameters
 # Match TIGER paper defaults: d_model=128, 6 heads, d_ff=1024, 4 layers each
