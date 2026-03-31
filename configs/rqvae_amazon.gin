@@ -2,9 +2,9 @@ import data.processed
 import modules.quantize
 
 train.iterations=400000
-train.learning_rate=0.0005
-train.weight_decay=0.01
-train.batch_size=64
+train.learning_rate=0.001
+train.weight_decay=0.0001
+train.batch_size=640
 train.vae_input_dim=768
 train.vae_n_cat_feats=0
 train.vae_hidden_dims=[512, 256, 128]
@@ -20,7 +20,8 @@ train.save_dir_root="out/rqvae/amazon/"
 train.wandb_logging=True
 train.commitment_weight=0.25
 train.vae_n_layers=3
-train.vae_codebook_mode=%modules.quantize.QuantizeForwardMode.ROTATION_TRICK
+train.vae_codebook_mode=%modules.quantize.QuantizeForwardMode.STE
 train.force_dataset_process=False
 train.dataset_split="beauty"
 train.do_eval=True
+train.use_kmeans_init=True

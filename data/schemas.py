@@ -12,6 +12,7 @@ class SeqBatch(NamedTuple):
     x_fut: Tensor
     seq_mask: Tensor
 
+
 class TokenizedSeqBatch(NamedTuple):
     user_ids: Tensor
     sem_ids: Tensor
