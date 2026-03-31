@@ -35,13 +35,18 @@ def efficient_rotation_trick_transform(u, q, e):
     """
     4.2 in https://arxiv.org/abs/2410.06424
     """
-    e = rearrange(e, 'b d -> b 1 d')
+    e = rearrange(e, "b d -> b 1 d")
     w = F.normalize(u + q, p=2, dim=1, eps=1e-6).detach()
 
     return (
-        e -
-        2 * (e @ rearrange(w, 'b d -> b d 1') @ rearrange(w, 'b d -> b 1 d')) +
-        2 * (e @ rearrange(u, 'b d -> b d 1').detach() @ rearrange(q, 'b d -> b 1 d').detach())
+        e
+        - 2 * (e @ rearrange(w, "b d -> b d 1") @ rearrange(w, "b d -> b 1 d"))
+        + 2
+        * (
+            e
+            @ rearrange(u, "b d -> b d 1").detach()
+            @ rearrange(q, "b d -> b 1 d").detach()
+        )
     ).squeeze()
 
 
@@ -55,7 +60,7 @@ class Quantize(nn.Module):
         sim_vq: bool = False,  # https://arxiv.org/pdf/2411.02038
         commitment_weight: float = 0.25,
         forward_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX,
-        distance_mode: QuantizeDistance = QuantizeDistance.L2
+        distance_mode: QuantizeDistance = QuantizeDistance.L2,
     ) -> None:
         super().__init__()
 
@@ -69,7 +74,7 @@ class Quantize(nn.Module):
 
         self.out_proj = nn.Sequential(
             nn.Linear(embed_dim, embed_dim, bias=False) if sim_vq else nn.Identity(),
-            L2NormalizationLayer(dim=-1) if codebook_normalize else nn.Identity()
+            L2NormalizationLayer(dim=-1) if codebook_normalize else nn.Identity(),
         )
 
         self.quantize_loss = QuantizeLoss(commitment_weight)
@@ -87,7 +92,7 @@ class Quantize(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Embedding):
                 nn.init.uniform_(m.weight)
-    
+
     @torch.no_grad
     def _kmeans_init(self, x) -> None:
         kmeans_init_(self.embedding.weight, x=x)
@@ -103,17 +108,19 @@ class Quantize(nn.Module):
             self._kmeans_init(x=x)
 
         codebook = self.out_proj(self.embedding.weight)
-        
+
         if self.distance_mode == QuantizeDistance.L2:
             dist = (
-                (x**2).sum(axis=1, keepdim=True) +
-                (codebook.T**2).sum(axis=0, keepdim=True) -
-                2 * x @ codebook.T
+                (x**2).sum(axis=1, keepdim=True)
+                + (codebook.T**2).sum(axis=0, keepdim=True)
+                - 2 * x @ codebook.T
             )
         elif self.distance_mode == QuantizeDistance.COSINE:
             dist = -(
-                x / x.norm(dim=1, keepdim=True) @
-                (codebook.T) / codebook.T.norm(dim=0, keepdim=True)
+                x
+                / x.norm(dim=1, keepdim=True)
+                @ (codebook.T)
+                / codebook.T.norm(dim=0, keepdim=True)
             )
         else:
             raise Exception("Unsupported Quantize distance mode.")
@@ -135,22 +142,22 @@ class Quantize(nn.Module):
                 emb_out = efficient_rotation_trick_transform(
                     x / (x.norm(dim=-1, keepdim=True) + 1e-8),
                     emb / (emb.norm(dim=-1, keepdim=True) + 1e-8),
-                    x
+                    x,
                 )
-                emb_out = emb_out * (
-                    torch.norm(emb, dim=1, keepdim=True) / (torch.norm(x, dim=1, keepdim=True) + 1e-6)
-                ).detach()
+                emb_out = (
+                    emb_out
+                    * (
+                        torch.norm(emb, dim=1, keepdim=True)
+                        / (torch.norm(x, dim=1, keepdim=True) + 1e-6)
+                    ).detach()
+                )
             else:
                 raise Exception("Unsupported Quantize forward mode.")
-            
+
             loss = self.quantize_loss(query=x, value=emb)
-        
+
         else:
             emb_out = self.get_item_embeddings(ids)
             loss = self.quantize_loss(query=x, value=emb_out)
 
-        return QuantizeOutput(
-            embeddings=emb_out,
-            ids=ids,
-            loss=loss
-        )
+        return QuantizeOutput(embeddings=emb_out, ids=ids, loss=loss)

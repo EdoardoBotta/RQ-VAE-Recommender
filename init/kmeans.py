@@ -21,10 +21,9 @@ class KmeansOutput(NamedTuple):
 
 
 class Kmeans:
-    def __init__(self,
-                 k: int,
-                 max_iters: int = None,
-                 stop_threshold: float = 1e-10) -> None:
+    def __init__(
+        self, k: int, max_iters: int = None, stop_threshold: float = 1e-10
+    ) -> None:
         self.k = k
         self.iters = max_iters
         self.stop_threshold = stop_threshold
@@ -40,7 +39,7 @@ class Kmeans:
     def _update_centroids(self, x) -> torch.Tensor:
         squared_pw_dist = (
             rearrange(x, "b d -> b 1 d") - rearrange(self.centroids, "b d -> 1 b d")
-        )**2
+        ) ** 2
         centroid_idx = (squared_pw_dist.sum(axis=2)).min(axis=1).indices
         assigned = (
             rearrange(torch.arange(self.k, device=x.device), "d -> d 1") == centroid_idx
@@ -50,7 +49,9 @@ class Kmeans:
             is_assigned_to_c = assigned[cluster]
             if not is_assigned_to_c.any():
                 if x.size(0) > 0:
-                    self.centroids[cluster, :] = x[torch.randint(0, x.size(0), (1,))].squeeze(0)
+                    self.centroids[cluster, :] = x[
+                        torch.randint(0, x.size(0), (1,))
+                    ].squeeze(0)
                 else:
                     raise ValueError("Can not choose random element from x, x is empty")
             else:
@@ -68,7 +69,4 @@ class Kmeans:
                 break
             i += 1
 
-        return KmeansOutput(
-            centroids=self.centroids,
-            assignment=self.assignment
-        )
+        return KmeansOutput(centroids=self.centroids, assignment=self.assignment)
