@@ -1,5 +1,6 @@
 from collections import defaultdict
 from einops import rearrange
+import torch
 from torch import Tensor
 
 
@@ -17,6 +18,8 @@ class TopKAccumulator:
         pos_match = rearrange(actual, "b d -> b 1 d") == top_k
         match_found, rank = pos_match.all(axis=-1).max(axis=-1)
         matched_rank = rank[match_found]
+        ndcg = 1.0 / torch.log2(matched_rank.float() + 2.0)
+        self.metrics["ndcg"] += ndcg.sum().item()
         for k in self.ks:
             self.metrics[f"h@{k}"] += len(matched_rank[matched_rank < k])
         self.total += B

@@ -70,6 +70,7 @@ def train(
     )
 
     device = accelerator.device
+    print(f"Device: {device}")
 
     train_dataset = ItemData(
         root=dataset_folder,
