@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/816098967.svg)](https://doi.org/10.5281/zenodo.22076162)
+
 # RQ-VAE Recommender
 This is a PyTorch implementation of a generative retrieval model using semantic IDs based on RQ-VAE from "Recommender Systems with Generative Retrieval". 
 The model has two stages:
