@@ -108,3 +108,32 @@ def test_later_ste_commitment_losses_reach_the_encoder():
     assert items.grad is not None
     assert torch.isfinite(items.grad).all()
     assert items.grad.norm() > 0
+
+
+def test_rqvae_ste_reconstruction_uses_one_identity_gradient():
+    torch.manual_seed(11)
+    model = RqVae(
+        input_dim=4,
+        embed_dim=3,
+        hidden_dims=[6],
+        codebook_size=5,
+        codebook_kmeans_init=False,
+        codebook_mode=QuantizeForwardMode.STE,
+        n_layers=3,
+        n_cat_features=0,
+    )
+    model.train()
+    items = torch.randn(7, 4, requires_grad=True)
+
+    output = model.get_semantic_ids(items)
+    aggregate = model.aggregate_embeddings(output)
+    actual_gradient = torch.autograd.grad(aggregate.sum(), items)[0]
+
+    reference_items = items.detach().clone().requires_grad_(True)
+    encoded = model.encode(reference_items)
+    expected_gradient = torch.autograd.grad(encoded.sum(), reference_items)[0]
+
+    assert torch.allclose(
+        aggregate.detach(), output.embeddings.detach().sum(dim=-1)
+    )
+    assert torch.allclose(actual_gradient, expected_gradient)

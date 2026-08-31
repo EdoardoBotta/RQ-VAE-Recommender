@@ -143,12 +143,27 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             quantize_loss=quantize_loss,
         )
 
+    def aggregate_embeddings(self, quantized: RqVaeOutput) -> Tensor:
+        """Combine residual codewords into the latent passed to the decoder.
+
+        Each STE quantizer exposes an identity gradient for its own input. If
+        those outputs are summed directly, the reconstruction gradient reaching
+        the encoder is multiplied by the number of residual levels. Applying
+        the straight-through estimator once to the aggregate preserves the
+        quantized forward value while exposing a single identity gradient.
+        """
+        embeddings = quantized.embeddings.sum(dim=-1)
+        if self.training and self.layers[0].forward_mode == QuantizeForwardMode.STE:
+            encoded = quantized.residuals[..., 0]
+            return encoded + (embeddings - encoded).detach()
+        return embeddings
+
     @torch.compile(mode="reduce-overhead")
     def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)
         embs, residuals = quantized.embeddings, quantized.residuals
-        x_hat = self.decode(embs.sum(axis=-1))
+        x_hat = self.decode(self.aggregate_embeddings(quantized))
         x_hat = torch.cat(
             [l2norm(x_hat[..., : -self.n_cat_feats]), x_hat[..., -self.n_cat_feats :]],
             axis=-1,

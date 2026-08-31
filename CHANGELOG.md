@@ -8,8 +8,9 @@ Notable user-visible changes are documented here. This project follows
 - Add standards-based Python packaging and command-line entry points.
 - Add automated tests, continuous integration, and JOSS paper validation.
 - Expand installation, usage, API, contribution, support, and citation guidance.
-- Preserve encoder gradients through every residual-quantization level and add
-  a regression test for the multi-level STE path.
+- Preserve commitment gradients through every residual-quantization level,
+  apply the reconstruction STE once to the aggregated latent, and add
+  regression tests for both multi-level gradient paths.
 - Normalize list/tensor sequence storage during training subsampling and reject
   invalid corpus-cache IDs with actionable errors.
 - Document supported scope, collision behavior, and numerical limitations.
