@@ -125,9 +125,6 @@ compliance.**
 
 # Acknowledgements
 
-**Before submission, replace this paragraph with a complete funding statement,
-including the sponsor's role, or explicitly state that the work received no
-specific external funding. Also confirm that all significant contributors are
-included in the author list.**
+This work received no specific external funding.
 
 # References

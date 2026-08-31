@@ -51,12 +51,12 @@ and the project-specific actions remaining before submission.
 - [x] State-of-field comparison and build-versus-contribute rationale.
 - [x] Software archive and independent research reuse are cited.
 - [x] Official Open Journals draft-PDF workflow.
-- [ ] Author: confirm the complete author list, author order, affiliation, and
-  spelling; add ORCID identifiers if available.
+- [x] Author: confirm that Edoardo Botta is the sole author.
+- [ ] Author: confirm the affiliation and spelling; add an ORCID identifier if
+  available.
 - [ ] Author: replace the bold placeholder in `AI usage disclosure` only after
   personally reviewing, editing, and validating every AI-assisted change.
-- [ ] Author: replace the Acknowledgements placeholder with complete funding and
-  sponsor-role information, or an explicit no-specific-funding statement.
+- [x] Author: confirm that the work received no specific external funding.
 - [ ] Author: confirm related papers or submissions and disclose them on the
   JOSS form; the JOSS paper must describe software rather than new results.
 - [ ] Author: disclose all financial, personal, or professional conflicts of
@@ -69,7 +69,7 @@ and the project-specific actions remaining before submission.
 ## Submission and review
 
 - [ ] Submitting author is a major software contributor and has a GitHub account.
-- [ ] All co-authors consent to authorship and accept accountability for the work.
+- [x] Sole-author submission; no co-author consent is required.
 - [ ] Submit the repository, release/archive version, and paper through the JOSS
   new-paper form.
 - [ ] Do not use generative AI for conversations with JOSS editors or reviewers
