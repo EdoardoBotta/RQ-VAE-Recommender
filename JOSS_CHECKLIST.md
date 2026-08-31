@@ -15,8 +15,8 @@ and the project-specific actions remaining before submission.
   and more than 120 forks as of August 2026.
 - [ ] Repository owner: remove GitHub's current issue-creation restriction so
   any GitHub user can file an issue, as JOSS requires.
-- [x] Correctness audit: fix the multi-level STE gradient path and sequence
-  subsampling defects; add cache-boundary validation and regression tests.
+- [x] Correctness audit: retain the original performance-sensitive RQ-VAE
+  training path; fix sequence subsampling and add cache-boundary validation.
 - [ ] Repository owner: confirm that the software is feature-complete for the
   deliberately limited scope claimed in the paper.
 

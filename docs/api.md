@@ -55,11 +55,6 @@ Constructor parameters of particular interest are:
 | `sem_ids` | `[B, H]` | Discrete codeword indices |
 | `quantize_loss` | `[B]` | Per-item residual quantization loss |
 
-`aggregate_embeddings(output)` sums the selected residual codewords for the
-decoder. In STE training mode it applies the straight-through estimator once
-to that sum, so the reconstruction path exposes one identity gradient to the
-encoder rather than one per residual level.
-
 `forward(batch, gumbel_t)` accepts a `data.schemas.SeqBatch` and returns the
 combined training loss, reconstruction loss, quantization loss, embedding
 norms, and semantic-ID diversity statistic. `load_pretrained(path)` loads the
