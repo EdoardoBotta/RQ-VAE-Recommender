@@ -52,15 +52,15 @@ and the project-specific actions remaining before submission.
 - [x] Software archive and independent research reuse are cited.
 - [x] Official Open Journals draft-PDF workflow.
 - [x] Author: confirm that Edoardo Botta is the sole author.
-- [ ] Author: confirm the affiliation and spelling; add an ORCID identifier if
-  available.
+- [x] Author: add ORCID identifier `0009-0003-6246-8477`.
+- [ ] Author: confirm the affiliation and spelling.
 - [ ] Author: replace the bold placeholder in `AI usage disclosure` only after
   personally reviewing, editing, and validating every AI-assisted change.
 - [x] Author: confirm that the work received no specific external funding.
 - [ ] Author: confirm related papers or submissions and disclose them on the
   JOSS form; the JOSS paper must describe software rather than new results.
-- [ ] Author: disclose all financial, personal, or professional conflicts of
-  interest in the submission form.
+- [x] Author: confirm there are no financial, personal, or professional
+  conflicts of interest to disclose in the submission form.
 - [x] Download and visually inspect the three-page `paper.pdf`; citations,
   links, and page layout render cleanly, and the body is 822 words.
 - [ ] Reinspect author metadata, AI disclosure, and acknowledgements after the

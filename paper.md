@@ -9,6 +9,7 @@ tags:
 authors:
   - name: Edoardo Botta
     affiliation: 1
+    orcid: 0009-0003-6246-8477
 affiliations:
   - name: Carnegie Mellon University, United States
     index: 1
