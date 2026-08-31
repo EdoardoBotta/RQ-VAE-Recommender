@@ -31,8 +31,11 @@ and the project-specific actions remaining before submission.
 - [x] Installation, example usage, API, and reproducibility documentation.
 - [x] Contribution, issue reporting, support, security, and conduct guidance.
 - [x] Changelog and tagged source archive with DOI.
-- [ ] Merge these changes through the normal public review workflow and confirm
-  that CI passes on GitHub.
+- [x] Open public pull request
+  [#68](https://github.com/EdoardoBotta/RQ-VAE-Recommender/pull/68).
+- [x] Confirm the pull-request test matrix passes on Python 3.10 and 3.12 and
+  the official Open Journals draft action builds the paper.
+- [ ] Review and merge pull request #68 through the normal public workflow.
 - [ ] Create a GitHub Release with useful release notes for the next submission
   version; the existing `v1_0_1` tag is archived but has no GitHub Release page.
 - [ ] Ask a colleague to install the package and follow the documented fast
@@ -58,8 +61,10 @@ and the project-specific actions remaining before submission.
   JOSS form; the JOSS paper must describe software rather than new results.
 - [ ] Author: disclose all financial, personal, or professional conflicts of
   interest in the submission form.
-- [ ] Download and visually inspect the generated `paper.pdf`; verify citations,
-  page layout, author metadata, and word count.
+- [x] Download and visually inspect the three-page `paper.pdf`; citations,
+  links, and page layout render cleanly, and the body is 853 words.
+- [ ] Reinspect author metadata, AI disclosure, and acknowledgements after the
+  author-only placeholders are finalized.
 
 ## Submission and review
 
