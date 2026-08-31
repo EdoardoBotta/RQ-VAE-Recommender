@@ -11,7 +11,7 @@ authors:
     affiliation: 1
     orcid: 0009-0003-6246-8477
 affiliations:
-  - name: Carnegie Mellon University, United States
+  - name: Independent Researcher
     index: 1
 date: 30 August 2026
 bibliography: paper.bib

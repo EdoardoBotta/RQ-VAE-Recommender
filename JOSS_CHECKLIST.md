@@ -53,7 +53,8 @@ and the project-specific actions remaining before submission.
 - [x] Official Open Journals draft-PDF workflow.
 - [x] Author: confirm that Edoardo Botta is the sole author.
 - [x] Author: add ORCID identifier `0009-0003-6246-8477`.
-- [ ] Author: confirm the affiliation and spelling.
+- [x] Author: use the supplied spelling, Edoardo Botta, and list the affiliation
+  as Independent Researcher.
 - [ ] Author: replace the bold placeholder in `AI usage disclosure` only after
   personally reviewing, editing, and validating every AI-assisted change.
 - [x] Author: confirm that the work received no specific external funding.
