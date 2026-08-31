@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Usage and support guidance
+    url: https://github.com/EdoardoBotta/RQ-VAE-Recommender/blob/main/SUPPORT.md
+    about: Read what information to include when asking for help.

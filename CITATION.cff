@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "RQ-VAE Recommender"
+authors:
+  - family-names: "Botta"
+    given-names: "Edoardo"
+    affiliation: "Independent Researcher"
+    email: "botta.edoardo@gmail.com"
+    orcid: "https://orcid.org/0009-0003-6246-8477"
+version: "1.0.1"
+date-released: 2026-08-24
+doi: "10.5281/zenodo.22076162"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22076163"
+    description: "DOI for the archived v1.0.1 release."
+repository-code: "https://github.com/EdoardoBotta/RQ-VAE-Recommender"
+license: MIT

@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rqvae-recommender"
+version = "1.0.1"
+description = "PyTorch semantic-ID tokenization and generative retrieval for recommender systems"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+  {name = "Edoardo Botta", email = "botta.edoardo@gmail.com"},
+]
+keywords = [
+  "generative retrieval",
+  "recommender systems",
+  "residual quantization",
+  "semantic IDs",
+]
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "accelerate>=1.8.1",
+  "einops>=0.8.0",
+  "gin-config>=0.5.0",
+  "huggingface-hub>=0.33.2",
+  "numpy>=1.24.3",
+  "pandas>=1.5.3",
+  "polars>=1.9.0",
+  "sentence-transformers>=3.3.1",
+  "torch>=2.5.1",
+  "torch-geometric>=2.6.1",
+  "tqdm>=4.65.0",
+  "transformers>=4.47.0,<5",
+  "wandb>=0.19.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/EdoardoBotta/RQ-VAE-Recommender"
+Documentation = "https://github.com/EdoardoBotta/RQ-VAE-Recommender#readme"
+Issues = "https://github.com/EdoardoBotta/RQ-VAE-Recommender/issues"
+Repository = "https://github.com/EdoardoBotta/RQ-VAE-Recommender"
+Archive = "https://doi.org/10.5281/zenodo.22076163"
+
+[project.scripts]
+rqvae-train = "train_rqvae:main"
+rqvae-train-decoder = "train_decoder:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = [
+  "data",
+  "distributions",
+  "evaluate",
+  "init",
+  "modules",
+  "modules.scheduler",
+  "modules.tokenizer",
+]
+py-modules = ["train_decoder", "train_rqvae"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers --strict-config"
+testpaths = ["tests"]

@@ -109,7 +109,30 @@ class SemanticIdTokenizer(nn.Module):
 
         return self.cached_ids
 
-    def _tokenize_seq_batch_from_cached(self, ids: Tensor) -> Tensor:
+    def _tokenize_seq_batch_from_cached(
+        self, ids: Tensor, *, allow_padding: bool = False
+    ) -> Tensor:
+        if self.cached_ids is None:
+            raise RuntimeError(
+                "Corpus IDs must be precomputed before tokenizing sequences."
+            )
+        if ids.ndim != 2:
+            raise ValueError(
+                f"Expected a 2-D item-ID tensor, received shape {ids.shape}."
+            )
+
+        if (ids < -1).any() or ((ids == -1).any() and not allow_padding):
+            raise IndexError(
+                "Item IDs must be non-negative; -1 is accepted only as history padding."
+            )
+
+        valid_ids = ids[ids >= 0]
+        if valid_ids.numel() and valid_ids.max() >= self.cached_ids.shape[0]:
+            raise IndexError(
+                "An item ID is outside the precomputed corpus-ID cache. "
+                "Rebuild the cache from the same complete item dataset used by the "
+                "sequence dataset."
+            )
         return rearrange(
             self.cached_ids[ids.flatten(), :], "(b n) d -> b (n d)", n=ids.shape[1]
         )
@@ -120,7 +143,7 @@ class SemanticIdTokenizer(nn.Module):
         # TODO: Handle output inconstency in If-else.
         # If block has to return 3-sized ids for use in precompute_corpus_ids
         # Else block has to return deduped 4-sized ids for use in decoder training.
-        if self.cached_ids is None or batch.ids.max() >= self.cached_ids.shape[0]:
+        if self.cached_ids is None:
             B, N = batch.ids.shape
             sem_ids = self.rq_vae.get_semantic_ids(batch.x).sem_ids
             D = sem_ids.shape[-1]
@@ -128,7 +151,9 @@ class SemanticIdTokenizer(nn.Module):
         else:
             B, N = batch.ids.shape
             _, D = self.cached_ids.shape
-            sem_ids = self._tokenize_seq_batch_from_cached(batch.ids)
+            sem_ids = self._tokenize_seq_batch_from_cached(
+                batch.ids, allow_padding=True
+            )
             seq_mask = batch.seq_mask.repeat_interleave(D, dim=1)
             sem_ids[~seq_mask] = -1
 

@@ -135,12 +135,35 @@ class SeqData(Dataset):
         user_ids = self.sequence_data["userId"][idx]
 
         if self.subsample:
-            seq = (
-                self.sequence_data["itemId"][idx]
-                + self.sequence_data["itemId_fut"][idx].tolist()
+            history = self.sequence_data["itemId"][idx]
+            future = self.sequence_data["itemId_fut"][idx]
+            history = (
+                history.reshape(-1).tolist()
+                if isinstance(history, Tensor)
+                else list(history)
             )
+            future = (
+                future.reshape(-1).tolist()
+                if isinstance(future, Tensor)
+                else list(future)
+                if isinstance(future, (list, tuple))
+                else [future]
+            )
+            if future and isinstance(future[0], list):
+                future = [item for values in future for item in values]
+
+            # Processed datasets may store histories as Python lists or padded
+            # tensors.  Normalize both representations and never sample the
+            # -1 padding sentinel as a training target.
+            seq = [int(item) for item in history + future if int(item) >= 0]
+            if len(seq) < 3:
+                raise ValueError(
+                    "A subsampled training sequence needs at least three valid items."
+                )
             start_idx = random.randint(0, max(0, len(seq) - 3))
-            end_idx = random.randint(start_idx + 3, start_idx + self.max_seq_len + 1)
+            end_idx = random.randint(
+                start_idx + 3, min(len(seq), start_idx + self.max_seq_len + 1)
+            )
             sample = seq[start_idx:end_idx]
 
             item_ids = torch.tensor(
