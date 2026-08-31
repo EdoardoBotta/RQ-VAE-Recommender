@@ -62,9 +62,8 @@ and the project-specific actions remaining before submission.
 - [x] Author: confirm there are no financial, personal, or professional
   conflicts of interest to disclose in the submission form.
 - [x] Download and visually inspect the three-page `paper.pdf`; citations,
-  links, and page layout render cleanly. The compacted body is 812 words before
-  the final manuscript rebuild.
-- [ ] Reinspect author metadata, AI disclosure, and acknowledgements after the
+  links, and page layout render cleanly, and the body is 812 words.
+- [x] Reinspect author metadata, AI disclosure, and acknowledgements after the
   author-only placeholders are finalized.
 
 ## Submission and review
