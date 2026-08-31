@@ -48,7 +48,10 @@ not inference from pretrained checkpoints. Executable gin configurations and
 end-to-end PyTorch loops let users locally reproduce data preparation,
 semantic-ID and retriever training, and ranking evaluation for the supported
 Amazon and MovieLens workflows; optional experiment tracking and CPU tests
-support this process.
+support this process. The software runs on a variety of PyTorch-supported
+hardware, including Apple silicon. As a concrete modest-resource configuration,
+the author trains the full pipeline locally on an Apple M4 Pro with 48 GB of
+unified memory rather than data-center hardware.
 
 # State of the field
 
@@ -97,7 +100,9 @@ PyTorch [@paszke2019pytorch] supplies the numerical and accelerator interface,
 while gin keeps experiment choices outside the training code. The intentionally
 minimal design exposes ordinary PyTorch modules and configurations for ease of
 use; separate components let researchers replace one stage without rewriting
-the pipeline.
+the pipeline. Training the tokenizer and retriever as separate stages further
+limits peak resource demand because they do not need to be optimized
+simultaneously.
 
 # Research impact statement
 
