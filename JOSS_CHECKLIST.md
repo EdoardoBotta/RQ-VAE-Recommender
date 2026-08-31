@@ -1,0 +1,75 @@
+# JOSS submission checklist
+
+This checklist tracks the current Journal of Open Source Software requirements
+and the project-specific actions remaining before submission.
+
+## Eligibility and pre-review gates
+
+- [x] Research software with an obvious research application.
+- [x] OSI-approved license in a plain-text `LICENSE` file (MIT).
+- [x] Public, cloneable source repository with more than six months of iterative
+  history (public since June 2024).
+- [x] Demonstrated research use: Hu et al. (2026) used this repository as the
+  basis of all public-dataset experiments in their QuaSID paper.
+- [x] Community evidence: external issues and pull requests, more than 840 stars,
+  and more than 120 forks as of August 2026.
+- [ ] Repository owner: remove GitHub's current issue-creation restriction so
+  any GitHub user can file an issue, as JOSS requires.
+- [x] Correctness audit: fix the multi-level STE gradient path and sequence
+  subsampling defects; add cache-boundary validation and regression tests.
+- [x] Document supported scope and remaining numerical/data limitations in
+  `docs/known-limitations.md`.
+- [ ] Repository owner: confirm that the software is feature-complete for the
+  deliberately limited scope claimed in the paper.
+
+## Software and open-source practice
+
+- [x] Standards-based `pyproject.toml` and `pip install` workflow.
+- [x] Dependency list includes all direct imports.
+- [x] Automated CPU tests for core numerical behavior.
+- [x] GitHub Actions test matrix for supported Python versions.
+- [x] Installation, example usage, API, and reproducibility documentation.
+- [x] Contribution, issue reporting, support, security, and conduct guidance.
+- [x] Changelog and tagged source archive with DOI.
+- [ ] Merge these changes through the normal public review workflow and confirm
+  that CI passes on GitHub.
+- [ ] Create a GitHub Release with useful release notes for the next submission
+  version; the existing `v1_0_1` tag is archived but has no GitHub Release page.
+- [ ] Ask a colleague to install the package and follow the documented fast
+  verification steps on a clean machine, then record any fixes publicly.
+
+## JOSS paper
+
+- [x] `paper.md` and `paper.bib` use JOSS Markdown/YAML and citation syntax.
+- [x] Draft is within the required 750--1750 word range.
+- [x] Required sections: Summary, Statement of need, State of the field,
+  Software design, Research impact statement, AI usage disclosure,
+  Acknowledgements, and References.
+- [x] State-of-field comparison and build-versus-contribute rationale.
+- [x] Software archive and independent research reuse are cited.
+- [x] Official Open Journals draft-PDF workflow.
+- [ ] Author: confirm the complete author list, author order, affiliation, and
+  spelling; add ORCID identifiers if available.
+- [ ] Author: replace the bold placeholder in `AI usage disclosure` only after
+  personally reviewing, editing, and validating every AI-assisted change.
+- [ ] Author: replace the Acknowledgements placeholder with complete funding and
+  sponsor-role information, or an explicit no-specific-funding statement.
+- [ ] Author: confirm related papers or submissions and disclose them on the
+  JOSS form; the JOSS paper must describe software rather than new results.
+- [ ] Author: disclose all financial, personal, or professional conflicts of
+  interest in the submission form.
+- [ ] Download and visually inspect the generated `paper.pdf`; verify citations,
+  page layout, author metadata, and word count.
+
+## Submission and review
+
+- [ ] Submitting author is a major software contributor and has a GitHub account.
+- [ ] All co-authors consent to authorship and accept accountability for the work.
+- [ ] Submit the repository, release/archive version, and paper through the JOSS
+  new-paper form.
+- [ ] Do not use generative AI for conversations with JOSS editors or reviewers
+  except for translation; JOSS's current author policy prohibits it.
+- [ ] Respond to reviewer questions within roughly two weeks and changes within
+  four to six weeks, or communicate delays in the public review thread.
+- [ ] At acceptance, make the requested tagged release, archive that exact
+  version, and give the version and DOI to the editor.

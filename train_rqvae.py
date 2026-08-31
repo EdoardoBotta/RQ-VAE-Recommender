@@ -300,6 +300,11 @@ def train(
         wandb.finish()
 
 
-if __name__ == "__main__":
+def main():
+    """Run RQ-VAE training from a gin configuration file."""
     parse_config()
     train()
+
+
+if __name__ == "__main__":
+    main()

@@ -127,7 +127,12 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             quantized = layer(res, temperature=gumbel_t)
             quantize_loss += quantized.loss
             emb, id = quantized.embeddings, quantized.ids
-            res = res - emb
+            # Residual selection is a forward-pass operation.  Detaching the
+            # selected embedding keeps the derivative of every later
+            # commitment loss connected to the encoder.  Without the detach,
+            # the identity gradient used by STE makes ``res - emb`` have zero
+            # derivative after the first level.
+            res = res - emb.detach()
             sem_ids.append(id)
             embs.append(emb)
 

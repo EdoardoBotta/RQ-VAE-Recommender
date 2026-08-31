@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose an improvement or new research-software capability
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Research or user need
+      description: What problem would this change solve, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Describe the behavior, interface, alternatives, and relevant references.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: How could the change be tested or evaluated objectively?
+    validations:
+      required: true
