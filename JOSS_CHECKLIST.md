@@ -35,11 +35,11 @@ and the project-specific actions remaining before submission.
   [#68](https://github.com/EdoardoBotta/RQ-VAE-Recommender/pull/68).
 - [x] Confirm the pull-request test matrix passes on Python 3.10 and 3.12 and
   the official Open Journals draft action builds the paper.
+- [x] Confirm installation and tests succeed in fresh GitHub-hosted Python 3.10
+  and 3.12 environments; also build and import the wheel locally.
 - [ ] Review and merge pull request #68 through the normal public workflow.
-- [ ] Create a GitHub Release with useful release notes for the next submission
-  version; the existing `v1_0_1` tag is archived but has no GitHub Release page.
-- [ ] Ask a colleague to install the package and follow the documented fast
-  verification steps on a clean machine, then record any fixes publicly.
+- [ ] Optional: ask a colleague to follow the documented fast verification
+  steps independently and record any resulting fixes publicly.
 
 ## JOSS paper
 
@@ -68,7 +68,8 @@ and the project-specific actions remaining before submission.
 
 ## Submission and review
 
-- [ ] Submitting author is a major software contributor and has a GitHub account.
+- [x] Submitting author is the primary software contributor and has the GitHub
+  account `EdoardoBotta`.
 - [x] Sole-author submission; no co-author consent is required.
 - [ ] Submit the repository, release/archive version, and paper through the JOSS
   new-paper form.
@@ -76,5 +77,5 @@ and the project-specific actions remaining before submission.
   except for translation; JOSS's current author policy prohibits it.
 - [ ] Respond to reviewer questions within roughly two weeks and changes within
   four to six weeks, or communicate delays in the public review thread.
-- [ ] At acceptance, make the requested tagged release, archive that exact
-  version, and give the version and DOI to the editor.
+- [ ] At acceptance, create the requested GitHub Release, archive that exact
+  tagged version, and give the version and DOI to the editor.
