@@ -49,6 +49,12 @@ It supports automatic preparation of Amazon Reviews and MovieLens data for
 tokenizer research, Amazon next-item generation, reusable checkpoints, optional
 experiment tracking, and CPU tests that exercise the core numerical behavior.
 
+The project's goal is reproducible training rather than providing inference
+code for pretrained checkpoints. Its end-to-end training loops and
+configurations let users locally prepare data, learn semantic IDs, train the
+retriever, and evaluate rankings, thereby reproducing every stage of the
+pipeline under their own experimental configuration.
+
 # State of the field
 
 Residual quantization was introduced for hierarchical discrete image

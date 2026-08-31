@@ -62,8 +62,8 @@ and the project-specific actions remaining before submission.
 - [x] Author: confirm there are no financial, personal, or professional
   conflicts of interest to disclose in the submission form.
 - [x] Download and visually inspect the three-page `paper.pdf`; citations,
-  links, and page layout render cleanly. Before the final disclosure rebuild,
-  the body is 808 words.
+  links, and page layout render cleanly. The revised body is 854 words before
+  the final scope-statement rebuild.
 - [ ] Reinspect author metadata, AI disclosure, and acknowledgements after the
   author-only placeholders are finalized.
 
