@@ -41,19 +41,14 @@ that research idea, however, requires coordinated implementations of dataset
 preprocessing, residual quantization, collision disambiguation, sequential
 training, corpus-constrained decoding, and top-$K$ evaluation.
 
-`RQ-VAE Recommender` provides those components through ordinary PyTorch modules
-and executable gin configurations. Its target users are researchers and
-practitioners investigating generative recommendation, learned discrete item
-representations, vector-quantization optimization, and semantic-ID collisions.
-It supports automatic preparation of Amazon Reviews and MovieLens data for
-tokenizer research, Amazon next-item generation, reusable checkpoints, optional
-experiment tracking, and CPU tests that exercise the core numerical behavior.
-
-The project's goal is reproducible training rather than providing inference
-code for pretrained checkpoints. Its end-to-end training loops and
-configurations let users locally prepare data, learn semantic IDs, train the
-retriever, and evaluate rankings, thereby reproducing every stage of the
-pipeline under their own experimental configuration.
+`RQ-VAE Recommender` targets researchers and practitioners studying generative
+recommendation, learned discrete item representations, vector-quantization
+optimization, and semantic-ID collisions. Its purpose is reproducible training,
+not inference from pretrained checkpoints. Executable gin configurations and
+end-to-end PyTorch loops let users locally reproduce data preparation,
+semantic-ID and retriever training, and ranking evaluation for the supported
+Amazon and MovieLens workflows; optional experiment tracking and CPU tests
+support this process.
 
 # State of the field
 
@@ -98,13 +93,11 @@ the corpus and keeps the highest-scoring candidates. This enforces catalog-valid
 outputs while preserving the compact hierarchical vocabulary. Hit rate and
 normalized discounted cumulative gain provide end-to-end ranking checks.
 
-PyTorch [@paszke2019pytorch] supplies the numerical and accelerator interface;
-gin files keep experiment choices outside the training code. The software
-design is intentionally minimal to facilitate ease of use: it avoids a
-project-specific framework layer and exposes ordinary PyTorch modules and gin
-configurations. The data, tokenizer, quantizer, models, metrics, and schedulers
-remain separate modules so that researchers can replace one stage without
-rewriting the complete pipeline.
+PyTorch [@paszke2019pytorch] supplies the numerical and accelerator interface,
+while gin keeps experiment choices outside the training code. The intentionally
+minimal design exposes ordinary PyTorch modules and configurations for ease of
+use; separate components let researchers replace one stage without rewriting
+the pipeline.
 
 # Research impact statement
 
