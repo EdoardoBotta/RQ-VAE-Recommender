@@ -13,11 +13,11 @@ and the project-specific actions remaining before submission.
   basis of all public-dataset experiments in their QuaSID paper.
 - [x] Community evidence: external issues and pull requests, more than 840 stars,
   and more than 120 forks as of August 2026.
-- [ ] Repository owner: remove GitHub's current issue-creation restriction so
-  any GitHub user can file an issue, as JOSS requires.
+- [x] Public issue tracker is enabled and accepts outside participation; the
+  repository currently has 39 open issues and no configured interaction limit.
 - [x] Correctness audit: retain the original performance-sensitive RQ-VAE
   training path; fix sequence subsampling and add cache-boundary validation.
-- [ ] Repository owner: confirm that the software is feature-complete for the
+- [x] Repository owner: confirm that the software is feature-complete for the
   deliberately limited scope claimed in the paper.
 
 ## Software and open-source practice
