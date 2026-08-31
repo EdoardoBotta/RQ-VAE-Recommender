@@ -50,6 +50,3 @@ be disabled with `train.wandb_logging=False` in a gin configuration.
   [Hugging Face](https://huggingface.co/edobotta/rqvae-amazon-beauty).
 - Additional repository checkpoints are examples, not substitutes for reporting
   the configuration and software version used in a new experiment.
-
-See [Known limitations](known-limitations.md) for the deliberately supported
-scope and numerical caveats.

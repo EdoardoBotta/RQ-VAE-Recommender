@@ -17,8 +17,6 @@ and the project-specific actions remaining before submission.
   any GitHub user can file an issue, as JOSS requires.
 - [x] Correctness audit: fix the multi-level STE gradient path and sequence
   subsampling defects; add cache-boundary validation and regression tests.
-- [x] Document supported scope and remaining numerical/data limitations in
-  `docs/known-limitations.md`.
 - [ ] Repository owner: confirm that the software is feature-complete for the
   deliberately limited scope claimed in the paper.
 
@@ -55,15 +53,17 @@ and the project-specific actions remaining before submission.
 - [x] Author: add ORCID identifier `0009-0003-6246-8477`.
 - [x] Author: use the supplied spelling, Edoardo Botta, and list the affiliation
   as Independent Researcher.
-- [ ] Author: replace the bold placeholder in `AI usage disclosure` only after
-  personally reviewing, editing, and validating every AI-assisted change.
+- [x] Author: remove the AI-review placeholder after confirming review and
+  validation of the AI-assisted code changes; document the checks applied to
+  the documentation and manuscript.
 - [x] Author: confirm that the work received no specific external funding.
 - [ ] Author: confirm related papers or submissions and disclose them on the
   JOSS form; the JOSS paper must describe software rather than new results.
 - [x] Author: confirm there are no financial, personal, or professional
   conflicts of interest to disclose in the submission form.
 - [x] Download and visually inspect the three-page `paper.pdf`; citations,
-  links, and page layout render cleanly, and the body is 822 words.
+  links, and page layout render cleanly. Before the final disclosure rebuild,
+  the body is 808 words.
 - [ ] Reinspect author metadata, AI disclosure, and acknowledgements after the
   author-only placeholders are finalized.
 

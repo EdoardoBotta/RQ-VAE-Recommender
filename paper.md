@@ -118,11 +118,9 @@ as code for a single analysis.
 OpenAI Codex using GPT-5 (accessed in August 2026) was used to audit JOSS
 requirements and assist with initial drafts of packaging metadata, automated
 tests, repository documentation, and this manuscript. It did not make the core
-research or software-design decisions. **Before submission, the author must
-review, edit, and validate every AI-assisted output, then replace this sentence
-with an explicit confirmation that this review was completed and that the
-author remains responsible for accuracy, originality, licensing, and ethical
-compliance.**
+research or software-design decisions. The author reviewed and validated the
+AI-assisted code changes. The documentation and manuscript were checked against
+the implementation, cited sources, and automated validation results.
 
 # Acknowledgements
 

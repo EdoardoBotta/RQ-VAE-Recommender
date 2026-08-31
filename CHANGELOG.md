@@ -13,7 +13,7 @@ Notable user-visible changes are documented here. This project follows
   regression tests for both multi-level gradient paths.
 - Normalize list/tensor sequence storage during training subsampling and reject
   invalid corpus-cache IDs with actionable errors.
-- Document supported scope, collision behavior, and numerical limitations.
+- Document the supported workflow and semantic-ID collision handling.
 
 ## 1.0.1 - 2026-08-24
 

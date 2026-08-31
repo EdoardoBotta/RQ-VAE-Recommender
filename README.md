@@ -158,7 +158,6 @@ and how reviewers can perform a fast objective check.
 
 - [API overview](docs/api.md)
 - [Reproducibility and verification](docs/reproducibility.md)
-- [Known limitations](docs/known-limitations.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [Support](SUPPORT.md)
 - [Security policy](SECURITY.md)
