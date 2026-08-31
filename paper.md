@@ -99,9 +99,12 @@ outputs while preserving the compact hierarchical vocabulary. Hit rate and
 normalized discounted cumulative gain provide end-to-end ranking checks.
 
 PyTorch [@paszke2019pytorch] supplies the numerical and accelerator interface;
-gin files keep experiment choices outside the training code. The data,
-tokenizer, quantizer, models, metrics, and schedulers remain separate modules so
-that researchers can replace one stage without rewriting the complete pipeline.
+gin files keep experiment choices outside the training code. The software
+design is intentionally minimal to facilitate ease of use: it avoids a
+project-specific framework layer and exposes ordinary PyTorch modules and gin
+configurations. The data, tokenizer, quantizer, models, metrics, and schedulers
+remain separate modules so that researchers can replace one stage without
+rewriting the complete pipeline.
 
 # Research impact statement
 
