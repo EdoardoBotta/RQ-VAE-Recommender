@@ -62,7 +62,7 @@ and the project-specific actions remaining before submission.
 - [ ] Author: disclose all financial, personal, or professional conflicts of
   interest in the submission form.
 - [x] Download and visually inspect the three-page `paper.pdf`; citations,
-  links, and page layout render cleanly, and the body is 853 words.
+  links, and page layout render cleanly, and the body is 822 words.
 - [ ] Reinspect author metadata, AI disclosure, and acknowledgements after the
   author-only placeholders are finalized.
 
