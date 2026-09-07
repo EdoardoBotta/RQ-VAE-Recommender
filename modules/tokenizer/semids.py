@@ -140,7 +140,7 @@ class SemanticIdTokenizer(nn.Module):
     @torch.no_grad
     @eval_mode
     def forward(self, batch: SeqBatch) -> TokenizedSeqBatch:
-        # TODO: Handle output inconstency in If-else.
+        # TODO: Handle output inconsistency in If-else.
         # If block has to return 3-sized ids for use in precompute_corpus_ids
         # Else block has to return deduped 4-sized ids for use in decoder training.
         if self.cached_ids is None:
